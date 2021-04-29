@@ -9,7 +9,7 @@ dim = np.int(2**chain_length)
 # Coupling constant
 J = 2
 # Magnetic field
-B = np.random.standard_normal(chain_length)
+B = 0 * np.random.uniform(-1, 1, chain_length)
 
 # Setup
 # ________________________________________________________________________________
@@ -45,3 +45,43 @@ for state_index in range(dim):
 
 # Use eigh for the calculation, since H is hermitian -> I hope for better efficiency
 eigenvalues, eigenvectors = np.linalg.eigh(H)
+
+
+# TIME EVO DOESNT WORK YET
+
+
+def time_evo_sigma_z(t, psi0):
+    """
+    Computes the time evolution of the spin operator sigma_z for the given state
+
+    Args:
+        t (array [tN]): array with tN timesteps
+        psi0 (array [N]): the state at t0
+
+    Returns:
+        exp_sig_z (array [tN, N]): Array of expectation values of a chain with N sites and tN
+        timesteps
+
+    """
+    # for time step in t
+    for time__i, ts in enumerate(t):
+        exp_sig_z = np.empty((len(t), chain_length), dtype=np.complex64)
+        for i in range(chain_length):
+            psi_t = (np.exp(-1j * eigenvalues[i] * ts) *
+                     np.inner(np.outer(eigenvectors[i], eigenvectors[i]), psi0))
+            sigma_z = psi_t[-chain_length:] - 1/2
+            exp_sig_z[time__i] = (sigma_z *
+                                  np.inner(psi_t.conjugate(), psi_t))
+    return exp_sig_z
+
+
+psi0 = np.unpackbits(psi_z[0])
+t = np.linspace(0, 1e-3, 100)
+evo = time_evo_sigma_z(t, psi0)
+
+fig, (ax1, ax2, ax3) = plt.subplots(3, 1, sharex=True)
+ax1.plot(t, np.abs(evo.T[0]))
+ax2.plot(t, np.abs(evo.T[1]))
+ax3.plot(t, np.abs(evo.T[2]))
+ax3.set_xlabel("Time t")
+plt.show()
