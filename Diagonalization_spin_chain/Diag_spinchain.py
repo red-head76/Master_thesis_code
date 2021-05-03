@@ -11,33 +11,75 @@ J = 2
 # Magnetic field
 B = 0 * np.random.uniform(-1, 1, chain_length)
 
+
 # Setup
 # ________________________________________________________________________________
 # array of states in sigma_z basis
 # if chain_length % 8 != 0, there will be zero padding until the byte is full
 psi_z = np.arange(0, np.int(2**chain_length), dtype=np.uint8)
 
+
+# New definitions of packbits and unpackbits are required because np.unpackbits can only handle
+# uint8. This means it is restricted to a chain_length of 8.
+
+def unpackbits(x, num_bits=chain_length):
+    """
+    Similar to np.unpackbits, but can also handle longer uints than uint8
+    From: https://stackoverflow.com/a/51509307
+
+    Args:
+        x (array [N]): input array with integers
+        num_bits (int, default: chain_length): number of bits
+
+    Returns:
+        unpacked_bits (array [N, chain_length]): array of unpacked bits
+
+    """
+    if np.issubdtype(x.dtype, np.floating):
+        raise ValueError("numpy data type needs to be int-like")
+    xshape = list(x.shape)
+    x = x.reshape([-1, 1])
+    mask = 2**np.arange(num_bits - 1, -1, -1,
+                        dtype=x.dtype).reshape([1, num_bits])
+    return (x & mask).astype(bool).astype(int).reshape(xshape + [num_bits])
+
+
+def packbits(x, num_bits=chain_length):
+    """
+    Similar to np.packbits, but can also handle longer uints than uint8
+
+    Args:
+        x (array [N, chain_length]): input array of unpacked bits
+        num_bits (int, default: chain_length): number of bits
+
+    Returns:
+        packed_bits (array [N]): an array of integer
+
+    """
+    mask = 2**np.arange(num_bits - 1, -1, -1)
+    return np.inner(mask, x)
+
+
 H = np.zeros((dim, dim))
+
 
 # For every state
 for state_index in range(dim):
-    state = np.unpackbits(psi_z[state_index])
-    shifted_state = np.unpackbits(np.right_shift(psi_z, 1)[state_index])
+    state = unpackbits(psi_z[state_index])
     # Going backwards through the array, because there is zero-padding to the left, which means
     # 15 = 0 0 0 0 1 1 1 1
     for i in range(-1, -(chain_length), -1):
         # Ising term in the hamiltonian: J * Sum(I_i^z * I_i+1^z)
-        # Method: shift the array one element to the right and compare to the original indexwise
-        if state[i] == shifted_state[i]:
+        # Method: compare one element with the one to the left indexwise
+        if state[i] == state[i-1]:
             H[state_index, state_index] += J/4
         else:
             H[state_index, state_index] -= J/4
             # Ladder operator terms: J/2 * Sum(I_i^+ I_i+1^- + I_i^- I_i+1^+)
             # Method: Flip spins and then add 1/2 in the according term in the hamiltonian
             # Only do this, if I_i^z != I_i+1^z, otherwise the ladder operators give 0.
-            flipmask = np.unpackbits(
-                np.array(np.left_shift(3, -(i+1)), dtype=np.uint8))
-            flipped_state = np.packbits(np.bitwise_xor(state, flipmask))
+            flipmask = np.roll(unpackbits(np.array(3), chain_length), (i+1))
+            flipped_state = packbits(np.logical_xor(state, flipmask))
             H[state_index, flipped_state] = J/2
     # Outer magnetic field term: Sum(B_i I_i^z)
     # Method: Just add diagonal terms to the hamiltonian.
@@ -45,7 +87,6 @@ for state_index in range(dim):
 
 # Use eigh for the calculation, since H is hermitian -> I hope for better efficiency
 eigenvalues, eigenvectors = np.linalg.eigh(H)
-
 
 # TIME EVO DOESNT WORK YET
 
