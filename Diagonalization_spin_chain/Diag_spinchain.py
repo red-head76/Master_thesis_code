@@ -12,15 +12,9 @@ J = 2
 B = 0 * np.random.uniform(-1, 1, chain_length)
 
 
-# Setup
-# ________________________________________________________________________________
-# array of states in sigma_z basis
-# if chain_length % 8 != 0, there will be zero padding until the byte is full
-psi_z = np.arange(0, np.int(2**chain_length), dtype=np.uint8)
-
-
 # New definitions of packbits and unpackbits are required because np.unpackbits can only handle
 # uint8. This means it is restricted to a chain_length of 8.
+
 
 def unpackbits(x, num_bits=chain_length):
     """
@@ -60,6 +54,12 @@ def packbits(x, num_bits=chain_length):
     return np.inner(mask, x)
 
 
+# Setup
+# ________________________________________________________________________________
+# array of states in sigma_z basis
+# if chain_length % 8 != 0, there will be zero padding until the byte is full
+psi_z = np.arange(0, np.int(2**chain_length), dtype=np.uint8)
+sigma_z = unpackbits(psi_z) - 1/2
 H = np.zeros((dim, dim))
 
 
@@ -104,25 +104,27 @@ def time_evo_sigma_z(t, psi0):
         timesteps
 
     """
+    exp_sig_z = np.empty((len(t), chain_length))
     # for time step in t
-    for time__i, ts in enumerate(t):
-        exp_sig_z = np.empty((len(t), chain_length), dtype=np.complex64)
-        for i in range(chain_length):
-            psi_t = (np.exp(-1j * eigenvalues[i] * ts) *
-                     np.inner(np.outer(eigenvectors[i], eigenvectors[i]), psi0))
-            sigma_z = psi_t[-chain_length:] - 1/2
-            exp_sig_z[time__i] = (sigma_z *
-                                  np.inner(psi_t.conjugate(), psi_t))
-    return exp_sig_z
+    for time_i, ts in enumerate(t):
+        # |psi_t> = U+ e^(iDt) U * |psi0>, with U = eigenvectors, D = diag(eigenvalues)
+        psi_t = (eigenvectors.conjugate().T @ np.diag(np.exp(1j * eigenvalues * ts)) @
+                 eigenvectors @ psi0)
+        exp_sig_z[time_i] = (np.inner(sigma_z.T, (np.abs(psi_t)**2)))
+
+    return (exp_sig_z)
 
 
-psi0 = np.unpackbits(psi_z[0])
-t = np.linspace(0, 1e-3, 100)
+psi0 = np.zeros(dim)
+psi0[0] = 1
+t = np.linspace(0, 10, 100)
 evo = time_evo_sigma_z(t, psi0)
 
-fig, (ax1, ax2, ax3) = plt.subplots(3, 1, sharex=True)
-ax1.plot(t, np.abs(evo.T[0]))
-ax2.plot(t, np.abs(evo.T[1]))
-ax3.plot(t, np.abs(evo.T[2]))
-ax3.set_xlabel("Time t")
+fig, ax = plt.subplots(3, 1, sharex=True)
+plt.subplots_adjust(hspace=0.5)
+plt.title("Expectation value sigma_z for different chain positions")
+for i in range(3):
+    ax[i].plot(t, evo.T[0])
+    ax[i].set_title(f"Position {i+1}")
+ax[2].set_xlabel("Time t")
 plt.show()
