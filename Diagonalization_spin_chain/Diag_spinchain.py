@@ -109,16 +109,16 @@ def time_evo_sigma_z(t, psi0):
     exp_sig_z = np.empty((len(t), chain_length))
     # for time step in t
     for time_i, ts in enumerate(t):
-        # |psi_t> = U+ e^(iDt) U * |psi0>, with U = eigenvectors, D = diag(eigenvalues)
-        psi_t = (eigenvectors.conjugate().T @ np.diag(np.exp(1j * eigenvalues * ts)) @
-                 eigenvectors @ psi0)
+        # |psi_t> = U e^(iDt) U+ * |psi0>, with U = eigenvectors, D = diag(eigenvalues)
+        psi_t = (eigenvectors @ np.diag(np.exp(1j * eigenvalues * ts)) @
+                 eigenvectors.conjugate().T @ psi0)
         exp_sig_z[time_i] = (np.inner(sigma_z.T, (np.abs(psi_t)**2)))
 
     return (exp_sig_z)
 
 
 psi0 = np.zeros(dim)
-psi0[7] = 1
+psi0[1] = 1
 t = np.linspace(0, 10, 100)
 evo = time_evo_sigma_z(t, psi0)
 
