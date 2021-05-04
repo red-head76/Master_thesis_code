@@ -87,7 +87,10 @@ for state_index in range(dim):
 
 # Use eigh for the calculation, since H is hermitian -> I hope for better efficiency
 eigenvalues, eigenvectors = np.linalg.eigh(H)
-# TIME EVO DOESNT WORK YET
+# Todo : order of eigenvectors doesnt seem to be right. First and last vector (all up or all down)
+#        should be eigenvectors. Instead eigenvectors[0] = [0 0 0 0 0 0 1 0]
+#                                    and eigenvectors[7] = [0 0 0 0 0 0 0 1]
+# They seem to be ordered by eigenvalues
 
 
 def time_evo_sigma_z(t, psi0):
