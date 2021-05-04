@@ -9,7 +9,7 @@ dim = np.int(2**chain_length)
 # Coupling constant
 J = 2
 # Magnetic field
-B = 0 * np.random.uniform(-1, 1, chain_length)
+B = 0 * np.round(np.random.uniform(-1, 1, chain_length), 2)
 
 
 # New definitions of packbits and unpackbits are required because np.unpackbits can only handle
@@ -39,9 +39,10 @@ def unpackbits(x, num_bits=chain_length):
     return (x & mask).astype(bool).astype(int).reshape(xshape + [num_bits])
 
 
-def packbits(x, num_bits=chain_length):
+def packbits(x):
     """
     Similar to np.packbits, but can also handle longer uints than uint8
+    Example: packbits([1, 1, 0]) = 0 * 1 + 1 * 2 + 1 * 4 = 6
 
     Args:
         x (array [N, chain_length]): input array of unpacked bits
@@ -51,7 +52,7 @@ def packbits(x, num_bits=chain_length):
         packed_bits (array [N]): an array of integer
 
     """
-    mask = 2**np.arange(num_bits - 1, -1, -1)
+    mask = 2**np.arange(len(x) - 1, -1, -1)
     return np.inner(mask, x)
 
 
@@ -114,15 +115,20 @@ def time_evo_sigma_z(t, psi0):
 
 
 psi0 = np.zeros(dim)
-psi0[0] = 1
+psi0[7] = 1
 t = np.linspace(0, 10, 100)
 evo = time_evo_sigma_z(t, psi0)
 
-fig, ax = plt.subplots(chain_length, 1, sharex=True)
-plt.subplots_adjust(hspace=0.5)
-plt.title("Expectation value sigma_z for different chain positions")
-for i in range(chain_length):
-    ax[i].plot(t, evo.T[i])
-    ax[i].set_title(f"Position {i+1}")
-ax[chain_length-1].set_xlabel("Time t")
-plt.show()
+if False:
+    fig, ax = plt.subplots(chain_length, 1, figsize=(
+        10, 1 + chain_length), sharex=True)
+    if not (all(B) == 0):
+        plt.text(0, (chain_length) * 5/3 - 1.5, f"B = {B}")
+        plt.subplots_adjust(hspace=0.5)
+    for i in range(chain_length):
+        ax[i].axhline(0, color="black")
+        ax[i].plot(t, evo.T[i])
+        ax[i].set_ylim(-0.55, 0.55)
+        ax[chain_length-1].set_xlabel("Time t")
+        # plt.savefig("N5_P4_B.png")
+        plt.show()
