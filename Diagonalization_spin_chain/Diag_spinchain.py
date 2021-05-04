@@ -20,6 +20,8 @@ def unpackbits(x, num_bits=chain_length):
     """
     Similar to np.unpackbits, but can also handle longer uints than uint8
     From: https://stackoverflow.com/a/51509307
+    The arrays get zero padded on the right, which means x=3, num_bits=4 returns:
+    ( 1 1 0 0)
 
     Args:
         x (array [N]): input array with integers
@@ -33,8 +35,7 @@ def unpackbits(x, num_bits=chain_length):
         raise ValueError("numpy data type needs to be int-like")
     xshape = list(x.shape)
     x = x.reshape([-1, 1])
-    mask = 2**np.arange(num_bits - 1, -1, -1,
-                        dtype=x.dtype).reshape([1, num_bits])
+    mask = 2**np.arange(num_bits, dtype=x.dtype).reshape([1, num_bits])
     return (x & mask).astype(bool).astype(int).reshape(xshape + [num_bits])
 
 
@@ -58,7 +59,7 @@ def packbits(x, num_bits=chain_length):
 # ________________________________________________________________________________
 # array of states in sigma_z basis
 # if chain_length % 8 != 0, there will be zero padding until the byte is full
-psi_z = np.arange(0, np.int(2**chain_length), dtype=np.uint8)
+psi_z = np.arange(0, np.int(2**chain_length))
 sigma_z = unpackbits(psi_z) - 1/2
 H = np.zeros((dim, dim))
 
@@ -66,9 +67,7 @@ H = np.zeros((dim, dim))
 # For every state
 for state_index in range(dim):
     state = unpackbits(psi_z[state_index])
-    # Going backwards through the array, because there is zero-padding to the left, which means
-    # 15 = 0 0 0 0 1 1 1 1
-    for i in range(-1, -(chain_length), -1):
+    for i in range(1, chain_length):
         # Ising term in the hamiltonian: J * Sum(I_i^z * I_i+1^z)
         # Method: compare one element with the one to the left indexwise
         if state[i] == state[i-1]:
@@ -78,7 +77,7 @@ for state_index in range(dim):
             # Ladder operator terms: J/2 * Sum(I_i^+ I_i+1^- + I_i^- I_i+1^+)
             # Method: Flip spins and then add 1/2 in the according term in the hamiltonian
             # Only do this, if I_i^z != I_i+1^z, otherwise the ladder operators give 0.
-            flipmask = np.roll(unpackbits(np.array(3), chain_length), (i+1))
+            flipmask = np.roll(unpackbits(np.array(3)), i-1)
             flipped_state = packbits(np.logical_xor(state, flipmask))
             H[state_index, flipped_state] = J/2
     # Outer magnetic field term: Sum(B_i I_i^z)
