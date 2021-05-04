@@ -86,7 +86,6 @@ for state_index in range(dim):
 
 # Use eigh for the calculation, since H is hermitian -> I hope for better efficiency
 eigenvalues, eigenvectors = np.linalg.eigh(H)
-
 # TIME EVO DOESNT WORK YET
 
 
@@ -119,11 +118,11 @@ psi0[0] = 1
 t = np.linspace(0, 10, 100)
 evo = time_evo_sigma_z(t, psi0)
 
-fig, ax = plt.subplots(3, 1, sharex=True)
+fig, ax = plt.subplots(chain_length, 1, sharex=True)
 plt.subplots_adjust(hspace=0.5)
 plt.title("Expectation value sigma_z for different chain positions")
-for i in range(3):
-    ax[i].plot(t, evo.T[0])
+for i in range(chain_length):
+    ax[i].plot(t, evo.T[i])
     ax[i].set_title(f"Position {i+1}")
-ax[2].set_xlabel("Time t")
+ax[chain_length-1].set_xlabel("Time t")
 plt.show()
