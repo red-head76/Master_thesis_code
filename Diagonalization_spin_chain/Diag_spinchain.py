@@ -134,4 +134,4 @@ if False:
         ax[i].set_ylim(-0.55, 0.55)
         ax[chain_length-1].set_xlabel("Time t")
         # plt.savefig("N5_P4_B.png")
-        plt.show()
+    plt.show()
