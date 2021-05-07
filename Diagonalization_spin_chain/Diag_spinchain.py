@@ -13,15 +13,8 @@ J = 2
 # Magnetic field
 B = 0 * np.round(np.random.uniform(-1, 1, chain_length), 2)
 
-# Setup
+# Helper functions
 # ________________________________________________________________________________
-# dimension of hilbert space
-dim = np.int(2**chain_length)
-psi_z = np.arange(0, np.int(2**chain_length))
-# array of states in sigma_z basis
-psi_z = np.arange(0, np.int(2**chain_length))
-# sigma_z operator
-sigma_z = unpackbits(psi_z) - 1/2
 
 
 def pc(matrix, precision=0):
@@ -92,6 +85,17 @@ def packbits(x):
     """
     mask = 2**np.arange(len(x) - 1, -1, -1)
     return np.inner(mask, x)
+
+
+# Setup
+# ________________________________________________________________________________
+# dimension of hilbert space
+dim = np.int(2**chain_length)
+psi_z = np.arange(0, np.int(2**chain_length))
+# array of states in sigma_z basis
+psi_z = np.arange(0, np.int(2**chain_length))
+# sigma_z operator
+sigma_z = unpackbits(psi_z) - 1/2
 
 
 def eig_values_vectors(J=2, B0=1):
