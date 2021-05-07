@@ -134,7 +134,7 @@ def eig_values_vectors(J=2, B0=1):
 
         # Outer magnetic field term: Sum(B_i S_i^z)
         H[state_index,
-            state_index] += np.sum(B * (state - 1/2))
+            state_index] += np.sum(B0 * B * (state - 1/2))
 
     # Use eigh for the calculation, since H is hermitian -> I hope for better efficiency
     return np.linalg.eigh(H)
@@ -199,7 +199,7 @@ def eig_values_vectors_spin_const(J=2, B0=1):
                     H_sub[state_index, sub_index_flipped_state] = J/2
             # Outer magnetic field term: Sum(B_i S_i^z)
             H_sub[state_index,
-                  state_index] += np.sum(B * (state - 1/2))
+                  state_index] += np.sum(B0 * B * (state - 1/2))
 
         # Diagonalization of subspace
         eigenvalues_sub, eigenvectors_sub = np.linalg.eigh(H_sub)
