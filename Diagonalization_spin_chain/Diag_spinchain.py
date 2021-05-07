@@ -230,17 +230,27 @@ def time_evo_sigma_z(t, psi0, J=2, B0=1, spin_constant=True):
         timesteps
 
     """
+
     exp_sig_z = np.empty((len(t), chain_length))
     if spin_constant:
         eigenvalues, eigenvectors = eig_values_vectors_spin_const(J, B0)
     else:
         eigenvalues, eigenvectors = eig_values_vectors(J, B0)
+
+    # non vectorized version. I just keep it for the sake of clarity
     # for time step in t
-    for time_i, ts in enumerate(t):
-        # |psi_t> = U e^(iDt) U+ * |psi0>, with U = eigenvectors, D = diag(eigenvalues)
-        psi_t = (eigenvectors @ np.diag(np.exp(1j * eigenvalues * ts)) @
-                 eigenvectors.conjugate().T @ psi0)
-        exp_sig_z[time_i] = (np.inner(sigma_z.T, (np.abs(psi_t)**2)))
+    # for time_i, ts in enumerate(t):
+    #     # |psi_t> = U e^(iDt) U+ * |psi0>, with U = eigenvectors, D = diag(eigenvalues)
+    #     psi_t = (eigenvectors @ np.diag(np.exp(1j * eigenvalues * ts)) @
+    #              eigenvectors.conjugate().T @ psi0)
+    #     exp_sig_z[time_i] = (np.inner(sigma_z.T, (np.abs(psi_t)**2)))
+
+    # vectorized notation
+    # Compute array with time vector multiplied with diagonal matrix with eigenvalues as entries
+    exp_part = np.apply_along_axis(
+        np.diag, 1, np.exp(1j * np.outer(t, eigenvalues)))
+    psi_t = eigenvectors @ exp_part @ eigenvectors.conjugate().T @ psi0
+    exp_sig_z = (np.abs(psi_t)**2 @ sigma_z)
 
     return (exp_sig_z)
 
