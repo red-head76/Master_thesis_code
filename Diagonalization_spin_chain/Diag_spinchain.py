@@ -107,7 +107,6 @@ def eig_values_vectors(J=2, B0=1):
     (H = Sum_i J * S_i * S_i+1 + B_i S_i^z).
 
     Args:
-        chain_length (int): the chain length
         J (float, default: 2): the coupling constant
         B0 (float, default: 1): the B-field amplitude. Currently random initialized uniformly
                                 between (-1, 1).
@@ -151,7 +150,6 @@ def eig_values_vectors_spin_const(J=2, B0=1):
     into subspaces according to the total number of spin-up states.
 
     Args:
-        chain_length (int): the chain length
         J (float, default: 2): the coupling constant
         B0 (float, default: 1): the B-field amplitude. Currently random initialized uniformly
                                 between (-1, 1).
