@@ -2,16 +2,21 @@ import pdb
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.special import binom
+# Animation stuff
+from matplotlib import animation
+from IPython.display import HTML
 
 # Parameters
 # ________________________________________________________________________________
-chain_length = 3
+chain_length = 8
 # dimension of hilbert space
 dim = np.int(2**chain_length)
 # Coupling constant
 J = 2
 # Magnetic field
-B = 0 * np.round(np.random.uniform(-1, 1, chain_length), 2)
+B0 = 1
+B = np.round(np.random.uniform(-1, 1, chain_length), 2)
+plot = False
 
 # Helper functions
 # ________________________________________________________________________________
@@ -89,8 +94,6 @@ def packbits(x):
 
 # Setup
 # ________________________________________________________________________________
-# dimension of hilbert space
-dim = np.int(2**chain_length)
 psi_z = np.arange(0, np.int(2**chain_length))
 # array of states in sigma_z basis
 psi_z = np.arange(0, np.int(2**chain_length))
@@ -261,7 +264,7 @@ psi0[1] = 1
 t = np.linspace(0, 10, 100)
 evo = time_evo_sigma_z(t, psi0)
 
-if False:
+if plot:
     fig, ax = plt.subplots(chain_length, 1, figsize=(
         10, 1 + chain_length), sharex=True)
     if not (all(B) == 0):
@@ -274,3 +277,21 @@ if False:
         ax[chain_length-1].set_xlabel("Time t")
         # plt.savefig("N5_P4_B.png")
     plt.show()
+
+
+def animate_spins(evo):
+    fig, ax = plt.subplots(figsize=(10, 8))
+    bars = plt.bar(np.arange(chain_length), evo[0])
+    frames = evo.shape[0]
+
+    def run(i):
+        for j, bar in enumerate(bars):
+            bar.set_height(evo[i, j])
+        return bars
+
+    anim = animation.FuncAnimation(fig, run, frames=frames, blit=True)
+
+    plt.show()
+
+
+animate_spins(evo)
