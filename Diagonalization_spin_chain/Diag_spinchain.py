@@ -320,6 +320,23 @@ def rice_rule(n):
     return np.int(np.ceil(2 * (n)**(1/3)))
 
 
+def sturge_rule(n):
+    """
+    Rule for calculating bins in a histogram
+    (https://en.wikipedia.org/wiki/Histogram#Sturges'_formula).
+    In principle the choice can be arbitrary, but there should be a predetermined choice without
+    looking at the data. This is give lower number of bins than rice rule
+
+    Args:
+        n (int): number of data points
+
+    Returns:
+        nbins (int): number of bins to use according to rice rule
+
+    """
+    return np.int(np.ceil(np.log2(n)) + 1)
+
+
 psi0 = np.zeros(dim)
 psi0[1] = 1
 t = np.linspace(0, 10, 100)
