@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 from scipy.special import binom
 # Animation stuff
 from matplotlib import animation
-from IPython.display import HTML
 
 # Parameters
 # ________________________________________________________________________________
@@ -15,12 +14,12 @@ dim = np.int(2**chain_length)
 J = 2
 # Magnetic field
 B0 = 1
-B = np.round(np.random.uniform(-1, 1, chain_length), 2)
-
+# TODO: Immer neue Realisierungen von B
 # Plotting
 plot = False
 animate = False
 plot_r_values = True
+
 # Helper functions
 # ________________________________________________________________________________
 
@@ -120,6 +119,8 @@ def eig_values_vectors(J=2, B0=1):
     """
 
     H = np.zeros((dim, dim))
+    # Create a new random B-field for every instance
+    B = np.round(np.random.uniform(-1, 1, chain_length), 2)
     # For every state
     for state_index in range(dim):
         state = unpackbits(psi_z[state_index])
@@ -176,6 +177,9 @@ def eig_values_vectors_spin_const(J=2, B0=1):
             if n_up == n:
                 subspaces[n][sub_counter] = psi
                 sub_counter += 1
+
+    # Create a new random B-field for every instance
+    B = np.round(np.random.uniform(-1, 1, chain_length), 2)
 
     eigenvalues = np.zeros(dim)
     eigenvectors = np.zeros((dim, dim))
