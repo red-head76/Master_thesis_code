@@ -264,45 +264,6 @@ def time_evo_sigma_z(t, psi0, J=2, B0=1, spin_constant=True):
     return (exp_sig_z)
 
 
-def r_values(J=2, B0=1, sampling=1, s_const=True):
-    """
-    Calculates the r value, the fraction of the difference of eigenvalues of the given Hamiltonian:
-    r = min (ΔE_n, ΔE_n+1) / max (ΔE_n, ΔE_n+1)
-
-    Args:
-        J (float, default: 2): the coupling constant
-        B0 (float, default: 1): the B-field amplitude. Currently random initialized uniformly
-                                between (-1, 1).
-        sampling (int, default: 1): Number of times data points should be generated for each number
-                                    of samplings there are (chain_length x chain_length - 2) data
-                                    points
-        s_const (bool, default: True): If true, the conservation of total spin is used to construct
-                                       respective subspaces. If False, full Hamiltonian is used.
-
-    Returns:
-        r_values (array (float) [(chain_length x chain_length - 2) * sampling])
-
-    """
-    sampling_size = np.int(2**chain_length - 2)
-    r_values = np.empty(np.int(sampling_size * sampling))
-    for i in range(sampling):
-        # Get the energy eigenvalues
-        if s_const:
-            E = eig_values_vectors_spin_const(J, B0)[0]
-        else:
-            E = eig_values_vectors(J, B0)[0]
-
-        E = np.sort(E)
-        Delta_E = np.diff(E)
-        Delta_E_shifted = np.roll(Delta_E, 1)
-        Delta_min = np.min((Delta_E, Delta_E_shifted), axis=0)[1:]
-        Delta_max = np.max((Delta_E, Delta_E_shifted), axis=0)[1:]
-        r_values[sampling_size * i:sampling_size *
-                 (i+1)] = Delta_min / Delta_max
-
-    return r_values
-
-
 def rice_rule(n):
     """
     Rule for calculating bins in a histogram (https://en.wikipedia.org/wiki/Histogram#Rice_Rule)
@@ -337,16 +298,58 @@ def sturge_rule(n):
     return np.int(np.ceil(np.log2(n)) + 1)
 
 
+def r_values(J=2, B0=1, sampling=1, s_const=True, binning_func=sturge_rule):
+    """
+    Calculates the r value, the fraction of the difference of eigenvalues of the given Hamiltonian:
+    r = min (ΔE_n, ΔE_n+1) / max (ΔE_n, ΔE_n+1)
+
+    Args:
+        J (float, default: 2): the coupling constant
+        B0 (float, default: 1): the B-field amplitude. Currently random initialized uniformly
+                                between (-1, 1).
+        sampling (int, default: 1): Number of times data points should be generated for each number
+                                    of samplings there are (chain_length x chain_length - 2) data
+                                    points
+        s_const (bool, default: True): If true, the conservation of total spin is used to construct
+                                       respective subspaces. If False, full Hamiltonian is used.
+
+    Returns:
+        r_values (array (float) [(chain_length x chain_length - 2) * sampling])
+
+    """
+    r_values = np.empty(np.int(sampling))
+    for i in range(sampling):
+        # Get the energy eigenvalues
+        if s_const:
+            E = eig_values_vectors_spin_const(J, B0)[0]
+        else:
+            E = eig_values_vectors(J, B0)[0]
+
+        E = np.sort(E)
+        Delta_E = np.diff(E)
+        Delta_E_shifted = np.roll(Delta_E, 1)
+        Delta_min = np.min((Delta_E, Delta_E_shifted), axis=0)[1:]
+        Delta_max = np.max((Delta_E, Delta_E_shifted), axis=0)[1:]
+        # Calculate the distribution approximately with a histogram
+        hist, bin_edges = np.histogram(Delta_min / Delta_max, bins=binning_func(Delta_min.size),
+                                       density=True, range=(0, 1))
+        bin_centers = (bin_edges + np.roll(bin_edges, 1))[1:] / 2
+        # Calculate the expectation value
+        r_values[i] = np.mean(hist * bin_centers)
+
+    return r_values
+
+
 psi0 = np.zeros(dim)
 psi0[1] = 1
 t = np.linspace(0, 10, 100)
-evo = time_evo_sigma_z(t, psi0)
+evo = time_evo_sigma_z(t, psi0, B0=0, spin_constant=False)
 
 if plot:
     fig, ax = plt.subplots(chain_length, 1, figsize=(
         10, 1 + chain_length), sharex=True)
-    if not (all(B) == 0):
-        plt.text(0, (chain_length) * 5/3 - 1.5, f"B = {B}")
+    # if not (all(B) == 0):
+    #     plt.text(0, (chain_length) * 5/3 - 1.5, f"B = {B}")
     plt.subplots_adjust(hspace=0.5)
     for i in range(chain_length):
         ax[i].axhline(0, color="black")
@@ -376,13 +379,13 @@ if animate:
     animate_spins(evo)
 
 if plot_r_values:
-    r = r_values(B0=2, sampling=10)
-    plt.hist(r, bins=rice_rule(r.size), density=True)
-    x = np.linspace(0, 1.1, 100)
-    # Normalization N (since it is only distributed from 0 to 1)
-    Norm = np.e / (np.e - 1)
-    plt.plot(x, Norm * np.exp(-x), label=r"$N e^{-r}$")
-    plt.plot([], [], ls="", label=f"Number of datapoints= {r.size}")
+    r = r_values(B0=1, sampling=100)
+    plt.hist(r, bins=sturge_rule(r.size))
+    # x = np.linspace(0, 1.1, 100)
+    # # Normalization N (since it is only distributed from 0 to 1)
+    # Norm = np.e / (np.e - 1)
+    # plt.plot(x, Norm * np.exp(-x), label=r"$N e^{-r}$")
+    plt.plot([], [], ls="", label=f"Average r = {np.mean(r):.2f}")
     plt.xlabel("r")
     plt.ylabel(r"Density $\rho (r)$")
     plt.legend()
