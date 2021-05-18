@@ -14,7 +14,6 @@ dim = np.int(2**chain_length)
 J = 2
 # Magnetic field
 B0 = 1
-# TODO: Immer neue Realisierungen von B
 # Plotting
 plot = False
 animate = False
@@ -247,8 +246,8 @@ def time_evo_sigma_z(t, psi0, J=2, B0=1, spin_constant=True):
     else:
         eigenvalues, eigenvectors = eig_values_vectors(J, B0)
 
-    # non vectorized version. I just keep it for the sake of clarity
-    # for time step in t
+    # # non vectorized version. I just keep it for the sake of clarity
+    # # for time step in t
     # for time_i, ts in enumerate(t):
     #     # |psi_t> = U e^(iDt) U+ * |psi0>, with U = eigenvectors, D = diag(eigenvalues)
     #     psi_t = (eigenvectors @ np.diag(np.exp(1j * eigenvalues * ts)) @
