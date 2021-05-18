@@ -69,6 +69,7 @@ def unpackbits(x, num_bits=chain_length):
         unpacked_bits (array [N, chain_length]): array of unpacked bits
 
     """
+    x = np.array(x)
     if np.issubdtype(x.dtype, np.floating):
         raise ValueError("numpy data type needs to be int-like")
     xshape = list(x.shape)
@@ -80,7 +81,7 @@ def unpackbits(x, num_bits=chain_length):
 def packbits(x):
     """
     Similar to np.packbits, but can also handle longer uints than uint8
-    Example: packbits([1, 1, 0]) = 0 * 1 + 1 * 2 + 1 * 4 = 6
+    Example: packbits([1, 1, 0, 0]) = 1 * 1 + 1 * 2 + 0 * 4 + 0 * 8 = 3
 
     Args:
         x (array [N, chain_length]): input array of unpacked bits
@@ -90,7 +91,7 @@ def packbits(x):
         packed_bits (array [N]): an array of integer
 
     """
-    mask = 2**np.arange(len(x) - 1, -1, -1)
+    mask = 2**np.arange(x.size)
     return np.inner(mask, x)
 
 
