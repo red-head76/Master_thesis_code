@@ -96,14 +96,13 @@ def packbits(x):
 
 # Setup
 # ________________________________________________________________________________
-psi_z = np.arange(0, np.int(2**chain_length))
 # array of states in sigma_z basis
 psi_z = np.arange(0, np.int(2**chain_length))
 # sigma_z operator
 sigma_z = unpackbits(psi_z) - 1/2
 
 
-def eig_values_vectors(J=2, B0=1):
+def eig_values_vectors(J=2, B0=1, periodic_boundaries=True):
     """
     Computes the eigenvalues and eigenvectors for the Heisenberg Hamiltonian
     (H = Sum_i J * S_i * S_i+1 + B_i S_i^z).
@@ -112,6 +111,8 @@ def eig_values_vectors(J=2, B0=1):
         J (float, default: 2): the coupling constant
         B0 (float, default: 1): the B-field amplitude. Currently random initialized uniformly
                                 between (-1, 1).
+        periodic_boundaries (bool, default:True): determines whether or not periodic boundary
+                                                  conditions are used in the chain.
 
     Returns:
         eigenvalues (array [chain_length])
@@ -124,8 +125,12 @@ def eig_values_vectors(J=2, B0=1):
     # For every state
     for state_index in range(dim):
         state = unpackbits(psi_z[state_index])
+        if periodic_boundaries:
+            start = 0
+        else:
+            start = 1
         # Check interaction with every other state
-        for i in range(1, chain_length):
+        for i in range(start, chain_length):
             # Ising term in the hamiltonian: J * Sum(S_i^z * S_i+1^z)
             if state[i] == state[i-1]:
                 H[state_index, state_index] += J/4
@@ -146,7 +151,7 @@ def eig_values_vectors(J=2, B0=1):
     return np.linalg.eigh(H)
 
 
-def eig_values_vectors_spin_const(J=2, B0=1):
+def eig_values_vectors_spin_const(J=2, B0=1, periodic_boundaries=True):
     """
     Computes the eigenvalues and eigenvectors for the Heisenberg Hamiltonian
     (H = Sum_i J * S_i * S_i+1 + B_i S_i^z).
@@ -157,6 +162,9 @@ def eig_values_vectors_spin_const(J=2, B0=1):
         J (float, default: 2): the coupling constant
         B0 (float, default: 1): the B-field amplitude. Currently random initialized uniformly
                                 between (-1, 1).
+        periodic_boundaries (bool, default:True): determines whether or not periodic boundary
+                                                  conditions are used in the chain.
+
 
     Returns:
         eigenvalues (array [chain_length])
@@ -191,7 +199,12 @@ def eig_values_vectors_spin_const(J=2, B0=1):
         # For every state
         for state_index in range(len(psi_sub)):
             state = unpackbits(psi_sub[state_index])
-            for i in range(1, chain_length):
+            if periodic_boundaries:
+                start = 0
+            else:
+                start = 1
+
+            for i in range(start, chain_length):
                 # Ising term in the hamiltonian: J * Sum(S_i^z * S_i+1^z)
                 if state[i] == state[i-1]:
                     H_sub[state_index, state_index] += J/4
