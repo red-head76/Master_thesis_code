@@ -84,7 +84,7 @@ def eig_values_vectors(chain_length, J, B0, A, periodic_boundaries, central_spin
     return np.linalg.eigh(H)
 
 
-def eig_values_vectors_spin_const(chain_length, J, B0, periodic_boundaries, central_spin):
+def eig_values_vectors_spin_const(chain_length, J, B0, periodic_boundaries):
     """
     Computes the the Heisenberg Hamiltonian without coupling
     to a central spin: H = Sum_i (J * S_i * S_i+1 + B_i S_i^z).
@@ -96,7 +96,6 @@ def eig_values_vectors_spin_const(chain_length, J, B0, periodic_boundaries, cent
                                 between (-1, 1).
         periodic_boundaries (bool): determines whether or not periodic boundary
                                                   conditions are used in the chain.
-        central_spin (bool): determines whethere or not a central spin is present
 
     Returns:
         eigenvalues (float array [total_spins]): the eigenvalues of the Hamiltonian

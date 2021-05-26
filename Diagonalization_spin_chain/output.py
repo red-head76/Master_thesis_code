@@ -140,7 +140,7 @@ def sturge_rule(n):
 
 
 def generate_r_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
-                      spin_const, sampling, binning_func=sturge_rule):
+                      spin_constant, binning_func=sturge_rule):
     """
     Calculates the r value, the fraction of the difference of eigenvalues of the given Hamiltonian:
     r = min (ΔE_n, ΔE_n+1) / max (ΔE_n, ΔE_n+1)
@@ -153,71 +153,115 @@ def generate_r_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
         A (float, default: 1): the coupling between the central spin and the spins in the chain
         periodic_boundaries (bool, default:True): determines whether or not periodic boundary
                                                   conditions are used in the chain.
-        sampling (int, default: 1): Number of times data points should be generated for each number
-                                    of samplings there are (chain_length x chain_length - 2) data
+        samples (int, default: 1): Number of times data points should be generated for each number
+                                    of samples there are (chain_length x chain_length - 2) data
                                     points
         s_const (bool, default: True): If true, the conservation of total spin is used to construct
                                        respective subspaces. If False, full Hamiltonian is used.
         central_spin (bool, default=True): determines whether or not a central spin is present
 
     Returns:
-        r_values (array (float) [(chain_length x chain_length - 2) * sampling])
+        r_values (array (float) [2**total_spins - 2])
 
     """
-    r_values = np.empty(np.int(sampling))
-    for i in range(sampling):
-        # Get the energy eigenvalues
-        if spin_constant:
-            if central_spin:
-                raise AttributeError(
-                    "With a central spin, total spin is not conserved in the chain. Therefore central_spin and spin_constant cannot be used at the same time.")
-        E = diagonalization.eig_values_vectors_spin_const(
-            chain_length, J, B0, periodic_boundaries, central_spin)[0]
+    # Get the energy eigenvalues
+    if spin_constant:
+        if central_spin:
+            raise AttributeError(
+                "With a central spin, total spin is not conserved in the chain. Therefore central_spin and spin_constant cannot be used at the same time.")
+        else:
+            E = eig_values_vectors_spin_const(
+                chain_length, J, B0, periodic_boundaries)[0]
     else:
-        E = diagonalization.eig_values_vectors(
+        E = eig_values_vectors(
             chain_length, J, B0, A, periodic_boundaries, central_spin)[0]
 
-        E = np.sort(E)
-        Delta_E = np.diff(E)
-        Delta_E_shifted = np.roll(Delta_E, 1)
-        Delta_min = np.min((Delta_E, Delta_E_shifted), axis=0)[1:]
-        Delta_max = np.max((Delta_E, Delta_E_shifted), axis=0)[1:]
-        # Calculate the distribution approximately with a histogram
-        hist, bin_edges = np.histogram(Delta_min / Delta_max, bins=binning_func(Delta_min.size),
-                                       density=True, range=(0, 1))
-        bin_centers = (bin_edges + np.roll(bin_edges, 1))[1:] / 2
-        # Calculate the expectation value
-        r_values[i] = np.mean(hist * bin_centers)
-
-    return r_values
+    E = np.sort(E)
+    Delta_E = np.diff(E)
+    Delta_E_shifted = np.roll(Delta_E, 1)
+    Delta_min = np.min((Delta_E, Delta_E_shifted), axis=0)[1:]
+    Delta_max = np.max((Delta_E, Delta_E_shifted), axis=0)[1:]
+    # Calculate the distribution approximately with a histogram
+    # hist, bin_edges = np.histogram(Delta_min / Delta_max, bins=binning_func(Delta_min.size),
+    #                                density=True, range=(0, 1))
+    # bin_centers = (bin_edges + np.roll(bin_edges, 1))[1:] / 2
+    # # Calculate the expectation value
+    # r_values[i] = np.mean(hist * bin_centers)
+    return Delta_min / Delta_max
 
 
 def plot_r_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
-                  spin_constant, sampling):
+                  spin_constant, samples):
     """
     Plots the histogram of r_values created by the given parameters.
 
     Args:
         chain_length (int): the length of the spin chain
-        J (float, default: 2): the coupling constant
-        B0 (float, default: 1): the B-field amplitude. Currently random initialized uniformly
+        J (float): the coupling constant
+        B0 (float): the B-field amplitude. Currently random initialized uniformly
                                 between (-1, 1).
-        A (float, default: 1): the coupling between the central spin and the spins in the chain
-        periodic_boundaries (bool, default:True): determines whether or not periodic boundary
+        A (float): the coupling between the central spin and the spins in the chain
+        periodic_boundaries (bool): determines whether or not periodic boundary
                                                   conditions are used in the chain.
         central_spin (bool): determines whether or not a central spin is present
         spin_constant (bool): If true, the conservation of total spin is used to construct
                            respective subspaces. If False, full Hamiltonian is used.
-        sampling (int): Number of times data points should be generated for each number
-                                    of samplings there are (chain_length x chain_length - 2) data
+        samples (int): Number of times data points should be generated for each number
+                                    of samples there are (chain_length x chain_length - 2) data
                                     points
     """
 
-    r = generate_r_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
-                          spin_constant, sampling)
-    plt.hist(r, bins=sturge_rule(r.size), density=True)
-    plt.plot([], [], ls="", label=f"Average r = {np.mean(r):.2f}")
+    total_spins = chain_length + central_spin
+    rs = np.zeros(np.int(2**total_spins - 2))
+    for _ in range(samples):
+        rs += generate_r_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
+                                spin_constant, samples)
+    # Average over samples
+    rs_mean = rs / samples
+    plt.hist(rs_mean, bins=sturge_rule(rs_mean.size), density=True)
+    # Average over states
+    plt.plot([], [], ls="", label=f"Average r = {np.mean(rs_mean):.2f}")
     plt.xlabel("r")
     plt.ylabel(r"Density $\rho (r)$")
+    plt.title(f"R values averaged over {samples} samples")
+    plt.legend()
+    plt.show()
+
+
+def plot_r_fig3(chain_length, J, B0, periodic_boundaries, samples):
+    """
+    Plots the r values as done in Figure 3 in https://doi.org/10.1103/PhysRevB.82.174411
+
+    Args:
+        chain_length (int or array (int)): the length of the spin chain
+        J (float): the coupling constant
+        B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
+                                between (-1, 1).
+        periodic_boundaries (bool): determines whether or not periodic boundary
+                                                  conditions are used in the chain.
+        samples (int or array (int)): Number of times data points should be generated
+            for each number of samples there are (chain_length x chain_length - 2) data points
+
+    Returns:
+        mean_r_values (array (float) [chain_length.size, B0.size]): The results of the r_value for
+            the different realizations.
+    """
+
+    mean_r_values = np.empty((np.size(chain_length), np.size(B0)))
+    if np.size(samples) == 1:
+        samples = np.ones(np.size(chain_length), dtype=np.int) * samples
+    for i, N in enumerate(chain_length):
+        for j, B in enumerate(B0):
+            r_values = np.zeros(np.int(2**chain_length - 2))
+            for sample in samples:
+                r_values += generate_r_values(N, J, B,
+                                              0, periodic_boundaries, False, True)
+            # Averaging over samples and states at the same time
+            mean_r_values[i, j] = np.mean(r_values)
+
+        plt.plot(B0, mean_r_values[i], marker="o",
+                 linestyle="--", label=f"N={N}")
+    plt.xlabel("Magnetic field amplitude B0")
+    plt.ylabel("r-value")
     plt.legend()
     plt.show()
