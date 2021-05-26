@@ -1,9 +1,11 @@
 import numpy as np
 import pdb
+import output
 from os.path import isfile
 from configparser import ConfigParser
 from create_config import create_config
-from output import plot_time_evo, animate_time_evo, plot_r_values
+
+
 def convert_list(string):
     # Converts a string to a list of floats
     return np.array([i.strip() for i in string.split(',')])
@@ -36,7 +38,7 @@ A = float(Constants["A"])
 Output = config_object["Output"]
 outputtype = Output["outputtype"]
 save = Output["filename"]
-sampling = int(Output["sampling"])
+samples = config_object.getlist("Output", "samples").astype(np.int)
 
 # Other setup
 Other = config_object["Other"]
@@ -47,13 +49,16 @@ psi0[int(Other["idx_psi0"])] = 1
 t = np.linspace(0, float(Other["timespan"]), int(Other["timesteps"]))
 
 if outputtype == "plot":
-    plot_time_evo(t, psi0, chain_length, J, B0, A, spin_constant, periodic_boundaries,
-                  central_spin, save)
+    output.plot_time_evo(t, psi0, chain_length, J, B0, A, spin_constant, periodic_boundaries,
+                         central_spin, save)
 
 if outputtype == "animate":
-    animate_time_evo(t, psi0, chain_length, J, B0, A, spin_constant, periodic_boundaries,
-                     central_spin, save)
+    output.animate_time_evo(t, psi0, chain_length, J, B0, A, spin_constant, periodic_boundaries,
+                            central_spin, save)
 
 if outputtype == "plot_r_values":
-    plot_r_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
-                  spin_constant, sampling)
+    output.plot_r_values(chain_length.item(), J, B0.item(), A, periodic_boundaries, central_spin,
+                         spin_constant, samples.item())
+
+if outputtype == "plot_r_fig3":
+    output.plot_r_fig3(chain_length, J, B0, periodic_boundaries, samples)
