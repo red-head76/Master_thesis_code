@@ -8,7 +8,7 @@ def create_config():
     """
 
     config_object = ConfigParser(allow_no_value=True)
-    intro_string = """# All parameters are explained in the creation file create_config.py. \n# A False corresponds to an empty string, True is any string."""
+    intro_string = """# All parameters are explained in the creation file create_config.py."""
     config_object.set('DEFAULT', intro_string, None)
 
     config_object["System"] = {
@@ -32,12 +32,13 @@ def create_config():
     }
 
     config_object["Output"] = {
-        # Available options: plot, animate, plot_r_values
+        # Available options: plot, animate, plot_r_values, plot_r_fig3
         "outputtype": "plot",
         # If empty, then the output is not saved, otherwise it is stored to ./Plots/filename
         "filename": "",
-        # In case of calculating the r_values, the amount of created samplings
-        "sampling": "100"
+        # In case of calculating the r_values, the amount of created samples
+        # In case of multiple instances, a list is also possible.
+        "samples": "100"
     }
 
     config_object["Other"] = {

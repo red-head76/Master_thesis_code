@@ -4,28 +4,32 @@ from os.path import isfile
 from configparser import ConfigParser
 from create_config import create_config
 from output import plot_time_evo, animate_time_evo, plot_r_values
+def convert_list(string):
+    # Converts a string to a list of floats
+    return np.array([i.strip() for i in string.split(',')])
+
 
 # if there is no config file, create one with default values
 if not isfile("config.ini"):
     create_config()
 
 # Read config.ini file with a config_object
-config_object = ConfigParser()
+config_object = ConfigParser(converters={"list": convert_list})
 config_object.read("config.ini")
 
 # System setup
 System = config_object["System"]
-central_spin = bool(System["central_spin"])
-chain_length = int(System["chain_length"])
+central_spin = config_object.getboolean("System", "central_spin")
+chain_length = config_object.getlist("System", "chain_length").astype(np.int)
 total_spins = central_spin + chain_length
-dim = int(2**total_spins)
-periodic_boundaries = bool(System["periodic_boundaries"])
-spin_constant = bool(System["spin_constant"])
-
+dim = np.array(2**total_spins, dtype=np.int)
+periodic_boundaries = config_object.getboolean("System", "periodic_boundaries")
+spin_constant = config_object.getboolean("System", "spin_constant")
 # Coupling Constants
 Constants = config_object["Constants"]
 J = float(Constants["J"])
-B0 = float(Constants["B0"])
+B0 = config_object.getlist("Constants", "B0").astype(np.float)
+# B0 = np.arange(0.5, 13)
 A = float(Constants["A"])
 
 # Output option
