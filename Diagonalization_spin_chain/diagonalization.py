@@ -84,7 +84,8 @@ def eig_values_vectors(chain_length, J, B0, A, periodic_boundaries, central_spin
     return np.linalg.eigh(H)
 
 
-def eig_values_vectors_spin_const(chain_length, J, B0, periodic_boundaries):
+def eig_values_vectors_spin_const(chain_length, J, B0, A, periodic_boundaries, central_spin,
+                                  only_biggest_subspace):
     """
     Computes the the Heisenberg Hamiltonian without coupling
     to a central spin: H = Sum_i (J * S_i * S_i+1 + B_i S_i^z).
@@ -94,45 +95,56 @@ def eig_values_vectors_spin_const(chain_length, J, B0, periodic_boundaries):
         J (float): the coupling constant
         B0 (float): the B-field amplitude. Currently random initialized uniformly
                                 between (-1, 1).
+        A (float): the coupling between the spins in the chain and the central spin
         periodic_boundaries (bool): determines whether or not periodic boundary
                                                   conditions are used in the chain.
+        central_spin (bool): determines whethere or not a central spin is present
 
     Returns:
         eigenvalues (float array [total_spins]): the eigenvalues of the Hamiltonian
         eigenvectors (float array [total_spins, total_spins]): the eigenvectors
     """
 
-    dim = np.int(2**chain_length)
+    total_spins = chain_length + central_spin
+    dim = np.int(2**total_spins)
     psi_z = np.arange(0, dim)
-    # Create subspaces
-    subspaces = [0] * (chain_length + 1)
-    for i in range(len(subspaces)):
-        subspaces[i] = np.zeros(np.int(binom(chain_length, i)), dtype=np.int)
-
-    # Fill subspaces
-    # For every possible number of spin-up
-    for n in range(len(subspaces)):
-        # Check every state to fit in that space
-        sub_counter = 0
-        for state in psi_z:
-            n_up = np.sum(unpackbits(state, chain_length))
-            if n_up == n:
-                subspaces[n][sub_counter] = state
-                sub_counter += 1
-
     # Create a new random B-field for every instance
     B = np.round(np.random.uniform(-1, 1, chain_length), 2)
+    if central_spin:
+        B = np.append(B, 0)
 
     eigenvalues = np.zeros(dim)
     eigenvectors = np.zeros((dim, dim))
 
+    # Create subspaces
+    subspaces = [0] * (total_spins + 1)
+    for i in range(len(subspaces)):
+        subspaces[i] = np.zeros(np.int(binom(total_spins, i)), dtype=np.int)
+
+    # Fill subspaces
+    # For every possible number of spin-up
+    for n in range(len(subspaces)):
+        if only_biggest_subspace and (n != len(subspaces) // 2):
+            continue
+        # Check every state to fit in that space
+        sub_counter = 0
+        for state in psi_z:
+            n_up = np.sum(unpackbits(state, total_spins))
+            if n_up == n:
+                subspaces[n][sub_counter] = state
+                sub_counter += 1
+
+    if only_biggest_subspace:
+        # even though its only one element, it needs to be iterable for the following algorithm
+        subspaces = [subspaces[len(subspaces) // 2]]
+
     # Generate Hamiltonian for each subspace
-    for psi_sub in subspaces:
-        dim_sub = len(psi_sub)
+    for subspace in subspaces:
+        dim_sub = len(subspace)
         H_sub = np.zeros((dim_sub, dim_sub))
         # For every state
-        for state_index in range(len(psi_sub)):
-            state = unpackbits(psi_sub[state_index], chain_length)
+        for state_index in range(dim_sub):
+            state = unpackbits(subspace[state_index], total_spins)
             if periodic_boundaries:
                 start = -1
             else:
@@ -140,29 +152,53 @@ def eig_values_vectors_spin_const(chain_length, J, B0, periodic_boundaries):
 
             for i in range(start, chain_length - 1):
                 # Ising term in the hamiltonian: J * Sum(S_i^z * S_i+1^z)
-                if state[i] == state[i+1]:
+                if state[i % chain_length] == state[i+1]:
                     H_sub[state_index, state_index] += J/4
                 else:
                     H_sub[state_index, state_index] -= J/4
                     # Ladder operator terms: J/2 * Sum(S_i^+ S_i+1^- + S_i^- S_i+1^+)
                     # Method: Flip spins and then add 1/2 in the according term in the hamiltonian
                     # Only do this, if S_i^z != S_i+1^z, otherwise the ladder operators give 0.
-                    flipmask = np.roll(unpackbits(3, chain_length), i)
+                    # This line is overcomplicated, but it takes care of the case of boundary
+                    # conditions: if i=-1 -> flipmask = [1, 0, ..., 1, 0]
+                    flipmask = unpackbits(packbits(np.roll(unpackbits(3, chain_length), i)),
+                                          total_spins)
                     flipped_state = packbits(np.logical_xor(state, flipmask))
-                    sub_index_flipped_state = np.where(
-                        psi_sub == flipped_state)[0][0]
-                    H_sub[state_index, sub_index_flipped_state] = J/2
+                    H_sub[state_index, np.argwhere(
+                        subspace == flipped_state).item()] = J/2
             # Outer magnetic field term: Sum(B_i S_i^z)
             H_sub[state_index,
                   state_index] += np.sum(B0 * B * (state - 1/2))
 
+        if central_spin:
+            # Now treat the last spin as the new central spin
+            for state_index in range(dim_sub):
+                state = unpackbits(subspace[state_index], total_spins)
+                for i in range(chain_length):
+                    # Central coupling term
+                    if state[i] == state[-1]:
+                        H_sub[state_index, state_index] += A/chain_length/4
+                    else:
+                        H_sub[state_index, state_index] -= A/chain_length/4
+                        flipmask = np.zeros(total_spins, dtype=np.bool)
+                        flipmask[i] = 1
+                        flipmask[-1] = 1
+                        flipped_state = packbits(
+                            np.logical_xor(state, flipmask))
+                        H_sub[state_index, np.argwhere(
+                            subspace == flipped_state).item()] += A/chain_length/2
+
         # Diagonalization of subspace
         eigenvalues_sub, eigenvectors_sub = np.linalg.eigh(H_sub)
         # Enter this into full space
-        eigenvalues[psi_sub] = eigenvalues_sub
+        eigenvalues[subspace] = eigenvalues_sub
         # Generate eigenvector with respect to full space basis
         eigenvectors_fullspace = eigenvectors_sub @ create_basis_vectors(
-            psi_sub, dim)
-        eigenvectors[psi_sub] = eigenvectors_fullspace
+            subspace, dim)
+        eigenvectors[subspace] = eigenvectors_fullspace
+
+    if only_biggest_subspace:
+        nonzero_columns = np.nonzero(eigenvalues)[0]
+        return eigenvalues[nonzero_columns], eigenvectors[nonzero_columns]
 
     return eigenvalues, eigenvectors

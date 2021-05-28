@@ -32,11 +32,8 @@ def time_evo_sigma_z(t, psi0, chain_length, J, B0, A, spin_constant,
     total_spins = chain_length + central_spin
     exp_sig_z = np.empty((len(t), total_spins))
     if spin_constant:
-        if central_spin:
-            raise AttributeError(
-                "With a central spin, total spin is not conserved in the chain. Therefore central_spin and spin_constant cannot be used at the same time.")
         eigenvalues, eigenvectors = diagonalization.eig_values_vectors_spin_const(
-            chain_length, J, B0, periodic_boundaries, central_spin)
+            chain_length, J, B0, A, periodic_boundaries, central_spin, only_biggest_subspace=False)
     else:
         eigenvalues, eigenvectors = diagonalization.eig_values_vectors(
             chain_length, J, B0, A, periodic_boundaries, central_spin)
