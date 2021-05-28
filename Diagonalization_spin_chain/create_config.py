@@ -36,7 +36,7 @@ def create_config():
         "outputtype": "plot",
         # If empty, then the output is not saved, otherwise it is stored to ./Plots/filename
         "filename": "",
-        # In case of calculating the r_values, the amount of created samples
+        # In case of calculating the plot_r_values, the amount of created samples
         # In case of multiple instances, a list is also possible.
         "samples": "100"
     }
