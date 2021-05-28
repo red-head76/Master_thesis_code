@@ -42,19 +42,20 @@ samples = config_object.getlist("Output", "samples").astype(np.int)
 
 # Other setup
 Other = config_object["Other"]
-# Initial state
-psi0 = np.zeros(dim)
-psi0[int(Other["idx_psi0"])] = 1
-# Time array
-t = np.linspace(0, float(Other["timespan"]), int(Other["timesteps"]))
+if output in ["plot", "animate"]:
+    # Initial state
+    psi0 = np.zeros(dim)
+    psi0[int(Other["idx_psi0"])] = 1
+    # Time array
+    t = np.linspace(0, float(Other["timespan"]), int(Other["timesteps"]))
 
 if outputtype == "plot":
-    output.plot_time_evo(t, psi0, chain_length, J, B0, A, spin_constant, periodic_boundaries,
-                         central_spin, save)
+    output.plot_time_evo(t, psi0, chain_length.item(), J, B0.item(), A, spin_constant,
+                         periodic_boundaries, central_spin, save)
 
 if outputtype == "animate":
-    output.animate_time_evo(t, psi0, chain_length, J, B0, A, spin_constant, periodic_boundaries,
-                            central_spin, save)
+    output.animate_time_evo(t, psi0, chain_length.item(), J, B0.item(), A, spin_constant,
+                            periodic_boundaries, central_spin, save)
 
 if outputtype == "plot_r_values":
     output.plot_r_values(chain_length.item(), J, B0.item(), A, periodic_boundaries, central_spin,
