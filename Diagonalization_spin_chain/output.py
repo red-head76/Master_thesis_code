@@ -166,13 +166,11 @@ def generate_r_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
     """
     # Get the energy eigenvalues
     if spin_constant:
-        if central_spin:
-            raise AttributeError(
-                "With a central spin, total spin is not conserved in the chain. Therefore central_spin and spin_constant cannot be used at the same time.")
-        else:
-            E = eig_values_vectors_spin_const(
-                chain_length, J, B0, periodic_boundaries)[0]
+        E = eig_values_vectors_spin_const(
+            chain_length, J, B0, A, periodic_boundaries, central_spin,
+            only_biggest_subspace=True)[0]
     else:
+        raise Warning("r_value with the fullspace H doesn't make sense!")
         E = eig_values_vectors(
             chain_length, J, B0, A, periodic_boundaries, central_spin)[0]
 
@@ -181,12 +179,12 @@ def generate_r_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
     Delta_E_shifted = np.roll(Delta_E, 1)
     Delta_min = np.min((Delta_E, Delta_E_shifted), axis=0)[1:]
     Delta_max = np.max((Delta_E, Delta_E_shifted), axis=0)[1:]
-    # Calculate the distribution approximately with a histogram
+    # # Calculate the distribution approximately with a histogram
     # hist, bin_edges = np.histogram(Delta_min / Delta_max, bins=binning_func(Delta_min.size),
     #                                density=True, range=(0, 1))
     # bin_centers = (bin_edges + np.roll(bin_edges, 1))[1:] / 2
-    # # Calculate the expectation value
-    # r_values[i] = np.mean(hist * bin_centers)
+
+    # return hist * bin_centers
     return Delta_min / Delta_max
 
 
@@ -211,16 +209,16 @@ def plot_r_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
                                     points
     """
 
-    total_spins = chain_length + central_spin
-    rs = np.zeros(np.int(2**total_spins - 2))
-    for _ in range(samples):
-        rs += generate_r_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
-                                spin_constant, samples)
+    r_values = generate_r_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
+                                 spin_constant)
+    for _ in range(samples - 1):
+        r_values += generate_r_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
+                                      spin_constant)
     # Average over samples
-    rs_mean = rs / samples
-    plt.hist(rs_mean, bins=sturge_rule(rs_mean.size), density=True)
+    r_values /= samples
+    plt.hist(r_values, bins=sturge_rule(r_values.size), density=True)
     # Average over states
-    plt.plot([], [], ls="", label=f"Average r = {np.mean(rs_mean):.2f}")
+    plt.plot([], [], ls="", label=f"Average r = {np.mean(r_values):.2f}")
     plt.xlabel("r")
     plt.ylabel(r"Density $\rho (r)$")
     plt.title(f"R values averaged over {samples} samples")
@@ -252,10 +250,12 @@ def plot_r_fig3(chain_length, J, B0, periodic_boundaries, samples):
         samples = np.ones(np.size(chain_length), dtype=np.int) * samples
     for i, N in enumerate(chain_length):
         for j, B in enumerate(B0):
-            r_values = np.zeros(np.int(2**chain_length - 2))
-            for sample in samples:
+            r_values = generate_r_values(N, J, B,
+                                         0, periodic_boundaries, False, True)
+            for _ in range(samples[i] - 1):
                 r_values += generate_r_values(N, J, B,
                                               0, periodic_boundaries, False, True)
+            r_values /= samples[i]
             # Averaging over samples and states at the same time
             mean_r_values[i, j] = np.mean(r_values)
 
