@@ -283,27 +283,43 @@ def generate_f_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
 
     # Get the eigenvectors n of the Hamiltonian
     if spin_constant:
-        eigenvalues, eigenvectors = eig_values_vectors_spin_const(
+        eigenvectors = eig_values_vectors_spin_const(
             chain_length, J, B0, A, periodic_boundaries, central_spin,
-            only_biggest_subspace=True)
+            only_biggest_subspace=False)[1]
     else:
         raise Warning("r_value with the fullspace H doesn't make sense!")
-        eigenvalues, eigenvectors = eig_values_vectors(
-            chain_length, J, B0, A, periodic_boundaries, central_spin)
+        eigenvectors = eig_values_vectors(
+            chain_length, J, B0, A, periodic_boundaries, central_spin)[1]
 
     total_spins = chain_length + central_spin
     dim = np.int(2**(total_spins))
-    psi_z = np.arange(0, dim)
-    sigma_z = unpackbits(psi_z, total_spins) - 1/2
 
+    # unvectorized notation step by step
+    psi_z = np.arange(dim)
+    sigma_z_ravelled = unpackbits(psi_z, total_spins) - 1/2
+    sigma_z = np.apply_along_axis(np.diag, 1, sigma_z_ravelled.T)
     M1 = sigma_z * np.exp(1j * 2 * np.pi *
-                          np.arange(total_spins) / total_spins)
+                          np.arange(total_spins) / total_spins).reshape([-1, 1, 1])
+    M1dagger = M1.transpose(0, 2, 1).conjugate()
+    # Expectation value of M1, summed over all sites and take the diagonal entries
+    exp_M1 = np.diag(np.sum(eigenvectors.T.conjugate()
+                            @ M1 @ eigenvectors, axis=0))
+    exp_M1dagger = np.diag(np.sum(eigenvectors.T.conjugate()
+                                  @ M1dagger @ eigenvectors, axis=0))
+    exp_M1daggerM1 = np.diag(np.sum(eigenvectors.T.conjugate()
+                                    @ M1dagger @ M1 @ eigenvectors, axis=0))
 
-    exp_M1 = np.abs(eigenvectors**2) @ M1.conjugate()
-    exp_M1d = np.abs(eigenvectors**2) @ M1
-    exp_M1dM1 = np.abs(eigenvectors**2) @ (M1.conjugate() * M1)
+    # f_values (for all states)
+    f_values = 1 - exp_M1 * exp_M1dagger / exp_M1daggerM1
 
-    return 1 - np.sum(exp_M1 * exp_M1d / exp_M1dM1, axis=1)
+    # M1 = sigma_z * np.exp(1j * 2 * np.pi *
+    #                       np.arange(total_spins) / total_spins)
+
+    # exp_M1 = np.abs(eigenvectors**2) @ M1.conjugate()
+    # exp_M1d = np.abs(eigenvectors**2) @ M1
+    # exp_M1dM1 = np.abs(eigenvectors**2) @ (M1.conjugate() * M1)
+
+    return f_values
 
 
 def plot_f_fig2(chain_length, J, B0, periodic_boundaries, samples):
@@ -335,9 +351,10 @@ def plot_f_fig2(chain_length, J, B0, periodic_boundaries, samples):
             # Averaging over samples and states at the same time
             mean_f_values[i, j] = np.mean(f_values)
 
-        plt.plot(B0, mean_f_values[i], marker="o",
-                 linestyle="--", label=f"N={N}")
+        yerrors = 1 / np.sqrt(samples[i] * 2**chain_length[i])
+        plt.errorbar(B0, mean_f_values[i], yerr=yerrors, marker="o", capsize=5,
+                     linestyle="--", label=f"N={N}")
     plt.xlabel("Magnetic field amplitude B0")
-    plt.ylabel("r-value")
+    plt.ylabel("f-value")
     plt.legend()
     plt.show()
