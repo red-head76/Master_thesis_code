@@ -4,8 +4,7 @@ import os
 from time_evo import time_evo_sigma_z
 from diagonalization import eig_values_vectors, eig_values_vectors_spin_const
 from matplotlib import animation
-
-# Plotting time evolution of the spin chain
+from support_functions import unpackbits
 
 
 def plot_time_evo(t, psi0, chain_length, J, B0, A, spin_constant,
@@ -153,12 +152,9 @@ def generate_r_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
         A (float, default: 1): the coupling between the central spin and the spins in the chain
         periodic_boundaries (bool, default:True): determines whether or not periodic boundary
                                                   conditions are used in the chain.
-        samples (int, default: 1): Number of times data points should be generated for each number
-                                    of samples there are (chain_length x chain_length - 2) data
-                                    points
-        s_const (bool, default: True): If true, the conservation of total spin is used to construct
-                                       respective subspaces. If False, full Hamiltonian is used.
         central_spin (bool, default=True): determines whether or not a central spin is present
+        spin_const (bool, default: True): If true, the conservation of total spin is used
+                        to construct respective subspaces. If False, full Hamiltonian is used.
 
     Returns:
         r_values (array (float) [2**total_spins - 2])
@@ -240,9 +236,6 @@ def plot_r_fig3(chain_length, J, B0, periodic_boundaries, samples):
         samples (int or array (int)): Number of times data points should be generated
             for each number of samples there are (chain_length x chain_length - 2) data points
 
-    Returns:
-        mean_r_values (array (float) [chain_length.size, B0.size]): The results of the r_value for
-            the different realizations.
     """
 
     mean_r_values = np.empty((np.size(chain_length), np.size(B0)))
@@ -260,6 +253,89 @@ def plot_r_fig3(chain_length, J, B0, periodic_boundaries, samples):
             mean_r_values[i, j] = np.mean(r_values)
 
         plt.plot(B0, mean_r_values[i], marker="o",
+                 linestyle="--", label=f"N={N}")
+    plt.xlabel("Magnetic field amplitude B0")
+    plt.ylabel("r-value")
+    plt.legend()
+    plt.show()
+
+
+def generate_f_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
+                      spin_constant):
+    """
+    Calculates the f value f = 1 - <n| M1 |n><n| M1+ |n> / <n| M1+ M1 |n>
+
+    Args:
+        chain_length (int): the length of the spin chain
+        J (float, default: 2): the coupling constant
+        B0 (float, default: 1): the B-field amplitude. Currently random initialized uniformly
+                                between (-1, 1).
+        A (float, default: 1): the coupling between the central spin and the spins in the chain
+        periodic_boundaries (bool, default:True): determines whether or not periodic boundary
+                                                  conditions are used in the chain.
+        central_spin (bool, default=True): determines whether or not a central spin is present
+        spin_const (bool, default: True): If true, the conservation of total spin is used
+                        to construct respective subspaces. If False, full Hamiltonian is used.
+
+    Returns:
+        f_values (array (float) [2**total_spins])
+    """
+
+    # Get the eigenvectors n of the Hamiltonian
+    if spin_constant:
+        eigenvalues, eigenvectors = eig_values_vectors_spin_const(
+            chain_length, J, B0, A, periodic_boundaries, central_spin,
+            only_biggest_subspace=True)
+    else:
+        raise Warning("r_value with the fullspace H doesn't make sense!")
+        eigenvalues, eigenvectors = eig_values_vectors(
+            chain_length, J, B0, A, periodic_boundaries, central_spin)
+
+    total_spins = chain_length + central_spin
+    dim = np.int(2**(total_spins))
+    psi_z = np.arange(0, dim)
+    sigma_z = unpackbits(psi_z, total_spins) - 1/2
+
+    M1 = sigma_z * np.exp(1j * 2 * np.pi *
+                          np.arange(total_spins) / total_spins)
+
+    exp_M1 = np.abs(eigenvectors**2) @ M1.conjugate()
+    exp_M1d = np.abs(eigenvectors**2) @ M1
+    exp_M1dM1 = np.abs(eigenvectors**2) @ (M1.conjugate() * M1)
+
+    return 1 - np.sum(exp_M1 * exp_M1d / exp_M1dM1, axis=1)
+
+
+def plot_f_fig2(chain_length, J, B0, periodic_boundaries, samples):
+    """
+    Plots the f values as done in Figure 2 in https://doi.org/10.1103/PhysRevB.82.174411
+
+    Args:
+        chain_length (int or array (int)): the length of the spin chain
+        J (float): the coupling constant
+        B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
+                                between (-1, 1).
+        periodic_boundaries (bool): determines whether or not periodic boundary
+                                                  conditions are used in the chain.
+        samples (int or array (int)): Number of times data points should be generated
+            for each number of samples there are (chain_length x chain_length - 2) data points
+
+    """
+    mean_f_values = np.empty((np.size(chain_length), np.size(B0)))
+    if np.size(samples) == 1:
+        samples = np.ones(np.size(chain_length), dtype=np.int) * samples
+    for i, N in enumerate(chain_length):
+        for j, B in enumerate(B0):
+            f_values = generate_f_values(N, J, B,
+                                         0, periodic_boundaries, False, True)
+            for _ in range(samples[i] - 1):
+                f_values += generate_f_values(N, J, B,
+                                              0, periodic_boundaries, False, True)
+            f_values /= samples[i]
+            # Averaging over samples and states at the same time
+            mean_f_values[i, j] = np.mean(f_values)
+
+        plt.plot(B0, mean_f_values[i], marker="o",
                  linestyle="--", label=f"N={N}")
     plt.xlabel("Magnetic field amplitude B0")
     plt.ylabel("r-value")

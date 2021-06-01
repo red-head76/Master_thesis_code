@@ -32,7 +32,7 @@ def create_config():
     }
 
     config_object["Output"] = {
-        # Available options: plot, animate, plot_r_values, plot_r_fig3
+        # Available options: plot, animate, plot_r_values, plot_r_fig3, plot_f_fig2
         "outputtype": "plot",
         # If empty, then the output is not saved, otherwise it is stored to ./Plots/filename
         "filename": "",

@@ -63,3 +63,6 @@ if outputtype == "plot_r_values":
 
 if outputtype == "plot_r_fig3":
     output.plot_r_fig3(chain_length, J, B0, periodic_boundaries, samples)
+
+if outputtype == "plot_f_fig2":
+    output.plot_f_fig2(chain_length, J, B0, periodic_boundaries, samples)
