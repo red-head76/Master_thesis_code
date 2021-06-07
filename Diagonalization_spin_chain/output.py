@@ -288,7 +288,6 @@ def generate_f_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
             chain_length, J, B0, A, periodic_boundaries, central_spin,
             only_biggest_subspace=False)[1]
     else:
-        raise Warning("r_value with the fullspace H doesn't make sense!")
         eigenvectors = eig_values_vectors(
             chain_length, J, B0, A, periodic_boundaries, central_spin)[1]
 
@@ -302,25 +301,21 @@ def generate_f_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
     M1 = sigma_z * np.exp(1j * 2 * np.pi *
                           np.arange(total_spins) / total_spins).reshape([-1, 1, 1])
     M1dagger = M1.transpose(0, 2, 1).conjugate()
-    # Expectation value of M1, summed over all sites and take the diagonal entries
-    exp_M1 = np.diag(np.sum(eigenvectors.T.conjugate()
-                            @ M1 @ eigenvectors, axis=0))
-    exp_M1dagger = np.diag(np.sum(eigenvectors.T.conjugate()
-                                  @ M1dagger @ eigenvectors, axis=0))
-    exp_M1daggerM1 = np.diag(np.sum(eigenvectors.T.conjugate()
-                                    @ M1dagger @ M1 @ eigenvectors, axis=0))
 
-    # f_values (for all states)
-    f_values = 1 - exp_M1 * exp_M1dagger / exp_M1daggerM1
+    exp_M1 = np.empty(dim)
+    exp_M1dagger = np.empty(dim)
+    exp_M1daggerM1 = np.empty(dim)
+    for n in range(dim):
+        # Should be real anyways, but sometimes there can be numerical errors (of order ~10^-50)
+        exp_M1[n] = np.real(np.sum(eigenvectors[n].T @
+                                   M1 @ eigenvectors[n], axis=0))
+        exp_M1dagger[n] = np.real(np.sum(eigenvectors[n].T @
+                                         M1dagger @ eigenvectors[n], axis=0))
+        exp_M1daggerM1[n] = np.real(np.sum(eigenvectors[n].T @
+                                           (M1dagger @ M1) @ eigenvectors[n], axis=0))
 
-    # M1 = sigma_z * np.exp(1j * 2 * np.pi *
-    #                       np.arange(total_spins) / total_spins)
-
-    # exp_M1 = np.abs(eigenvectors**2) @ M1.conjugate()
-    # exp_M1d = np.abs(eigenvectors**2) @ M1
-    # exp_M1dM1 = np.abs(eigenvectors**2) @ (M1.conjugate() * M1)
-
-    return f_values
+    f_value = np.mean(1 - exp_M1 * exp_M1dagger / exp_M1daggerM1)
+    return f_value
 
 
 def plot_f_fig2(chain_length, J, B0, periodic_boundaries, samples):
@@ -343,14 +338,12 @@ def plot_f_fig2(chain_length, J, B0, periodic_boundaries, samples):
         samples = np.ones(np.size(chain_length), dtype=np.int) * samples
     for i, N in enumerate(chain_length):
         for j, B in enumerate(B0):
-            f_values = generate_f_values(N, J, B,
-                                         0, periodic_boundaries, False, True)
-            for _ in range(samples[i] - 1):
-                f_values += generate_f_values(N, J, B,
-                                              0, periodic_boundaries, False, True)
-            f_values /= samples[i]
-            # Averaging over samples and states at the same time
-            mean_f_values[i, j] = np.mean(f_values)
+            f_value = 0
+            for _ in range(samples[i]):
+                f_value += generate_f_values(N, J, B,
+                                             0, periodic_boundaries, False, True)
+            # Averaging over samples
+            mean_f_values[i, j] = f_value / samples[i]
 
         yerrors = 1 / np.sqrt(samples[i] * 2**chain_length[i])
         plt.errorbar(B0, mean_f_values[i], yerr=yerrors, marker="o", capsize=5,
