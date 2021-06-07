@@ -42,12 +42,21 @@ samples = config_object.getlist("Output", "samples").astype(np.int)
 
 # Other setup
 Other = config_object["Other"]
-if output in ["plot", "animate"]:
+if outputtype in ["plot", "animate"]:
     # Initial state
     psi0 = np.zeros(dim)
     psi0[int(Other["idx_psi0"])] = 1
     # Time array
     t = np.linspace(0, float(Other["timespan"]), int(Other["timesteps"]))
+
+if outputtype == "plot_g_value":
+    # Initial state
+    # psi0 = [np.zeros(d) for d in dim]
+    # for psi in psi0:
+    #     psi[int(Other["idx_psi0"])] = 1
+    rho0 = [np.eye(d) / d for d in dim]
+    # Time array
+    t = np.linspace(0, float(Other["timespan"]), int(Other["timesteps"]) + 1)
 
 if outputtype == "plot":
     output.plot_time_evo(t, psi0, chain_length.item(), J, B0.item(), A, spin_constant,
@@ -66,3 +75,8 @@ if outputtype == "plot_r_fig3":
 
 if outputtype == "plot_f_fig2":
     output.plot_f_fig2(chain_length, J, B0, periodic_boundaries, samples)
+
+if outputtype == "plot_g_value":
+    pdb.set_trace()
+    output.plot_g_value(rho0, t, chain_length, J, B0,
+                        periodic_boundaries, samples)

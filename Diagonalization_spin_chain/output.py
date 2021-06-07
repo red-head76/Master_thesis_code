@@ -352,3 +352,112 @@ def plot_f_fig2(chain_length, J, B0, periodic_boundaries, samples):
     plt.ylabel("f-value")
     plt.legend()
     plt.show()
+
+
+def generate_g_values(rho0, times, chain_length, J, B0, A, periodic_boundaries, central_spin,
+                      spin_constant):
+    """
+    Calculates the value g = <M1> (ρ(t)) / <M1> (ρ(0))
+
+    Args:
+        rho0 (array (float) [dim, dim]): the initial density matrix, where dim = 2**total_spins
+        times (array (float) [tD]): the time array, where g should be calculated
+        chain_length (int): the length of the spin chain
+        J (float): the coupling constant
+        B0 (float): the B-field amplitude. Currently random initialized uniformly
+                                between (-1, 1).
+        A (float): the coupling between the central spin and the spins in the chain
+        periodic_boundaries (bool): determines whether or not periodic boundary
+                                                  conditions are used in the chain.
+        central_spin (bool): determines whether or not a central spin is present
+        spin_const (bool): If true, the conservation of total spin is used
+                        to construct respective subspaces. If False, full Hamiltonian is used.
+
+    Returns:
+        g_values (array (float) [tD]): the g_values at the given timesteps (tD in total)
+    """
+
+    # Get the eigenvectors n of the Hamiltonian
+    if spin_constant:
+        eigenvalues, eigenvectors = eig_values_vectors_spin_const(
+            chain_length, J, B0, A, periodic_boundaries, central_spin,
+            only_biggest_subspace=False)
+    else:
+        eigenvalues, eigenvectors = eig_values_vectors(
+            chain_length, J, B0, A, periodic_boundaries, central_spin)
+
+    total_spins = chain_length + central_spin
+    dim = np.int(2**(total_spins))
+
+    # unvectorized notation step by step
+    psi_z = np.arange(dim)
+    sigma_z_ravelled = unpackbits(psi_z, total_spins) - 1/2
+    sigma_z = np.apply_along_axis(np.diag, 1, sigma_z_ravelled.T)
+    M1 = sigma_z * np.exp(1j * 2 * np.pi *
+                          np.arange(total_spins) / total_spins).reshape([-1, 1, 1])
+    exp_M1_rho0 = np.empty(dim)
+    exp_M1_rhot = np.empty((times.size, dim))
+    exp_M1_rhot_ext = np.empty((times.size, dim, dim), dtype=complex)
+
+    # Expectation value of M1, summed over all sites and take the diagonal entries
+    for n in range(dim):
+        # Should be real anyways, but sometimes there can be numerical errors (of order ~10^-50)
+        exp_M1_rho0[n] = np.real(np.sum(eigenvectors[n].T @
+                                        (M1 @ rho0) @ eigenvectors[n], axis=0))
+    for t_idx, t in enumerate(times):
+        for n in range(dim):
+            for m in range(dim):
+                exp_M1_rhot_ext[t_idx, n, m] = (np.exp(-1j * (eigenvalues[n] - eigenvalues[m]) * t) *
+                                                (eigenvectors[n].T @ rho0 @ eigenvectors[m]) *
+                                                np.sum(eigenvectors[m].T @ M1 @ eigenvectors[n], axis=0))
+    # Sum over m
+    exp_M1_rhot = np.sum(exp_M1_rhot_ext, axis=2)
+    # Average over state
+    return np.mean(1 - exp_M1_rhot / exp_M1_rho0, axis=1)
+
+
+def plot_g_value(rho0, times, chain_length, J, B0, periodic_boundaries, samples):
+    """
+    Plots the f values as done in Figure 2 in https://doi.org/10.1103/PhysRevB.82.174411
+
+    Args:
+        rho0 (array (float) [dim, dim]): the initial density matrix, where dim = 2**total_spins
+        times (array (float) [tD]): the time array, where g should be calculated
+        chain_length (int or array (int)): the length of the spin chain
+        J (float): the coupling constant
+        B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
+                                between (-1, 1).
+        periodic_boundaries (bool): determines whether or not periodic boundary
+                                                  conditions are used in the chain.
+        samples (int or array (int)): Number of times data points should be generated
+            for each number of samples there are (chain_length x chain_length - 2) data points
+
+    """
+    fig = plt.figure(figsize=(chain_length.size * 6, 4))
+    axes = [fig.add_subplot(1, chain_length.size, ax, projection='3d')
+            for ax in range(1, chain_length.size + 1)]
+
+    mean_g_values = np.empty((times.size, np.size(chain_length), np.size(B0)))
+    if np.size(samples) == 1:
+        samples = np.ones(np.size(chain_length), dtype=np.int) * samples
+    for i, N in enumerate(chain_length):
+        for j, B in enumerate(B0):
+            g_value = np.zeros(times.size)
+            for _ in range(samples[i]):
+                g_value += generate_g_values(rho0[i], times, N, J, B,
+                                             0, periodic_boundaries, False, True)
+            # Averaging over samples
+            mean_g_values[:, i, j] = g_value / samples[i]
+
+        # yerrors = 1 / np.sqrt(samples[i] * 2**chain_length[i])
+        t_idx, B0_idx = np.meshgrid(range(times.size), range(B0.size))
+        axes[i].plot_surface(times[t_idx], B0[B0_idx],
+                             mean_g_values[t_idx, i, B0_idx])
+        axes[i].set_title(f"N = {N}")
+        axes[i].set_xlabel("Time t")
+        axes[i].set_ylabel("Magnetic field amplitude B0")
+        axes[i].set_zlabel("g-value")
+        # plt.errorbar(B0, mean_g_values[i], yerr=yerrors, marker="o", capsize=5,
+        #              linestyle="--", label=f"N={N}")
+
+    plt.show()
