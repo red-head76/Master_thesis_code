@@ -318,7 +318,7 @@ def generate_f_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
     return f_value
 
 
-def plot_f_fig2(chain_length, J, B0, periodic_boundaries, samples):
+def plot_f_fig2(chain_length, J, B0, periodic_boundaries, samples, verbose=True):
     """
     Plots the f values as done in Figure 2 in https://doi.org/10.1103/PhysRevB.82.174411
 
@@ -331,15 +331,22 @@ def plot_f_fig2(chain_length, J, B0, periodic_boundaries, samples):
                                                   conditions are used in the chain.
         samples (int or array (int)): Number of times data points should be generated
             for each number of samples there are (chain_length x chain_length - 2) data points
-
+        verbose (bool, default=True): prints some extra information about where the process is
     """
     mean_f_values = np.empty((np.size(chain_length), np.size(B0)))
     if np.size(samples) == 1:
         samples = np.ones(np.size(chain_length), dtype=np.int) * samples
     for i, N in enumerate(chain_length):
+        if verbose:
+            print(f"Calculating for chain length = {N}")
         for j, B in enumerate(B0):
+            if verbose:
+                print(f"B0 = {B}")
             f_value = 0
-            for _ in range(samples[i]):
+            for s in range(samples[i]):
+                # print every 20% step
+                if ((s*5 % (samples[i])) < 5):
+                    print(f"{s}/{samples[i]} samples done")
                 f_value += generate_f_values(N, J, B,
                                              0, periodic_boundaries, False, True)
             # Averaging over samples

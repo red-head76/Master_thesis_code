@@ -77,6 +77,5 @@ if outputtype == "plot_f_fig2":
     output.plot_f_fig2(chain_length, J, B0, periodic_boundaries, samples)
 
 if outputtype == "plot_g_value":
-    pdb.set_trace()
     output.plot_g_value(rho0, t, chain_length, J, B0,
                         periodic_boundaries, samples)
