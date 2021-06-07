@@ -146,14 +146,14 @@ def generate_r_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
 
     Args:
         chain_length (int): the length of the spin chain
-        J (float, default: 2): the coupling constant
-        B0 (float, default: 1): the B-field amplitude. Currently random initialized uniformly
+        J (float): the coupling constant
+        B0 (float): the B-field amplitude. Currently random initialized uniformly
                                 between (-1, 1).
-        A (float, default: 1): the coupling between the central spin and the spins in the chain
-        periodic_boundaries (bool, default:True): determines whether or not periodic boundary
+        A (float): the coupling between the central spin and the spins in the chain
+        periodic_boundaries (bool): determines whether or not periodic boundary
                                                   conditions are used in the chain.
-        central_spin (bool, default=True): determines whether or not a central spin is present
-        spin_const (bool, default: True): If true, the conservation of total spin is used
+        central_spin (bool): determines whether or not a central spin is present
+        spin_const (bool): If true, the conservation of total spin is used
                         to construct respective subspaces. If False, full Hamiltonian is used.
 
     Returns:
@@ -268,18 +268,18 @@ def generate_f_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
 
     Args:
         chain_length (int): the length of the spin chain
-        J (float, default: 2): the coupling constant
-        B0 (float, default: 1): the B-field amplitude. Currently random initialized uniformly
+        J (float): the coupling constant
+        B0 (float): the B-field amplitude. Currently random initialized uniformly
                                 between (-1, 1).
-        A (float, default: 1): the coupling between the central spin and the spins in the chain
-        periodic_boundaries (bool, default:True): determines whether or not periodic boundary
+        A (float): the coupling between the central spin and the spins in the chain
+        periodic_boundaries (bool): determines whether or not periodic boundary
                                                   conditions are used in the chain.
-        central_spin (bool, default=True): determines whether or not a central spin is present
-        spin_const (bool, default: True): If true, the conservation of total spin is used
+        central_spin (bool): determines whether or not a central spin is present
+        spin_const (bool): If true, the conservation of total spin is used
                         to construct respective subspaces. If False, full Hamiltonian is used.
 
     Returns:
-        f_values (array (float) [2**total_spins])
+        f_value (float)
     """
 
     # Get the eigenvectors n of the Hamiltonian
