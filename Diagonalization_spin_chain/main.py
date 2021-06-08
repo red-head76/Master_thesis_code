@@ -58,7 +58,7 @@ if outputtype == "plot_g_value":
     # Time array
     t = np.linspace(0, float(Other["timespan"]), int(Other["timesteps"]) + 1)
 
-if outputtype == "plot":
+if outputtype == "plot_time_evo_chain":
     output.plot_time_evo(t, psi0, chain_length.item(), J, B0.item(), A, spin_constant,
                          periodic_boundaries, central_spin, save)
 

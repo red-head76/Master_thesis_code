@@ -345,7 +345,7 @@ def plot_f_fig2(chain_length, J, B0, periodic_boundaries, samples, verbose=True)
             f_value = 0
             for s in range(samples[i]):
                 # print every 20% step
-                if ((s*5 % (samples[i])) < 5):
+                if ((s*5 % (samples[i])) < 5) and verbose:
                     print(f"{s}/{samples[i]} samples done")
                 f_value += generate_f_values(N, J, B,
                                              0, periodic_boundaries, False, True)
