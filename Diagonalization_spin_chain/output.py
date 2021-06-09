@@ -5,6 +5,7 @@ from time_evo import time_evo_sigma_z
 from diagonalization import eig_values_vectors, eig_values_vectors_spin_const
 from matplotlib import animation
 from support_functions import unpackbits
+from scipy.special import binom
 
 
 def plot_time_evo(t, psi0, chain_length, J, B0, A, spin_constant,
@@ -299,20 +300,30 @@ def generate_f_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
     sigma_z_ravelled = unpackbits(psi_z, total_spins) - 1/2
     sigma_z = np.apply_along_axis(np.diag, 1, sigma_z_ravelled.T)
     M1 = sigma_z * np.exp(1j * 2 * np.pi *
-                          np.arange(total_spins) / total_spins).reshape([-1, 1, 1])
+                          np.arange(total_spins) / total_spins).reshape(-1, 1, 1)
     M1dagger = M1.transpose(0, 2, 1).conjugate()
 
-    exp_M1 = np.empty(dim)
-    exp_M1dagger = np.empty(dim)
-    exp_M1daggerM1 = np.empty(dim)
+    # # Old version
+    # # Expectation value of M1, summed over all sites and take the diagonal entries
+    # exp_M1_old = np.diag(np.sum(eigenvectors.T.conjugate()
+    #                             @ M1 @ eigenvectors, axis=0))
+    # exp_M1dagger_old = np.diag(np.sum(eigenvectors.T.conjugate()
+    #                                   @ M1dagger @ eigenvectors, axis=0))
+    # exp_M1daggerM1_old = np.diag(np.sum(eigenvectors.T.conjugate()
+    #                                     @ M1dagger @ M1 @ eigenvectors, axis=0))
+    # # f_values (for all states)
+    # f_values_old = 1 - exp_M1_old * exp_M1dagger_old / exp_M1daggerM1_old
+
+    exp_M1 = np.empty(dim, dtype=complex)
+    exp_M1dagger = np.empty(dim, dtype=complex)
+    exp_M1daggerM1 = np.empty(dim, dtype=complex)
     for n in range(dim):
-        # Should be real anyways, but sometimes there can be numerical errors (of order ~10^-50)
-        exp_M1[n] = np.real(np.sum(eigenvectors[n].T @
-                                   M1 @ eigenvectors[n], axis=0))
-        exp_M1dagger[n] = np.real(np.sum(eigenvectors[n].T @
-                                         M1dagger @ eigenvectors[n], axis=0))
-        exp_M1daggerM1[n] = np.real(np.sum(eigenvectors[n].T @
-                                           (M1dagger @ M1) @ eigenvectors[n], axis=0))
+        exp_M1[n] = np.sum(eigenvectors[n].T @
+                           M1 @ eigenvectors[n], axis=0)
+        exp_M1dagger[n] = np.sum(eigenvectors[n].T @
+                                 M1dagger @ eigenvectors[n], axis=0)
+        exp_M1daggerM1[n] = np.sum(eigenvectors[n].T @
+                                   (M1dagger @ M1) @ eigenvectors[n], axis=0)
 
     f_value = np.mean(1 - exp_M1 * exp_M1dagger / exp_M1daggerM1)
     return f_value
@@ -467,4 +478,96 @@ def plot_g_value(rho0, times, chain_length, J, B0, periodic_boundaries, samples)
         # plt.errorbar(B0, mean_g_values[i], yerr=yerrors, marker="o", capsize=5,
         #              linestyle="--", label=f"N={N}")
 
+    plt.show()
+
+
+def generate_fa_values(chain_length, J, B0, A, periodic_boundaries, central_spin):
+    """
+    Calculates the fa value fa = <n| Ma |n> <n| Ma+ |n>
+
+    Args:
+        chain_length (int): the length of the spin chain
+        J (float): the coupling constant
+        B0 (float): the B-field amplitude. Currently random initialized uniformly
+                                between (-1, 1).
+        A (float): the coupling between the central spin and the spins in the chain
+        periodic_boundaries (bool): determines whether or not periodic boundary
+                                                  conditions are used in the chain.
+        central_spin (bool): determines whether or not a central spin is present
+
+    Returns:
+        fa_value (array (float) [chain_length])
+    """
+    eigenvectors = eig_values_vectors_spin_const(
+        chain_length, J, B0, A, periodic_boundaries, central_spin,
+        only_biggest_subspace=True)[1]
+
+    N_states = eigenvectors.shape[0]
+    total_spins = chain_length + central_spin
+    dim = np.int(2**(total_spins))
+
+    psi_z = np.arange(dim)
+    sigma_z_ravelled = unpackbits(psi_z, total_spins) - 1/2
+    sigma_z = np.apply_along_axis(np.diag, 1, sigma_z_ravelled.T)
+    Ma = sigma_z * np.exp(1j * 2 * np.pi *
+                          np.outer(np.arange(chain_length), np.arange(chain_length)) /
+                          total_spins).reshape(chain_length, chain_length, 1, 1)
+    Ma_dagger = Ma.transpose(0, 1, 3, 2).conjugate()
+
+    # <n| Ma |n> <n| Ma_dagger |n>
+    exp_fa = np.zeros(chain_length)
+    for n in range(N_states):
+        exp_fa += np.real(np.sum(eigenvectors[n].T @ Ma @ eigenvectors[n], axis=0) *
+                          np.sum(eigenvectors[n].T @ Ma_dagger @ eigenvectors[n], axis=0))
+    # / (eigenvectors[n].T @ (Ma @ Ma_dagger) @ eigenvectors[n]))
+
+    # average over states
+    return exp_fa / N_states
+
+
+def plot_fa_values(chain_length, J, B0, A, periodic_boundaries, central_spin, samples):
+    """
+    Plots the f values as done in Figure 2 in https://doi.org/10.1103/PhysRevB.82.174411
+
+    Args:
+        chain_length (int or array (int)): the length of the spin chain
+        J (float): the coupling constant
+        B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
+                                between (-1, 1).
+        A (float): the coupling between the central spin and the spins in the chain
+        periodic_boundaries (bool): determines whether or not periodic boundary
+                                                  conditions are used in the chain.
+        samples (int or array (int)): Number of times data points should be generated
+            for each number of samples there are (chain_length x chain_length - 2) data points
+    """
+    # convert lists to int
+    if chain_length.size > 1:
+        raise Warning(
+            "chain length should be an integer, not a list when plotting fa")
+    chain_length = chain_length[0]
+    if samples.size > 1:
+        raise Warning(
+            "samples should be an integer, not a list when plotting fa")
+    samples = samples[0]
+    total_spins = chain_length + central_spin
+    mean_fa_values = np.empty((np.size(B0), chain_length))
+    # Allow only one chain length for the moment
+    # if np.size(samples) == 1:
+    #     samples = np.ones(np.size(total_spins), dtype=np.int) * samples
+    # for i, N in enumerate(chain_length):
+    for j, B in enumerate(B0):
+        fa_values = np.zeros(chain_length)
+        for _ in range(samples):
+            fa_values += generate_fa_values(chain_length, J, B, A,
+                                            periodic_boundaries, central_spin)
+        # Averaging over samples
+        mean_fa_values[j] = fa_values / samples
+
+        yerrors = (
+            1 / np.sqrt(samples * binom(total_spins, total_spins // 2)))
+        plt.errorbar(np.arange(chain_length), mean_fa_values[j],
+                     yerr=yerrors, marker="o", capsize=5, linestyle="--", label=f"B0={B}")
+    plt.xlabel("Fourier mode a")
+    plt.ylabel("fa-value")
+    plt.legend()
     plt.show()
