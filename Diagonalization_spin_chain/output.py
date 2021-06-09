@@ -517,9 +517,9 @@ def generate_fa_values(chain_length, J, B0, A, periodic_boundaries, central_spin
     # <n| Ma |n> <n| Ma_dagger |n>
     exp_fa = np.zeros(chain_length)
     for n in range(N_states):
-        exp_fa += np.real(np.sum(eigenvectors[n].T @ Ma @ eigenvectors[n], axis=0) *
-                          np.sum(eigenvectors[n].T @ Ma_dagger @ eigenvectors[n], axis=0))
-    # / (eigenvectors[n].T @ (Ma @ Ma_dagger) @ eigenvectors[n]))
+        exp_fa += np.real(np.sum(eigenvectors[n].T @ Ma @ eigenvectors[n], axis=1) *
+                          np.sum(eigenvectors[n].T @ Ma_dagger @ eigenvectors[n], axis=1))
+        # / (eigenvectors[n].T @ (Ma @ Ma_dagger) @ eigenvectors[n]))
 
     # average over states
     return exp_fa / N_states
@@ -565,7 +565,7 @@ def plot_fa_values(chain_length, J, B0, A, periodic_boundaries, central_spin, sa
 
         yerrors = (
             1 / np.sqrt(samples * binom(total_spins, total_spins // 2)))
-        plt.errorbar(np.arange(chain_length), mean_fa_values[j],
+        plt.errorbar(np.arange(chain_length, dtype=int), mean_fa_values[j],
                      yerr=yerrors, marker="o", capsize=5, linestyle="--", label=f"B0={B}")
     plt.xlabel("Fourier mode a")
     plt.ylabel("fa-value")

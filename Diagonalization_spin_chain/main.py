@@ -79,3 +79,7 @@ if outputtype == "plot_f_fig2":
 if outputtype == "plot_g_value":
     output.plot_g_value(rho0, t, chain_length, J, B0,
                         periodic_boundaries, samples)
+
+if outputtype == "plot_fa_values":
+    output.plot_fa_values(chain_length, J, B0, A,
+                          periodic_boundaries, central_spin, samples)
