@@ -511,15 +511,20 @@ def generate_fa_values(chain_length, J, B0, A, periodic_boundaries, central_spin
     sigma_z = np.apply_along_axis(np.diag, 1, sigma_z_ravelled.T)
     Ma = sigma_z * np.exp(1j * 2 * np.pi *
                           np.outer(np.arange(chain_length), np.arange(chain_length)) /
-                          total_spins).reshape(chain_length, chain_length, 1, 1)
+                          chain_length).reshape(chain_length, chain_length, 1, 1)
     Ma_dagger = Ma.transpose(0, 1, 3, 2).conjugate()
 
     # <n| Ma |n> <n| Ma_dagger |n>
     exp_fa = np.zeros(chain_length)
     for n in range(N_states):
-        exp_fa += np.real(np.sum(eigenvectors[n].T @ Ma @ eigenvectors[n], axis=1) *
-                          np.sum(eigenvectors[n].T @ Ma_dagger @ eigenvectors[n], axis=1))
-        # / (eigenvectors[n].T @ (Ma @ Ma_dagger) @ eigenvectors[n]))
+        # Sum goes over the different sites
+        exp_Ma = np.sum(eigenvectors[n].T @ Ma @ eigenvectors[n], axis=1)
+        Ma_Ma_dagger = np.zeros(chain_length, dtype=complex)
+        for i in range(chain_length):
+            for j in range(chain_length):
+                Ma_Ma_dagger += (eigenvectors[n].T @
+                                 (Ma[:, i] @ Ma_dagger[:, j]) @ eigenvectors[n])
+        exp_fa += np.real(exp_Ma * exp_Ma.conjugate()) / np.real(Ma_Ma_dagger)
 
     # average over states
     return exp_fa / N_states
@@ -538,7 +543,7 @@ def plot_fa_values(chain_length, J, B0, A, periodic_boundaries, central_spin, sa
         periodic_boundaries (bool): determines whether or not periodic boundary
                                                   conditions are used in the chain.
         samples (int or array (int)): Number of times data points should be generated
-            for each number of samples there are (chain_length x chain_length - 2) data points
+            for each number of samples there are binom(total_spins, total_spins // 2) data points
     """
     # convert lists to int
     if chain_length.size > 1:
@@ -557,7 +562,8 @@ def plot_fa_values(chain_length, J, B0, A, periodic_boundaries, central_spin, sa
     # for i, N in enumerate(chain_length):
     for j, B in enumerate(B0):
         fa_values = np.zeros(chain_length)
-        for _ in range(samples):
+        for s in range(samples):
+            print(f"Sample {s+1} / {samples}")
             fa_values += generate_fa_values(chain_length, J, B, A,
                                             periodic_boundaries, central_spin)
         # Averaging over samples
@@ -569,5 +575,6 @@ def plot_fa_values(chain_length, J, B0, A, periodic_boundaries, central_spin, sa
                      yerr=yerrors, marker="o", capsize=5, linestyle="--", label=f"B0={B}")
     plt.xlabel("Fourier mode a")
     plt.ylabel("fa-value")
+    plt.title(f"fa_values for chain_length = {chain_length}")
     plt.legend()
     plt.show()
