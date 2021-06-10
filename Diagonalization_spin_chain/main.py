@@ -42,14 +42,14 @@ samples = config_object.getlist("Output", "samples").astype(np.int)
 
 # Other setup
 Other = config_object["Other"]
-if outputtype in ["plot", "animate"]:
+if outputtype in ["plot_time_evo", "animate_time_evo"]:
     # Initial state
     psi0 = np.zeros(dim)
     psi0[int(Other["idx_psi0"])] = 1
     # Time array
     t = np.linspace(0, float(Other["timespan"]), int(Other["timesteps"]))
 
-if outputtype == "plot_g_value":
+if outputtype == "plot_g":
     # Initial state
     # psi0 = [np.zeros(d) for d in dim]
     # for psi in psi0:
@@ -58,15 +58,19 @@ if outputtype == "plot_g_value":
     # Time array
     t = np.linspace(0, float(Other["timespan"]), int(Other["timesteps"]) + 1)
 
-if outputtype == "plot_time_evo_chain":
+if outputtype == "plot_sa":
+    t = np.logspace(0, np.log10(float(Other["timespan"])), int(
+        Other["timesteps"]) + 1)
+
+if outputtype == "plot_time_evo":
     output.plot_time_evo(t, psi0, chain_length.item(), J, B0.item(), A, spin_constant,
                          periodic_boundaries, central_spin, save)
 
-if outputtype == "animate":
+if outputtype == "animate_time_evo":
     output.animate_time_evo(t, psi0, chain_length.item(), J, B0.item(), A, spin_constant,
                             periodic_boundaries, central_spin, save)
 
-if outputtype == "plot_r_values":
+if outputtype == "plot_r":
     output.plot_r_values(chain_length.item(), J, B0.item(), A, periodic_boundaries, central_spin,
                          spin_constant, samples.item())
 
@@ -76,10 +80,15 @@ if outputtype == "plot_r_fig3":
 if outputtype == "plot_f_fig2":
     output.plot_f_fig2(chain_length, J, B0, periodic_boundaries, samples)
 
-if outputtype == "plot_g_value":
+if outputtype == "plot_g":
     output.plot_g_value(rho0, t, chain_length, J, B0,
                         periodic_boundaries, samples)
 
-if outputtype == "plot_fa_values":
+if outputtype == "plot_fa":
     output.plot_fa_values(chain_length, J, B0, A,
                           periodic_boundaries, central_spin, samples)
+
+if outputtype == "plot_sa":
+    pdb.set_trace()
+    output.plot_Sa_values(t, chain_length, J, B0, A,
+                          periodic_boundaries, samples)

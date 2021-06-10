@@ -32,8 +32,8 @@ def create_config():
     }
 
     config_object["Output"] = {
-        # Available options: plot_time_evo_chain, animate, plot_r_values, plot_r_fig3, plot_f_fig2,
-        #                    plot_fa_values
+        # Available options: plot_time_evo, animate_time_evo, plot_r, plot_r_fig3, plot_f_fig2,
+        #                    plot_fa, plot_sa
         "outputtype": "plot",
         # If empty, then the output is not saved, otherwise it is stored to ./Plots/filename
         "filename": "",
