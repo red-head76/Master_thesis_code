@@ -4,7 +4,7 @@ import os
 from time_evo import time_evo_sigma_z
 from diagonalization import eig_values_vectors, eig_values_vectors_spin_const
 from matplotlib import animation
-from support_functions import unpackbits
+from support_functions import packbits, unpackbits, create_basis_vectors
 from scipy.special import binom
 
 
@@ -510,7 +510,7 @@ def generate_fa_values(chain_length, J, B0, A, periodic_boundaries, central_spin
     sigma_z_ravelled = unpackbits(psi_z, total_spins) - 1/2
     sigma_z = np.apply_along_axis(np.diag, 1, sigma_z_ravelled.T)
     Ma = sigma_z * np.exp(1j * 2 * np.pi *
-                          np.outer(np.arange(chain_length), np.arange(chain_length)) /
+                          np.outer(np.arange(1, chain_length+1), np.arange(1, chain_length+1)) /
                           chain_length).reshape(chain_length, chain_length, 1, 1)
     Ma_dagger = Ma.transpose(0, 1, 3, 2).conjugate()
 
@@ -571,10 +571,64 @@ def plot_fa_values(chain_length, J, B0, A, periodic_boundaries, central_spin, sa
 
         yerrors = (
             1 / np.sqrt(samples * binom(total_spins, total_spins // 2)))
-        plt.errorbar(np.arange(chain_length, dtype=int), mean_fa_values[j],
+        plt.errorbar(np.arange(1, chain_length+1, dtype=int), mean_fa_values[j],
                      yerr=yerrors, marker="o", capsize=5, linestyle="--", label=f"B0={B}")
     plt.xlabel("Fourier mode a")
     plt.ylabel("fa-value")
     plt.title(f"fa_values for chain_length = {chain_length}")
     plt.legend()
+    plt.show()
+
+
+def plot_Sa_values(times, chain_length, J, B0, A, periodic_boundaries, samples):
+    """
+    Plots the Sa(t) values (see fig2 in http://arxiv.org/abs/1806.08316)
+
+    Args:
+        rho0 (array (float) [dim, dim]): the initial density matrix, where dim = 2**total_spins
+        times (array (float) [tD]): the time array, where g should be calculated
+        chain_length (int or array (int)): the length of the spin chain
+        J (float): the coupling constant
+        B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
+                                between (-1, 1).
+        A (float): the coupling between the central spin and the spins in the chain
+        periodic_boundaries (bool): determines whether or not periodic boundary
+                                                  conditions are used in the chain.
+        samples (int or array (int)): Number of times data points should be generated
+            for each number of samples there are (chain_length x chain_length - 2) data points
+
+    """
+    # TODO: Samples currently not implemented
+    total_spins = chain_length + 1
+    dim = np.int(2**total_spins)
+    dim_sub = np.int(2**(total_spins/2))
+    eigenvalues, eigenvectors = eig_values_vectors_spin_const(
+        chain_length[0], J, B0[0], A, periodic_boundaries,
+        central_spin=True, only_biggest_subspace=True)
+
+    # Starting with a Neel state , i.e. |up, down, up, down, ...>
+    psi_0 = np.zeros(dim)
+    psi_0[packbits(np.arange(total_spins) % 2)] = 1
+    rho_0 = np.outer(psi_0, psi_0)
+    # Time evolution of rho: rho(t) = U+ rho0 U with U = exp(-i H t)
+    # U for all times, i.e. [times, dim, dim]
+    exp_part = np.apply_along_axis(
+        np.diag, 1, np.exp(-1j * np.outer(times, eigenvalues)))
+    U = eigenvectors.T @ exp_part @ eigenvectors
+    rho_t = U.transpose(0, 2, 1).conjugate() @ rho_0 @ U
+    # Identity over subspace a, the space with the first half of spins
+    id_a = np.eye(dim_sub)
+    # basis states in subspace b:
+    psi_b = np.eye(dim_sub)
+    # Partial trace over b: rho_a = tr_b(rho) = sum_j (1_a o <b_j|) rho (1_a o |b_j>)
+    rho_a = np.zeros((times.size, dim_sub, dim_sub), dtype=complex)
+    for j in range(dim_sub):
+        rho_a += np.kron(id_a, psi_b[j]) @ rho_t @ np.kron(id_a, psi_b[j]).T
+    # Sa = -tr(rho_a ln(rho_a))
+    Sa = np.sum(np.diagonal(rho_a * np.log(rho_a), axis1=1, axis2=2), axis=1)
+
+    plt.plot(times, Sa, "o-")
+    plt.xlabel("time t")
+    plt.ylabel("Sa(t)")
+    plt.semilogx()
     plt.show()
