@@ -4,6 +4,7 @@ import output
 from os.path import isfile
 from configparser import ConfigParser
 from create_config import create_config
+from support_functions import pc
 
 
 def convert_list(string):
@@ -42,7 +43,7 @@ samples = config_object.getlist("Output", "samples").astype(np.int)
 
 # Other setup
 Other = config_object["Other"]
-if outputtype in ["plot_time_evo", "animate_time_evo"]:
+if outputtype in ["plot_time_evo", "animate_time_evo", "plot_occupation_imbalance"]:
     # Initial state
     psi0 = np.zeros(dim)
     psi0[int(Other["idx_psi0"])] = 1
@@ -89,6 +90,9 @@ if outputtype == "plot_fa":
                           periodic_boundaries, central_spin, samples)
 
 if outputtype == "plot_sa":
-    pdb.set_trace()
     output.plot_Sa_values(t, chain_length, J, B0, A,
                           periodic_boundaries, samples)
+
+if outputtype == "plot_occupation_imbalance":
+    output.plot_occupation_imbalance(
+        t, chain_length, J, B0, A, periodic_boundaries, central_spin)
