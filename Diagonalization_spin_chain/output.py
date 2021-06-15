@@ -4,7 +4,7 @@ import os
 from time_evo import time_evo_sigma_z
 from diagonalization import eig_values_vectors, eig_values_vectors_spin_const
 from matplotlib import animation
-from support_functions import packbits, unpackbits, create_basis_vectors
+from support_functions import packbits, unpackbits
 from scipy.special import binom
 
 
@@ -507,27 +507,17 @@ def generate_fa_values(chain_length, J, B0, A, periodic_boundaries, central_spin
     dim = np.int(2**(total_spins))
 
     psi_z = np.arange(dim)
-    sigma_z_ravelled = unpackbits(psi_z, total_spins) - 1/2
-    sigma_z = np.apply_along_axis(np.diag, 1, sigma_z_ravelled.T)
-    Ma = sigma_z * np.exp(1j * 2 * np.pi *
-                          np.outer(np.arange(1, chain_length+1), np.arange(1, chain_length+1)) /
-                          chain_length).reshape(chain_length, chain_length, 1, 1)
-    Ma_dagger = Ma.transpose(0, 1, 3, 2).conjugate()
+    sigma_z = unpackbits(psi_z, total_spins) - 1/2
+    # Sigma_z at each side j times the phase factor of exp(2πi j/N a) for each side j and mode a
+    # summed over sites
+    Ma = (sigma_z.reshape(1, dim, chain_length) *
+          np.exp(1j * 2 * np.pi * np.outer(np.arange(chain_length), np.arange(chain_length))
+                 / chain_length).reshape(chain_length, 1, chain_length)).sum(axis=2)
+    exp_Ma = Ma @ (eigenvectors**2).T
+    exp_Ma_Madagger = (Ma * Ma.conj()) @ (eigenvectors**2).T
 
-    # <n| Ma |n> <n| Ma_dagger |n>
-    exp_fa = np.zeros(chain_length)
-    for n in range(N_states):
-        # Sum goes over the different sites
-        exp_Ma = np.sum(eigenvectors[n].T @ Ma @ eigenvectors[n], axis=1)
-        Ma_Ma_dagger = np.zeros(chain_length, dtype=complex)
-        for i in range(chain_length):
-            for j in range(chain_length):
-                Ma_Ma_dagger += (eigenvectors[n].T @
-                                 (Ma[:, i] @ Ma_dagger[:, j]) @ eigenvectors[n])
-        exp_fa += np.real(exp_Ma * exp_Ma.conjugate()) / np.real(Ma_Ma_dagger)
-
-    # average over states
-    return exp_fa / N_states
+    # Return mean over all states
+    return np.mean(np.real(exp_Ma * exp_Ma.conj() / exp_Ma_Madagger**2), axis=1)
 
 
 def plot_fa_values(chain_length, J, B0, A, periodic_boundaries, central_spin, samples):
@@ -570,13 +560,14 @@ def plot_fa_values(chain_length, J, B0, A, periodic_boundaries, central_spin, sa
         mean_fa_values[j] = fa_values / samples
 
         yerrors = (
-            1 / np.sqrt(samples * binom(total_spins, total_spins // 2)))
-        plt.errorbar(np.arange(1, chain_length+1, dtype=int), mean_fa_values[j],
+            1 / np.sqrt(samples))  # * binom(total_spins, total_spins // 2)))
+        plt.errorbar(np.arange(chain_length, dtype=int), mean_fa_values[j],
                      yerr=yerrors, marker="o", capsize=5, linestyle="--", label=f"B0={B}")
     plt.xlabel("Fourier mode a")
     plt.ylabel("fa-value")
+    plt.xticks(np.arange(chain_length))
     plt.title(f"fa_values for chain_length = {chain_length}")
-    plt.legend()
+    plt.legend(loc=4)
     plt.show()
 
 
