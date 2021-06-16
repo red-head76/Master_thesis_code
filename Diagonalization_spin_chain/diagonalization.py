@@ -3,7 +3,7 @@ from scipy.special import binom
 from support_functions import packbits, unpackbits, create_basis_vectors
 
 
-def eig_values_vectors(chain_length, J, B0, A, periodic_boundaries, central_spin):
+def eig_values_vectors(chain_length, J, B0, A, periodic_boundaries, central_spin, seed=False):
     """
     Computes the the Heisenberg Hamiltonian without coupling
     to a central spin: H = Sum_i (J * S_i * S_i+1 + B_i S_i^z).
@@ -17,6 +17,7 @@ def eig_values_vectors(chain_length, J, B0, A, periodic_boundaries, central_spin
         periodic_boundaries (bool): determines whether or not periodic boundary
                                                   conditions are used in the chain.
         central_spin (bool): determines whethere or not a central spin is present
+        seed (bool, default=False): if a seed is used, its always the same realization.
 
     Returns:
         eigenvalues (float array [total_spins]): the eigenvalues of the Hamiltonian
@@ -30,6 +31,8 @@ def eig_values_vectors(chain_length, J, B0, A, periodic_boundaries, central_spin
 
     H = np.zeros((dim, dim))
     # Create a new random B-field for every instance
+    if seed:
+        np.random.seed(seed)
     B = np.round(np.random.uniform(-1, 1, chain_length), 2)
     # For every state
     for state_index in range(dim):
@@ -85,7 +88,7 @@ def eig_values_vectors(chain_length, J, B0, A, periodic_boundaries, central_spin
 
 
 def eig_values_vectors_spin_const(chain_length, J, B0, A, periodic_boundaries, central_spin,
-                                  only_biggest_subspace):
+                                  only_biggest_subspace, seed=False):
     """
     Computes the the Heisenberg Hamiltonian without coupling
     to a central spin: H = Sum_i (J * S_i * S_i+1 + B_i S_i^z).
@@ -99,6 +102,7 @@ def eig_values_vectors_spin_const(chain_length, J, B0, A, periodic_boundaries, c
         periodic_boundaries (bool): determines whether or not periodic boundary
                                                   conditions are used in the chain.
         central_spin (bool): determines whethere or not a central spin is present
+        seed (bool, default=False): if a seed is used, its always the same realization.
 
     Returns:
         eigenvalues (float array [total_spins]): the eigenvalues of the Hamiltonian
@@ -109,6 +113,8 @@ def eig_values_vectors_spin_const(chain_length, J, B0, A, periodic_boundaries, c
     dim = np.int(2**total_spins)
     psi_z = np.arange(0, dim)
     # Create a new random B-field for every instance
+    if seed:
+        np.random.seed(seed)
     B = np.round(np.random.uniform(-1, 1, chain_length), 2)
     if central_spin:
         B = np.append(B, 0)
