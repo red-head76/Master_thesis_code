@@ -130,7 +130,7 @@ def eig_values_vectors_spin_const(chain_length, J, B0, A, periodic_boundaries, c
     # Fill subspaces
     # For every possible number of spin-up
     for n in range(len(subspaces)):
-        if only_biggest_subspace and (n != len(subspaces) // 2):
+        if only_biggest_subspace and (n != (total_spins // 2)):
             continue
         # Check every state to fit in that space
         sub_counter = 0
@@ -142,7 +142,7 @@ def eig_values_vectors_spin_const(chain_length, J, B0, A, periodic_boundaries, c
 
     if only_biggest_subspace:
         # even though its only one element, it needs to be iterable for the following algorithm
-        subspaces = [subspaces[len(subspaces) // 2]]
+        subspaces = [subspaces[total_spins // 2]]
 
     # Generate Hamiltonian for each subspace
     for subspace in subspaces:

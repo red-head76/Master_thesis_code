@@ -624,6 +624,48 @@ def plot_Sa_values(times, chain_length, J, B0, A, periodic_boundaries, samples):
     plt.show()
 
 
+def calc_occupation_imbalance(times, chain_length, J, B0, A, periodic_boundaries, central_spin):
+    """
+    Calculates the occupation imbalance sum_odd s_z - sum_even s_z
+
+    Args:
+        rho0 (array (float) [dim, dim]): the initial density matrix, where dim = 2**total_spins
+        times (array (float) [tD]): the time array, where g should be calculated
+        chain_length (int or array (int)): the length of the spin chain
+        J (float): the coupling constant
+        B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
+                                between (-1, 1).
+        A (float): the coupling between the central spin and the spins in the chain
+        periodic_boundaries (boolx): determines whether or not periodic boundary
+                                                  conditions are used in the chain.
+        central_spin (bool): determines whether or not a central spin is present
+    """
+    total_spins = chain_length[0] + central_spin
+    dim = np.int(2**total_spins)
+    # This mask filters out the states of the biggest subspace
+    sub_room_mask = np.where(np.logical_not(np.sum(unpackbits(np.arange(dim), total_spins),
+                                                   axis=1) - total_spins//2))
+    eigenvalues, eigenvectors = eig_values_vectors_spin_const(
+        chain_length[0], J, B0, A, periodic_boundaries, central_spin,
+        only_biggest_subspace=True, seed=21)
+    eigenvectors = (eigenvectors.T[sub_room_mask]).T
+    psi_z = np.arange(0, np.int(2**(total_spins)))[sub_room_mask]
+    # discard last spin
+    sigma_z = (unpackbits(psi_z, total_spins) - 1/2)[:, :-1]
+    # Initialize in Neel state
+    psi_0 = np.zeros(dim)
+    psi_0[packbits(np.arange(total_spins) % 2)] = 1
+    psi_0 = psi_0[sub_room_mask]
+    # e ^ i D t in shape (times, dim, dim)
+    exp_part = np.apply_along_axis(
+        np.diag, 1, np.exp(1j * np.outer(times, eigenvalues)))
+    psi_t = eigenvectors @ exp_part @ eigenvectors.T @ psi_0
+    # discard central spin in exp_sig_z
+    exp_sig_z = (np.abs(psi_t)**2 @ sigma_z)
+    return np.sum(
+        np.where(np.arange(chain_length) % 2, exp_sig_z, -exp_sig_z), axis=1)
+
+
 def plot_occupation_imbalance(times, chain_length, J, B0, A, periodic_boundaries, central_spin):
     """
     Plots the occupation imbalance sum_odd s_z - sum_even s_z
@@ -640,25 +682,13 @@ def plot_occupation_imbalance(times, chain_length, J, B0, A, periodic_boundaries
                                                   conditions are used in the chain.
         central_spin (bool): determines whether or not a central spin is present
     """
-    total_spins = chain_length[0] + central_spin
-    dim = np.int(2**total_spins)
-    eigenvalues, eigenvectors = eig_values_vectors_spin_const(
-        chain_length[0], J, B0[0], A, periodic_boundaries, central_spin, only_biggest_subspace=True)
-    psi_z = np.arange(0, np.int(2**(total_spins)))
-    sigma_z = unpackbits(psi_z, total_spins) - 1/2
-    # Initialize in Neel state
-    psi_0 = np.zeros(dim)
-    psi_0[packbits(np.arange(total_spins) % 2)] = 1
-    # e ^ i D t in shape (times, dim, dim)
-    exp_part = np.apply_along_axis(
-        np.diag, 1, np.exp(1j * np.outer(times, eigenvalues)))
-    psi_t = eigenvectors.T @ exp_part @ eigenvectors @ psi_0
-    exp_sig_z = (np.abs(psi_t)**2 @ sigma_z)
-    occupation_imbalance = np.sum(
-        np.where(np.arange(total_spins) % 2, exp_sig_z, -exp_sig_z), axis=1)
-    plt.plot(times, occupation_imbalance)
-    plt.title(f"Occupation imbalance for \n N={chain_length}, J={J}, B0={B0}, A={A},\
-    central_spin={central_spin}")
+    for i, B in enumerate(B0):
+        occupation_imbalance = calc_occupation_imbalance(
+            times, chain_length, J, B, A, periodic_boundaries, central_spin)
+        plt.plot(times, occupation_imbalance, label=f"B0={B}")
+    plt.title(
+        f"Occupation imbalance for \n N={chain_length[0]}, J={J}, A={A}, central_spin={central_spin}")
     plt.xlabel("time")
     plt.ylabel("occupation imbalance")
+    plt.legend(loc=1)
     plt.show()
