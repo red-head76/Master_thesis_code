@@ -70,3 +70,32 @@ def packbits(x):
     """
     mask = 2**np.arange(x.size)
     return np.inner(mask, x)
+
+
+def partial_trace(rho, spins_a, rho_a=True):
+    """
+    Calculates the partial trace for the given rho and dimensions of the subspaces
+    Explanation see Notes/partial_trace_calc.pdf
+
+    Args:
+        rho (array (float) [dim, dim] or [t, dim, dim]): full density matrix with dimensions of
+                            the full hamiltonian. With optional time dimension in front.
+        spins_a (int): spins in subspace a.
+        rho_a (bool, default: True): determines whether the partial trace over b (if True, results
+                                     in rho_a) or over a (results in rho_b) should be calculated.
+
+    Returns:
+        rho_a (array (float) [dim_a, dim_a] or [t, dim_a, dim_a]): the partial trace over b
+                (or the other way around if rho_a=False).
+    """
+    axis_offset = np.size(rho.shape) - 2
+    dim = rho.shape[-1]
+    dim_a = int(2**spins_a)
+    dim_b = int(dim / dim_a)
+    if axis_offset:
+        rhojkjk = rho.reshape(-1, dim_a, dim_b, dim_a, dim_b)
+    else:
+        rhojkjk = rho.reshape(dim_a, dim_b, dim_a, dim_b)
+    # If rho_a is true, axis 1 and 3 (+offset) are taken, axis 0 and 2 otherwise
+    return np.diagonal(rhojkjk, axis1=rho_a+axis_offset,
+                       axis2=(2+rho_a+axis_offset)).sum(axis=2+axis_offset)

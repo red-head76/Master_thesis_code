@@ -4,7 +4,7 @@ import os
 from time_evo import time_evo_sigma_z
 from diagonalization import eig_values_vectors, eig_values_vectors_spin_const
 from matplotlib import animation
-from support_functions import packbits, unpackbits
+from support_functions import packbits, unpackbits, partial_trace
 from scipy.special import binom
 
 
