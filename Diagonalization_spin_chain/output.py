@@ -639,6 +639,11 @@ def calc_occupation_imbalance(times, chain_length, J, B0, A, periodic_boundaries
         periodic_boundaries (boolx): determines whether or not periodic boundary
                                                   conditions are used in the chain.
         central_spin (bool): determines whether or not a central spin is present
+        seed (int): use a seed to produce comparable outcomes if False, then it is initialized
+                    randomly
+
+    Returns:
+        occupation_imbalance (array (float) [times])
     """
     total_spins = chain_length[0] + central_spin
     dim = np.int(2**total_spins)
@@ -647,7 +652,7 @@ def calc_occupation_imbalance(times, chain_length, J, B0, A, periodic_boundaries
                                                    axis=1) - total_spins//2))
     eigenvalues, eigenvectors = eig_values_vectors_spin_const(
         chain_length[0], J, B0, A, periodic_boundaries, central_spin,
-        only_biggest_subspace=True, seed=21)
+        only_biggest_subspace=True, seed=seed)
     eigenvectors = (eigenvectors.T[sub_room_mask]).T
     psi_z = np.arange(0, np.int(2**(total_spins)))[sub_room_mask]
     # discard last spin
@@ -662,11 +667,15 @@ def calc_occupation_imbalance(times, chain_length, J, B0, A, periodic_boundaries
     psi_t = eigenvectors @ exp_part @ eigenvectors.T @ psi_0
     # discard central spin in exp_sig_z
     exp_sig_z = (np.abs(psi_t)**2 @ sigma_z)
-    return np.sum(
-        np.where(np.arange(chain_length) % 2, exp_sig_z, -exp_sig_z), axis=1)
+    # occupation imbalance mask: even minus odd sites
+    occ_imbalance = np.where(np.arange(chain_length) %
+                             2, exp_sig_z, -exp_sig_z).sum(axis=1)
+    # and norm it to 1
+    return occ_imbalance / (chain_length / 2)
 
 
-def plot_occupation_imbalance(times, chain_length, J, B0, A, periodic_boundaries, central_spin):
+def plot_occupation_imbalance(times, chain_length, J, B0, A, periodic_boundaries, central_spin,
+                              samples, seed):
     """
     Plots the occupation imbalance sum_odd s_z - sum_even s_z
 
@@ -681,11 +690,19 @@ def plot_occupation_imbalance(times, chain_length, J, B0, A, periodic_boundaries
         periodic_boundaries (boolx): determines whether or not periodic boundary
                                                   conditions are used in the chain.
         central_spin (bool): determines whether or not a central spin is present
+        samples (array (int)[1]): Number of times data points should be generated
+        seed (int): use a seed to produce comparable outcomes if False, then it is initialized
+                    randomly
     """
     for i, B in enumerate(B0):
-        occupation_imbalance = calc_occupation_imbalance(
-            times, chain_length, J, B, A, periodic_boundaries, central_spin)
-        plt.plot(times, occupation_imbalance, label=f"B0={B}")
+        occupation_imbalance = np.zeros((samples[0], times.size))
+        for sample in range(samples[0]):
+            occupation_imbalance[sample] = calc_occupation_imbalance(
+                times, chain_length, J, B, A, periodic_boundaries, central_spin, seed)
+        occupation_imbalance_mean = occupation_imbalance.mean(axis=0)
+        yerrors = occupation_imbalance.std(axis=0) / np.sqrt(samples[0])
+        plt.errorbar(times, occupation_imbalance_mean, yerr=yerrors, errorevery=int(times.size/10),
+                     label=f"B0={B}", capsize=5)
     plt.title(
         f"Occupation imbalance for \n N={chain_length[0]}, J={J}, A={A}, central_spin={central_spin}")
     plt.xlabel("time")
