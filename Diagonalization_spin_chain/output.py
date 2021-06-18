@@ -579,50 +579,60 @@ def plot_Sa_values(times, chain_length, J, B0, As, periodic_boundaries, samples)
         J (float): the coupling constant
         B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
                                 between (-1, 1).
-        A (float): the coupling between the central spin and the spins in the chain
+        A (array (float)): the coupling between the central spin and the spins in the chain
         periodic_boundaries (bool): determines whether or not periodic boundary
                                                   conditions are used in the chain.
         samples (int or array (int)): Number of times data points should be generated
-            for each number of samples there are (chain_length x chain_length - 2) data points
 
     """
     # TODO: Samples currently not implemented
-    total_spins = chain_length + 1
+    total_spins = chain_length[0] + 1
     dim = np.int(2**total_spins)
-    dim_sub = np.int(2**(total_spins/2))
-    eigenvalues, eigenvectors = eig_values_vectors_spin_const(
-        chain_length[0], J, B0[0], A, periodic_boundaries,
-        central_spin=True, only_biggest_subspace=True)
-
+    # This mask filters out the states of the biggest subspace
+    sub_room_mask = np.where(np.logical_not(np.sum(unpackbits(np.arange(dim), total_spins),
+                                                   axis=1) - total_spins//2))[0]
     # Starting with a Neel state , i.e. |up, down, up, down, ...>
     psi_0 = np.zeros(dim)
     psi_0[packbits(np.arange(total_spins) % 2)] = 1
-    rho_0 = np.outer(psi_0, psi_0)
-    # Time evolution of rho: rho(t) = U+ rho0 U with U = exp(-i H t)
-    # U for all times, i.e. [times, dim, dim]
-    exp_part = np.apply_along_axis(
-        np.diag, 1, np.exp(-1j * np.outer(times, eigenvalues)))
-    U = eigenvectors.T @ exp_part @ eigenvectors
-    rho_t = U.transpose(0, 2, 1).conjugate() @ rho_0 @ U
-    # Identity over subspace a, the space with the first half of spins
-    id_a = np.eye(dim_sub)
-    # basis states in subspace b:
-    psi_b = np.eye(dim_sub)
-    # Partial trace over b: rho_a = tr_b(rho) = sum_j (1_a o <b_j|) rho (1_a o |b_j>)
-    rho_a = np.zeros((times.size, dim_sub, dim_sub), dtype=complex)
-    for j in range(dim_sub):
-        rho_a += np.kron(id_a, psi_b[j]) @ rho_t @ np.kron(id_a, psi_b[j]).T
-    # Sa = -tr(rho_a ln(rho_a))
-    Sa = np.sum(np.diagonal(rho_a * np.log(rho_a), axis1=1, axis2=2), axis=1)
+    psi_0 = psi_0[sub_room_mask]
 
-    plt.plot(times, Sa, "o-")
+    for A in As:
+        eigenvalues, eigenvectors = eig_values_vectors_spin_const(
+            chain_length[0], J, B0[0], A, periodic_boundaries,
+            central_spin=True, only_biggest_subspace=True)
+        eigenvectors = (eigenvectors.T[sub_room_mask]).T
+        # dimension of the biggest subspace
+        dim_bss = eigenvectors.shape[0]
+        # Time evolution of rho: rho(t) = U+ rho0 U with U = exp(-i H t)
+        # U for all times, i.e. [times, dim, dim]
+        # exp_part = np.apply_along_axis(
+        #     np.diag, 1, np.exp(-1j * np.outer(times, eigenvalues)))
+        # U = eigenvectors.T @ exp_part @ eigenvectors
+        # rho_t = U.transpose(0, 2, 1).conjugate() @ rho_0 @ U
+        exp_part = np.exp(1j * np.outer(times, eigenvalues))
+        psi_t = (eigenvectors @
+                 (exp_part.reshape(times.size, dim_bss, 1) * eigenvectors.T) @ psi_0)
+        # This performs an outer product along axis 1
+        rho_t = psi_t[:, :, np.newaxis] * psi_t[:, np.newaxis, :]
+        # For now: go back to full space to calculate the partial trace. Even though there must
+        # be a smarter way to do this...
+        rho_t_fullspace = np.zeros((times.size, dim, dim))
+        rho_t_fullspace[:, sub_room_mask, sub_room_mask] = rho_t
+        # partial_trace over b -> rho_a(t)
+        rho_a_t = partial_trace(rho_t_fullspace, total_spins//2)
+        # # Sa = -tr(rho_a ln(rho_a))
+        Sa = np.sum(np.diagonal(rho_a_t * np.log(rho_a_t),
+                                axis1=1, axis2=2), axis=1)
+
+        plt.plot(times, Sa, "o-")
     plt.xlabel("time t")
     plt.ylabel("Sa(t)")
     plt.semilogx()
     plt.show()
 
 
-def calc_occupation_imbalance(times, chain_length, J, B0, A, periodic_boundaries, central_spin):
+def calc_occupation_imbalance(times, chain_length, J, B0, A, periodic_boundaries, central_spin,
+                              seed):
     """
     Calculates the occupation imbalance sum_odd s_z - sum_even s_z
 
