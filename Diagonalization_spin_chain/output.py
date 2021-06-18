@@ -341,7 +341,6 @@ def plot_f_fig2(chain_length, J, B0, periodic_boundaries, samples, verbose=True)
         periodic_boundaries (bool): determines whether or not periodic boundary
                                                   conditions are used in the chain.
         samples (int or array (int)): Number of times data points should be generated
-            for each number of samples there are (chain_length x chain_length - 2) data points
         verbose (bool, default=True): prints some extra information about where the process is
     """
     mean_f_values = np.empty((np.size(chain_length), np.size(B0)))
@@ -448,7 +447,6 @@ def plot_g_value(rho0, times, chain_length, J, B0, periodic_boundaries, samples)
         periodic_boundaries (bool): determines whether or not periodic boundary
                                                   conditions are used in the chain.
         samples (int or array (int)): Number of times data points should be generated
-            for each number of samples there are (chain_length x chain_length - 2) data points
 
     """
     fig = plt.figure(figsize=(chain_length.size * 6, 4))
