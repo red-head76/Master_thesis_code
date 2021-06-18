@@ -571,7 +571,7 @@ def plot_fa_values(chain_length, J, B0, A, periodic_boundaries, central_spin, sa
     plt.show()
 
 
-def plot_Sa_values(times, chain_length, J, B0, A, periodic_boundaries, samples):
+def plot_Sa_values(times, chain_length, J, B0, As, periodic_boundaries, samples):
     """
     Plots the Sa(t) values (see fig2 in http://arxiv.org/abs/1806.08316)
 

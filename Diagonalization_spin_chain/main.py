@@ -33,16 +33,17 @@ Constants = config_object["Constants"]
 J = float(Constants["J"])
 B0 = config_object.getlist("Constants", "B0").astype(np.float)
 # B0 = np.arange(0.5, 13)
-A = float(Constants["A"])
+A = config_object.getlist("Constants", "A").astype(np.float)
 
 # Output option
 Output = config_object["Output"]
 outputtype = Output["outputtype"]
 save = Output["filename"]
 samples = config_object.getlist("Output", "samples").astype(np.int)
-
 # Other setup
 Other = config_object["Other"]
+seed = int(Other["seed"])
+
 if outputtype in ["plot_time_evo", "animate_time_evo", "plot_occupation_imbalance"]:
     # Initial state
     psi0 = np.zeros(dim)
@@ -64,16 +65,16 @@ if outputtype == "plot_sa":
         Other["timesteps"]) + 1)
 
 if outputtype == "plot_time_evo":
-    output.plot_time_evo(t, psi0, chain_length.item(), J, B0.item(), A, spin_constant,
+    output.plot_time_evo(t, psi0, chain_length[0], J, B0[0], A[0], spin_constant,
                          periodic_boundaries, central_spin, save)
 
 if outputtype == "animate_time_evo":
-    output.animate_time_evo(t, psi0, chain_length.item(), J, B0.item(), A, spin_constant,
+    output.animate_time_evo(t, psi0, chain_length[0], J, B0[0], A[0], spin_constant,
                             periodic_boundaries, central_spin, save)
 
 if outputtype == "plot_r":
-    output.plot_r_values(chain_length.item(), J, B0.item(), A, periodic_boundaries, central_spin,
-                         spin_constant, samples.item())
+    output.plot_r_values(chain_length[0], J, B0[0], A[0], periodic_boundaries, central_spin,
+                         spin_constant, samples[0])
 
 if outputtype == "plot_r_fig3":
     output.plot_r_fig3(chain_length, J, B0, periodic_boundaries, samples)
@@ -86,13 +87,14 @@ if outputtype == "plot_g":
                         periodic_boundaries, samples)
 
 if outputtype == "plot_fa":
-    output.plot_fa_values(chain_length, J, B0, A,
+    output.plot_fa_values(chain_length, J, B0, A[0],
                           periodic_boundaries, central_spin, samples)
 
 if outputtype == "plot_sa":
+    pdb.set_trace()
     output.plot_Sa_values(t, chain_length, J, B0, A,
                           periodic_boundaries, samples)
 
 if outputtype == "plot_occupation_imbalance":
     output.plot_occupation_imbalance(
-        t, chain_length, J, B0, A, periodic_boundaries, central_spin)
+        t, chain_length, J, B0, A[0], periodic_boundaries, central_spin, samples, seed)
