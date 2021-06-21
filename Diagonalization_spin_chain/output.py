@@ -557,7 +557,7 @@ def plot_fa_values(chain_length, J, B0, A, periodic_boundaries, central_spin, sa
         mean_fa_values[j] = fa_values / samples
 
         yerrors = (
-            1 / np.sqrt(samples))  # * binom(total_spins, total_spins // 2)))
+            1 / np.sqrt(samples))
         plt.errorbar(np.arange(chain_length, dtype=int), mean_fa_values[j],
                      yerr=yerrors, marker="o", capsize=5, linestyle="--", label=f"B0={B}")
     plt.xlabel("Fourier mode a")
@@ -612,11 +612,12 @@ def plot_Sa_values(times, chain_length, J, B0, As, periodic_boundaries, samples)
         psi_t = (eigenvectors @
                  (exp_part.reshape(times.size, dim_bss, 1) * eigenvectors.T) @ psi_0)
         # This performs an outer product along axis 1
-        rho_t = psi_t[:, :, np.newaxis] * psi_t[:, np.newaxis, :]
+        rho_t = psi_t[:, :, np.newaxis] * psi_t.conj()[:, np.newaxis, :]
         # For now: go back to full space to calculate the partial trace. Even though there must
         # be a smarter way to do this...
-        rho_t_fullspace = np.zeros((times.size, dim, dim))
-        rho_t_fullspace[:, sub_room_mask, sub_room_mask] = rho_t
+        rho_t_fullspace = np.zeros((times.size, dim, dim), dtype=complex)
+        sub_room_mask2D = np.meshgrid(sub_room_mask, sub_room_mask)
+        rho_t_fullspace[:, sub_room_mask2D[1], sub_room_mask2D[0]] = rho_t
         # partial_trace over b -> rho_a(t)
         rho_a_t = partial_trace(rho_t_fullspace, total_spins//2)
         # # Sa = -tr(rho_a ln(rho_a))
