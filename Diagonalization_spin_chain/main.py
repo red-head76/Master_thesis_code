@@ -44,7 +44,8 @@ samples = config_object.getlist("Output", "samples").astype(np.int)
 Other = config_object["Other"]
 seed = int(Other["seed"])
 
-if outputtype in ["plot_time_evo", "animate_time_evo", "plot_occupation_imbalance"]:
+if outputtype in ["plot_time_evo", "animate_time_evo", "plot_occupation_imbalance",
+                  "plot_exp_sig_z_central_spin"]:
     # Initial state
     psi0 = np.zeros(dim)
     psi0[int(Other["idx_psi0"])] = 1
@@ -98,3 +99,6 @@ if outputtype == "plot_sa":
 if outputtype == "plot_occupation_imbalance":
     output.plot_occupation_imbalance(
         t, chain_length, J, B0, A[0], periodic_boundaries, central_spin, samples, seed)
+if outputtype == "plot_exp_sig_z_central_spin":
+    output.plot_exp_sig_z_central_spin(
+        t, chain_length, J, B0, A, periodic_boundaries, samples, seed)

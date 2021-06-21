@@ -5,7 +5,6 @@ from time_evo import time_evo_sigma_z
 from diagonalization import eig_values_vectors, eig_values_vectors_spin_const
 from matplotlib import animation
 from support_functions import packbits, unpackbits, partial_trace
-from scipy.special import binom
 
 
 def plot_time_evo(t, psi0, chain_length, J, B0, A, spin_constant,
@@ -715,5 +714,89 @@ def plot_occupation_imbalance(times, chain_length, J, B0, A, periodic_boundaries
         f"Occupation imbalance for \n N={chain_length[0]}, J={J}, A={A}, central_spin={central_spin}")
     plt.xlabel("time")
     plt.ylabel("occupation imbalance")
+    plt.legend(loc=1)
+    plt.show()
+
+
+def calc_exp_sig_z_central_spin(times, chain_length, J, B0, A, periodic_boundaries, seed):
+    """
+    Calculates the expectation value for the central spin.
+
+    Args:
+        rho0 (array (float) [dim, dim]): the initial density matrix, where dim = 2**total_spins
+        times (array (float) [tD]): the time array, where g should be calculated
+        chain_length (int or array (int)): the length of the spin chain
+        J (float): the coupling constant
+        B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
+                                between (-1, 1).
+        A (float): the coupling between the central spin and the spins in the chain
+        periodic_boundaries (boolx): determines whether or not periodic boundary
+                                                  conditions are used in the chain.
+        seed (int): use a seed to produce comparable outcomes if False, then it is initialized
+                    randomly
+
+    Returns:
+        exp_sig_z (array (float) [times]): the expectation value for the central spin
+    """
+    total_spins = chain_length[0] + 1
+    dim = np.int(2**total_spins)
+    # This mask filters out the states of the biggest subspace
+    sub_room_mask = np.where(np.logical_not(np.sum(unpackbits(np.arange(dim), total_spins),
+                                                   axis=1) - total_spins//2))
+    eigenvalues, eigenvectors = eig_values_vectors_spin_const(
+        chain_length[0], J, B0, A, periodic_boundaries, True,
+        only_biggest_subspace=True, seed=seed)
+    eigenvectors = (eigenvectors.T[sub_room_mask]).T
+    psi_z = np.arange(0, np.int(2**(total_spins)))[sub_room_mask]
+    # discard last spin
+    sigma_z = (unpackbits(psi_z, total_spins) - 1/2)[:, -1]
+    # Initialize in Neel state
+    psi_0 = np.zeros(dim)
+    psi_0[packbits(np.arange(total_spins) % 2)] = 1
+    psi_0 = psi_0[sub_room_mask]
+    # e ^ i D t in shape (times, dim, dim)
+    exp_part = np.apply_along_axis(
+        np.diag, 1, np.exp(1j * np.outer(times, eigenvalues)))
+    psi_t = eigenvectors @ exp_part @ eigenvectors.T @ psi_0
+    # discard central spin in exp_sig_z
+    exp_sig_z = (np.abs(psi_t)**2 @ sigma_z)
+    # and norm it to 1
+    return exp_sig_z
+
+
+def plot_exp_sig_z_central_spin(times, chain_length, J, B0, As, periodic_boundaries,
+                                samples, seed):
+    """
+    Plots the occupation imbalance sum_odd s_z - sum_even s_z
+
+    Args:
+        rho0 (array (float) [dim, dim]): the initial density matrix, where dim = 2**total_spins
+        times (array (float) [tD]): the time array, where g should be calculated
+        chain_length (int or array (int)): the length of the spin chain
+        J (float): the coupling constant
+        B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
+                                between (-1, 1).
+        As (array (float)): the coupling between the central spin and the spins in the chain
+        periodic_boundaries (boolx): determines whether or not periodic boundary
+                                                  conditions are used in the chain.
+        samples (array (int)[1]): Number of times data points should be generated
+        seed (int): use a seed to produce comparable outcomes if False, then it is initialized
+                    randomly
+    """
+    for A in As:
+        for B in B0:
+            exp_sig_z = np.zeros((samples[0], times.size))
+            for sample in range(samples[0]):
+                exp_sig_z[sample] = calc_exp_sig_z_central_spin(
+                    times, chain_length, J, B, A, periodic_boundaries, seed)
+            exp_sig_z_mean = exp_sig_z.mean(axis=0)
+            yerrors = exp_sig_z.std(axis=0) / np.sqrt(samples[0])
+            plt.plot(times, exp_sig_z_mean, label=f"B0={B}, A={A}")
+            plt.fill_between(times, exp_sig_z_mean + yerrors,
+                             exp_sig_z_mean - yerrors, alpha=0.2)
+            plt.title(
+                f"Expectation value of the central spin for \n N={chain_length[0]}, J={J}")
+    plt.xlabel("time")
+    plt.ylabel(r"$<S_z>$")
     plt.legend(loc=1)
     plt.show()
