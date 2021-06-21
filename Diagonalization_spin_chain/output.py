@@ -681,7 +681,7 @@ def calc_occupation_imbalance(times, chain_length, J, B0, A, periodic_boundaries
     return occ_imbalance / (chain_length / 2)
 
 
-def plot_occupation_imbalance(times, chain_length, J, B0, A, periodic_boundaries, central_spin,
+def plot_occupation_imbalance(times, chain_length, J, B0, As, periodic_boundaries, central_spin,
                               samples, seed):
     """
     Plots the occupation imbalance sum_odd s_z - sum_even s_z
@@ -693,7 +693,7 @@ def plot_occupation_imbalance(times, chain_length, J, B0, A, periodic_boundaries
         J (float): the coupling constant
         B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
                                 between (-1, 1).
-        A (float): the coupling between the central spin and the spins in the chain
+        As (array (float)): the coupling between the central spin and the spins in the chain
         periodic_boundaries (boolx): determines whether or not periodic boundary
                                                   conditions are used in the chain.
         central_spin (bool): determines whether or not a central spin is present
@@ -701,17 +701,19 @@ def plot_occupation_imbalance(times, chain_length, J, B0, A, periodic_boundaries
         seed (int): use a seed to produce comparable outcomes if False, then it is initialized
                     randomly
     """
-    for i, B in enumerate(B0):
-        occupation_imbalance = np.zeros((samples[0], times.size))
-        for sample in range(samples[0]):
-            occupation_imbalance[sample] = calc_occupation_imbalance(
-                times, chain_length, J, B, A, periodic_boundaries, central_spin, seed)
-        occupation_imbalance_mean = occupation_imbalance.mean(axis=0)
-        yerrors = occupation_imbalance.std(axis=0) / np.sqrt(samples[0])
-        plt.errorbar(times, occupation_imbalance_mean, yerr=yerrors, errorevery=int(times.size/10),
-                     label=f"B0={B}", capsize=5)
-    plt.title(
-        f"Occupation imbalance for \n N={chain_length[0]}, J={J}, A={A}, central_spin={central_spin}")
+    for A in As:
+        for B in B0:
+            occupation_imbalance = np.zeros((samples[0], times.size))
+            for sample in range(samples[0]):
+                occupation_imbalance[sample] = calc_occupation_imbalance(
+                    times, chain_length, J, B, A, periodic_boundaries, central_spin, seed)
+            occupation_imbalance_mean = occupation_imbalance.mean(axis=0)
+            yerrors = occupation_imbalance.std(axis=0) / np.sqrt(samples[0])
+            plt.plot(times, occupation_imbalance_mean, label=f"B0={B}, A={A}")
+            plt.fill_between(times, occupation_imbalance_mean + yerrors,
+                             occupation_imbalance_mean - yerrors, alpha=0.2)
+            plt.title(
+                f"Occupation imbalance for \n N={chain_length[0]}, J={J}, central_spin={central_spin}")
     plt.xlabel("time")
     plt.ylabel("occupation imbalance")
     plt.legend(loc=1)

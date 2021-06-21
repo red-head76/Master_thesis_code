@@ -92,13 +92,13 @@ if outputtype == "plot_fa":
                           periodic_boundaries, central_spin, samples)
 
 if outputtype == "plot_sa":
-    pdb.set_trace()
     output.plot_Sa_values(t, chain_length, J, B0, A,
                           periodic_boundaries, samples)
 
 if outputtype == "plot_occupation_imbalance":
     output.plot_occupation_imbalance(
-        t, chain_length, J, B0, A[0], periodic_boundaries, central_spin, samples, seed)
+        t, chain_length, J, B0, A, periodic_boundaries, central_spin, samples, seed)
+
 if outputtype == "plot_exp_sig_z_central_spin":
     output.plot_exp_sig_z_central_spin(
         t, chain_length, J, B0, A, periodic_boundaries, samples, seed)
