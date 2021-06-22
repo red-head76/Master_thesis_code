@@ -43,26 +43,19 @@ samples = config_object.getlist("Output", "samples").astype(np.int)
 Other = config_object["Other"]
 seed = int(Other["seed"])
 
-if outputtype in ["plot_time_evo", "animate_time_evo", "plot_occupation_imbalance",
-                  "plot_exp_sig_z_central_spin"]:
+if outputtype in ["plot_time_evo", "animate_time_evo"]:
     # Initial state
     psi0 = np.zeros(dim)
     psi0[int(Other["idx_psi0"])] = 1
     # Time array
     t = np.linspace(0, float(Other["timespan"]), int(Other["timesteps"]))
 
-if outputtype == "plot_g":
+if outputtype in ["plot_g"]:
     # Initial state
-    # psi0 = [np.zeros(d) for d in dim]
-    # for psi in psi0:
-    #     psi[int(Other["idx_psi0"])] = 1
     rho0 = [np.eye(d) / d for d in dim]
     # Time array
     t = np.linspace(0, float(Other["timespan"]), int(Other["timesteps"]) + 1)
 
-if outputtype == "plot_sa":
-    t = np.logspace(0, np.log10(float(Other["timespan"])), int(
-        Other["timesteps"]) + 1)
 if outputtype in ["plot_sa", "plot_occupation_imbalance", "plot_exp_sig_z_central_spin"]:
     t = np.logspace(np.log10(float(Other["timestart"])), np.log10(float(Other["timespan"])),
                     int(Other["timesteps"]) + 1)

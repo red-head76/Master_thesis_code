@@ -251,8 +251,7 @@ def plot_r_fig3(chain_length, J, B0, periodic_boundaries, samples):
             r_values /= samples[i]
             # Averaging over samples and states at the same time
             mean_r_values[i, j] = np.mean(r_values)
-
-        yerrors = 1 / np.sqrt(samples[i] * 2**chain_length[i])
+        yerrors = 1 / np.sqrt(samples[i])
         plt.errorbar(B0, mean_r_values[i], yerr=yerrors, marker="o", capsize=5,
                      linestyle="--", label=f"N={N}")
     plt.xlabel("Magnetic field amplitude B0")
