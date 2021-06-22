@@ -639,11 +639,11 @@ def calc_occupation_imbalance(times, chain_length, J, B0, A, periodic_boundaries
     Args:
         rho0 (array (float) [dim, dim]): the initial density matrix, where dim = 2**total_spins
         times (array (float) [tD]): the time array, where g should be calculated
-        chain_length (int or array (int)): the length of the spin chain
+        chain_length (int): the length of the spin chain
         J (float): the coupling constant
         B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
                                 between (-1, 1).
-        A (float): the coupling between the central spin and the spins in the chain
+        A (float): coupling between the central spin and the spins in the chain
         periodic_boundaries (boolx): determines whether or not periodic boundary
                                                   conditions are used in the chain.
         central_spin (bool): determines whether or not a central spin is present
@@ -653,13 +653,13 @@ def calc_occupation_imbalance(times, chain_length, J, B0, A, periodic_boundaries
     Returns:
         occupation_imbalance (array (float) [times])
     """
-    total_spins = chain_length[0] + central_spin
+    total_spins = chain_length + central_spin
     dim = np.int(2**total_spins)
     # This mask filters out the states of the biggest subspace
     sub_room_mask = np.where(np.logical_not(np.sum(unpackbits(np.arange(dim), total_spins),
                                                    axis=1) - total_spins//2))
     eigenvalues, eigenvectors = eig_values_vectors_spin_const(
-        chain_length[0], J, B0, A, periodic_boundaries, central_spin,
+        chain_length, J, B0, A, periodic_boundaries, central_spin,
         only_biggest_subspace=True, seed=seed)
     eigenvectors = (eigenvectors.T[sub_room_mask]).T
     psi_z = np.arange(0, np.int(2**(total_spins)))[sub_room_mask]
@@ -669,10 +669,9 @@ def calc_occupation_imbalance(times, chain_length, J, B0, A, periodic_boundaries
     psi_0 = np.zeros(dim)
     psi_0[packbits(np.arange(total_spins) % 2)] = 1
     psi_0 = psi_0[sub_room_mask]
-    # e ^ i D t in shape (times, dim, dim)
-    exp_part = np.apply_along_axis(
-        np.diag, 1, np.exp(1j * np.outer(times, eigenvalues)))
-    psi_t = eigenvectors @ exp_part @ eigenvectors.T @ psi_0
+    exp_part = np.exp(1j * np.outer(times, eigenvalues))
+    psi_t = eigenvectors @ (exp_part.reshape(times.size, eigenvalues.size, 1)
+                            * eigenvectors.T) @ psi_0
     # discard central spin in exp_sig_z
     exp_sig_z = (np.abs(psi_t)**2 @ sigma_z)
     # occupation imbalance mask: even minus odd sites
@@ -690,9 +689,9 @@ def plot_occupation_imbalance(times, chain_length, J, B0, As, periodic_boundarie
     Args:
         rho0 (array (float) [dim, dim]): the initial density matrix, where dim = 2**total_spins
         times (array (float) [tD]): the time array, where g should be calculated
-        chain_length (int or array (int)): the length of the spin chain
+        chain_length (array (int)): the length of the spin chain
         J (float): the coupling constant
-        B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
+        B0 (array (float)): the B-field amplitude. Currently random initialized uniformly
                                 between (-1, 1).
         As (array (float)): the coupling between the central spin and the spins in the chain
         periodic_boundaries (boolx): determines whether or not periodic boundary
@@ -702,20 +701,23 @@ def plot_occupation_imbalance(times, chain_length, J, B0, As, periodic_boundarie
         seed (int): use a seed to produce comparable outcomes if False, then it is initialized
                     randomly
     """
-    for A in As:
-        for B in B0:
-            occupation_imbalance = np.zeros((samples[0], times.size))
-            for sample in range(samples[0]):
-                occupation_imbalance[sample] = calc_occupation_imbalance(
-                    times, chain_length, J, B, A, periodic_boundaries, central_spin, seed)
-            occupation_imbalance_mean = occupation_imbalance.mean(axis=0)
-            yerrors = occupation_imbalance.std(axis=0) / np.sqrt(samples[0])
-            plt.plot(times, occupation_imbalance_mean, label=f"B0={B}, A={A}")
-            plt.fill_between(times, occupation_imbalance_mean + yerrors,
-                             occupation_imbalance_mean - yerrors, alpha=0.2)
-            plt.title(
-                f"Occupation imbalance for \n N={chain_length[0]}, J={J}, central_spin={central_spin}")
+    for i, N in enumerate(chain_length):
+        for A in As:
+            for B in B0:
+                occupation_imbalance = np.zeros((samples[0], times.size))
+                for sample in range(samples[i]):
+                    occupation_imbalance[sample] = calc_occupation_imbalance(
+                        times, N, J, B, A, periodic_boundaries, central_spin, seed)
+                occupation_imbalance_mean = occupation_imbalance.mean(axis=0)
+                yerrors = occupation_imbalance.std(
+                    axis=0) / np.sqrt(samples[0])
+                plt.plot(times, occupation_imbalance_mean, label=f"N={N}")
+                plt.fill_between(times, occupation_imbalance_mean + yerrors,
+                                 occupation_imbalance_mean - yerrors, alpha=0.2)
+                plt.title(
+                    f"Occupation imbalance for \nJ={J}, B={B}, A={A}, central_spin={central_spin}")
     plt.xlabel("time")
+    plt.semilogx()
     plt.ylabel("occupation imbalance")
     plt.legend(loc=1)
     plt.show()

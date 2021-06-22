@@ -64,6 +64,9 @@ if outputtype == "plot_g":
 if outputtype == "plot_sa":
     t = np.logspace(0, np.log10(float(Other["timespan"])), int(
         Other["timesteps"]) + 1)
+if outputtype in ["plot_sa", "plot_occupation_imbalance", "plot_exp_sig_z_central_spin"]:
+    t = np.logspace(np.log10(float(Other["timestart"])), np.log10(float(Other["timespan"])),
+                    int(Other["timesteps"]) + 1)
 
 if outputtype == "plot_time_evo":
     output.plot_time_evo(t, psi0, chain_length[0], J, B0[0], A[0], spin_constant,
