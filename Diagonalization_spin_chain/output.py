@@ -619,14 +619,18 @@ def plot_Sa_values(times, chain_length, J, B0, As, periodic_boundaries, samples)
         rho_t_fullspace[:, sub_room_mask2D[1], sub_room_mask2D[0]] = rho_t
         # partial_trace over b -> rho_a(t)
         rho_a_t = partial_trace(rho_t_fullspace, total_spins//2)
-        # # Sa = -tr(rho_a ln(rho_a))
-        Sa = np.sum(np.diagonal(rho_a_t * np.log(rho_a_t),
-                                axis1=1, axis2=2), axis=1)
+        # Sa = -tr(rho_a ln(rho_a))
+        #    = -tr(rho ln(rho)) = tr(D ln(D)), where D is the diagonalized matrix
+        eigvals = np.linalg.eigvalsh(rho_a_t)
+        # to prevent errors because of ln(0)
+        eigvals += 1e-20
+        Sa = -np.sum(eigvals * np.log(eigvals), axis=1)
+        plt.plot(times, Sa, label=f"A={A}")
 
-        plt.plot(times, Sa, "o-")
     plt.xlabel("time t")
     plt.ylabel("Sa(t)")
     plt.semilogx()
+    plt.legend()
     plt.show()
 
 
