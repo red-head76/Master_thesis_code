@@ -40,7 +40,9 @@ def create_config():
         "filename": "",
         # In case of calculating the plot_r_values, the amount of created samples
         # In case of multiple instances, a list is also possible.
-        "samples": "100"
+        "samples": "100",
+        # Determines if the output should be displayed or not
+        "show": "True"
     }
 
     config_object["Other"] = {

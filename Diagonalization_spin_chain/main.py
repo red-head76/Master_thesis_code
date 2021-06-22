@@ -2,6 +2,7 @@ import pdb
 from os.path import isfile
 from configparser import ConfigParser
 import numpy as np
+from matplotlib.pyplot import show as show_plot
 import output
 from create_config import create_config
 
@@ -39,6 +40,8 @@ Output = config_object["Output"]
 outputtype = Output["outputtype"]
 save = Output["filename"]
 samples = config_object.getlist("Output", "samples").astype(np.int)
+show = config_object.getboolean("Output", "show")
+
 # Other setup
 Other = config_object["Other"]
 seed = int(Other["seed"])
@@ -97,3 +100,7 @@ if outputtype == "plot_occupation_imbalance":
 if outputtype == "plot_exp_sig_z_central_spin":
     output.plot_exp_sig_z_central_spin(
         t, chain_length, J, B0, A, periodic_boundaries, samples, seed)
+
+
+if show:
+    show_plot()

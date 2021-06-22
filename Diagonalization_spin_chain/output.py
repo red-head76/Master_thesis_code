@@ -50,7 +50,6 @@ def plot_time_evo(t, psi0, chain_length, J, B0, A, spin_constant,
             if not os.path.isdir("./Plots"):
                 os.mkdir("./Plots")
             plt.savefig("./Plots/" + save)
-    plt.show()
 
 
 def animate_time_evo(t, psi0, chain_length, J, B0, A, spin_constant,
@@ -99,7 +98,6 @@ def animate_time_evo(t, psi0, chain_length, J, B0, A, spin_constant,
             os.mkdir("./Plots")
         writervideo = animation.FFMpegWriter(fps=10)
         anim.save("./Plots/" + save, writer=writervideo)
-    plt.show()
 
 
 # Histogram functions for r_value
@@ -219,7 +217,6 @@ def plot_r_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
     plt.ylabel(r"Density $\rho (r)$")
     plt.title(f"R values averaged over {samples} samples")
     plt.legend()
-    plt.show()
 
 
 def plot_r_fig3(chain_length, J, B0, periodic_boundaries, samples):
@@ -257,7 +254,6 @@ def plot_r_fig3(chain_length, J, B0, periodic_boundaries, samples):
     plt.xlabel("Magnetic field amplitude B0")
     plt.ylabel("r-value")
     plt.legend()
-    plt.show()
 
 
 def generate_f_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
@@ -366,7 +362,6 @@ def plot_f_fig2(chain_length, J, B0, periodic_boundaries, samples, verbose=True)
     plt.xlabel("Magnetic field amplitude B0")
     plt.ylabel("f-value")
     plt.legend()
-    plt.show()
 
 
 def generate_g_values(rho0, times, chain_length, J, B0, A, periodic_boundaries, central_spin,
@@ -474,8 +469,6 @@ def plot_g_value(rho0, times, chain_length, J, B0, periodic_boundaries, samples)
         # plt.errorbar(B0, mean_g_values[i], yerr=yerrors, marker="o", capsize=5,
         #              linestyle="--", label=f"N={N}")
 
-    plt.show()
-
 
 def generate_fa_values(chain_length, J, B0, A, periodic_boundaries, central_spin):
     """
@@ -564,7 +557,6 @@ def plot_fa_values(chain_length, J, B0, A, periodic_boundaries, central_spin, sa
     plt.xticks(np.arange(chain_length))
     plt.title(f"fa_values for chain_length = {chain_length}")
     plt.legend(loc=4)
-    plt.show()
 
 
 def plot_Sa_values(times, chain_length, J, B0, As, periodic_boundaries, samples):
@@ -631,7 +623,6 @@ def plot_Sa_values(times, chain_length, J, B0, As, periodic_boundaries, samples)
     plt.ylabel("Sa(t)")
     plt.semilogx()
     plt.legend()
-    plt.show()
 
 
 def calc_occupation_imbalance(times, chain_length, J, B0, A, periodic_boundaries, central_spin,
@@ -723,7 +714,6 @@ def plot_occupation_imbalance(times, chain_length, J, B0, As, periodic_boundarie
     plt.semilogx()
     plt.ylabel("occupation imbalance")
     plt.legend(loc=1)
-    plt.show()
 
 
 def calc_exp_sig_z_central_spin(times, chain_length, J, B0, A, periodic_boundaries, seed):
@@ -807,4 +797,3 @@ def plot_exp_sig_z_central_spin(times, chain_length, J, B0, As, periodic_boundar
     plt.xlabel("time")
     plt.ylabel(r"$<S_z>$")
     plt.legend(loc=1)
-    plt.show()
