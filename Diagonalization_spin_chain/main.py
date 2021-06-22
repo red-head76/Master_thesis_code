@@ -1,10 +1,9 @@
-import numpy as np
 import pdb
-import output
 from os.path import isfile
 from configparser import ConfigParser
+import numpy as np
+import output
 from create_config import create_config
-from support_functions import pc
 
 
 def convert_list(string):
