@@ -48,8 +48,7 @@ seed = int(Other["seed"])
 
 if outputtype in ["plot_time_evo", "animate_time_evo"]:
     # Initial state
-    psi0 = np.zeros(dim)
-    psi0[int(Other["idx_psi0"])] = 1
+    idx_psi_0 = int(Other["idx_psi_0"])
     # Time array
     t = np.linspace(0, float(Other["timespan"]), int(Other["timesteps"]))
 

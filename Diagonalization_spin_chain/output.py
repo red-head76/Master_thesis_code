@@ -7,14 +7,14 @@ from matplotlib import animation
 from support_functions import packbits, unpackbits, partial_trace
 
 
-def plot_time_evo(t, psi0, chain_length, J, B0, A, spin_constant,
+def plot_time_evo(t, idx_psi_0, chain_length, J, B0, A, spin_constant,
                   periodic_boundaries, central_spin, save):
     """
     Plots the time evolution of the spin chain and the optional central spin
 
     Args:
         t (array [tN]): array with tN timesteps
-        psi0 (array [N]): the state at t0
+        idx_psi_0 (int): the index of the state at t0
         chain_length (int): the length of the spin chain
         J (float): the coupling constant
         B0 (float): the B-field amplitude. Currently random initialized uniformly
@@ -29,8 +29,11 @@ def plot_time_evo(t, psi0, chain_length, J, B0, A, spin_constant,
         save (string): If not False, the output is saved with the given filename.
 
     """
-
-    exp_sig_z = time_evo_sigma_z(t, psi0, chain_length, J, B0, A, spin_constant,
+    total_spins = central_spin + chain_length
+    dim = np.array(2**total_spins, dtype=np.int)
+    psi_0 = np.zeros(dim)
+    psi_0[idx_psi_0] = 1
+    exp_sig_z = time_evo_sigma_z(t, psi_0, chain_length, J, B0, A, spin_constant,
                                  periodic_boundaries, central_spin)
     total_spins = chain_length + central_spin
     fig, ax = plt.subplots(total_spins, 1, figsize=(
@@ -74,8 +77,11 @@ def animate_time_evo(t, psi0, chain_length, J, B0, A, spin_constant,
         save (string): If not False, the output is saved with the given filename.
 
     """
-
-    exp_sig_z = time_evo_sigma_z(t, psi0, chain_length, J, B0, A, spin_constant,
+    total_spins = central_spin + chain_length
+    dim = np.array(2**total_spins, dtype=np.int)
+    psi_0 = np.zeros(dim)
+    psi_0[idx_psi_0] = 1
+    exp_sig_z = time_evo_sigma_z(t, psi_0, chain_length, J, B0, A, spin_constant,
                                  periodic_boundaries, central_spin)
     total_spins = chain_length + central_spin
     fig, ax = plt.subplots(figsize=(10, 8))

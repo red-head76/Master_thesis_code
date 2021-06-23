@@ -46,8 +46,8 @@ def create_config():
     }
 
     config_object["Other"] = {
-        # Index where psi0 is nonzero
-        "idx_psi0": "1",
+        # Index where psi 0 is nonzero
+        "idx_psi_0": "1",
         "timespan": "10",
         "timesteps": "100",
         # In certain cases a random seed can be used to produce comparable outcomes. 0 equals None
