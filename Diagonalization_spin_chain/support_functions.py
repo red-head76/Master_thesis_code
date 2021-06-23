@@ -9,7 +9,7 @@ from matplotlib import animation
 def pc(matrix, precision=1):
     """
     print clean
-    Just to print out a matrix cleanly without unreadable datajunk
+    Just to print out a matrix cleanly without unreadable data junk
     """
     with np.printoptions(precision=precision, suppress=True):
         print(matrix)
@@ -17,7 +17,7 @@ def pc(matrix, precision=1):
 
 def create_basis_vectors(indices, dimension):
     """
-    Creates an array of basis vectors according to given indicees
+    Creates an array of basis vectors according to given indices
 
     Args:
         indices (array [N]): an array containing N integers
