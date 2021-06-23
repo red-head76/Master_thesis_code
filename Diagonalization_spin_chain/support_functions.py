@@ -1,4 +1,9 @@
 import numpy as np
+from matplotlib.pyplot import savefig
+from json import dump
+from os.path import isdir
+from os import mkdir
+from matplotlib import animation
 
 
 def pc(matrix, precision=1):
@@ -99,3 +104,31 @@ def partial_trace(rho, spins_a, rho_a=True):
     # If rho_a is true, axis 1 and 3 (+offset) are taken, axis 0 and 2 otherwise
     return np.diagonal(rhojkjk, axis1=rho_a+axis_offset,
                        axis2=(2+rho_a+axis_offset)).sum(axis=2+axis_offset)
+
+
+def save_data(filename, data, params, anim=False, fps=10):
+    """
+    Saves the data to a given plot with a given filename. There is one file for the plot, the data
+    of the plot and the parameters used.
+
+    Args:
+        filename (string): The filename used for saving
+        data (array): the data of the plot
+        params (dict): the parameters used to create the plot
+        anim (bool, default: False): Determines if the output is an animation
+        fps (int, default=10): set the frames per second of an animation
+
+    """
+
+    if not isdir("./Plots"):
+        mkdir("./Plots")
+    save_path = "./Plots/" + filename
+    if not anim:
+        savefig(save_path)
+    else:
+        writervideo = animation.FFMpegWriter(fps=fps)
+        anim.save(save_path, writer=writervideo)
+
+    np.savez(save_path, *data)
+    with open(save_path + "_info.json", 'w') as jsonfile:
+        dump(params, jsonfile)

@@ -4,7 +4,7 @@ import os
 from time_evo import time_evo_sigma_z
 from diagonalization import eig_values_vectors, eig_values_vectors_spin_const
 from matplotlib import animation
-from support_functions import packbits, unpackbits, partial_trace
+from support_functions import packbits, unpackbits, partial_trace, save_data
 
 
 def plot_time_evo(t, idx_psi_0, chain_length, J, B0, A, spin_constant,
@@ -50,19 +50,22 @@ def plot_time_evo(t, idx_psi_0, chain_length, J, B0, A, spin_constant,
 
         ax[-1].set_xlabel("Time t")
         if save:
-            if not os.path.isdir("./Plots"):
-                os.mkdir("./Plots")
-            plt.savefig("./Plots/" + save)
+            data = [t, exp_sig_z]
+            params = {"plot type": "time_evo", "data structure": "[t, exp_sig_z]",
+                      "idx_psi_0": idx_psi_0, "chain_length": chain_length, "J": J,
+                      "B0": B0, "A": A, "spin_constant": spin_constant,
+                      "periodic_boundaries": periodic_boundaries, "central_spin": central_spin}
+            save_data(save, data, params)
 
 
-def animate_time_evo(t, psi0, chain_length, J, B0, A, spin_constant,
+def animate_time_evo(t, idx_psi_0, chain_length, J, B0, A, spin_constant,
                      periodic_boundaries, central_spin, save):
     """
     Animate the time evolution of the spin chain and the optional central spin
 
     Args:
         t (array [tN]): array with tN timesteps
-        psi0 (array [N]): the state at t0
+        idx_psi_0 (int): the index of the state at t0
         chain_length (int): the length of the spin chain
         J (float): the coupling constant
         B0 (float): the B-field amplitude. Currently random initialized uniformly
@@ -100,10 +103,12 @@ def animate_time_evo(t, psi0, chain_length, J, B0, A, spin_constant,
     anim = animation.FuncAnimation(
         fig, run, frames=t.size, blit=True, interval=100)
     if save:
-        if not os.path.isdir("./Plots"):
-            os.mkdir("./Plots")
-        writervideo = animation.FFMpegWriter(fps=10)
-        anim.save("./Plots/" + save, writer=writervideo)
+        data = [t, exp_sig_z]
+        params = {"plot type": "anim_time_evo", "data structure": "[t, exp_sig_z]",
+                  "idx_psi_0": idx_psi_0, "chain_length": chain_length, "J": J,
+                  "B0": B0, "A": A, "spin_constant": spin_constant,
+                  "periodic_boundaries": periodic_boundaries, "central_spin": central_spin}
+        save_data(save, data, params, anim=anim)
 
 
 # Histogram functions for r_value
@@ -189,7 +194,7 @@ def generate_r_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
 
 
 def plot_r_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
-                  spin_constant, samples):
+                  spin_constant, samples, save):
     """
     Plots the histogram of r_values created by the given parameters.
 
@@ -223,9 +228,16 @@ def plot_r_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
     plt.ylabel(r"Density $\rho (r)$")
     plt.title(f"R values averaged over {samples} samples")
     plt.legend()
+    if save:
+        data = [r_values]
+        params = {"plot type": "r_values", "data structure": "[r_values]",
+                  "chain_length": chain_length, "J": J,
+                  "B0": B0, "A": A, "spin_constant": spin_constant,
+                  "periodic_boundaries": periodic_boundaries, "central_spin": central_spin}
+        save_data(save, data, params)
 
 
-def plot_r_fig3(chain_length, J, B0, periodic_boundaries, samples):
+def plot_r_fig3(chain_length, J, B0, periodic_boundaries, samples, save):
     """
     Plots the r values as done in Figure 3 in https://doi.org/10.1103/PhysRevB.82.174411
 
@@ -260,6 +272,12 @@ def plot_r_fig3(chain_length, J, B0, periodic_boundaries, samples):
     plt.xlabel("Magnetic field amplitude B0")
     plt.ylabel("r-value")
     plt.legend()
+    if save:
+        data = [B0, mean_r_values]
+        params = {"plot type": "r_values", "data structure": "[B0, mean_r_values]",
+                  "chain_length": chain_length, "J": J,
+                  "B0": B0, "periodic_boundaries": periodic_boundaries, "samples": samples}
+        save_data(save, data, params)
 
 
 def generate_f_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
@@ -329,7 +347,7 @@ def generate_f_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
     return f_value
 
 
-def plot_f_fig2(chain_length, J, B0, periodic_boundaries, samples, verbose=True):
+def plot_f_fig2(chain_length, J, B0, periodic_boundaries, samples, save, verbose=True):
     """
     Plots the f values as done in Figure 2 in https://doi.org/10.1103/PhysRevB.82.174411
 
@@ -368,6 +386,12 @@ def plot_f_fig2(chain_length, J, B0, periodic_boundaries, samples, verbose=True)
     plt.xlabel("Magnetic field amplitude B0")
     plt.ylabel("f-value")
     plt.legend()
+    if save:
+        data = [B0, mean_f_values]
+        params = {"plot type": "f_fig2", "data structure": "[B0, mean_f_values]",
+                  "chain_length": chain_length, "J": J,
+                  "B0": B0, "periodic_boundaries": periodic_boundaries, "samples": samples}
+        save_data(save, data, params)
 
 
 def generate_g_values(rho0, times, chain_length, J, B0, A, periodic_boundaries, central_spin,
@@ -448,6 +472,7 @@ def plot_g_value(rho0, times, chain_length, J, B0, periodic_boundaries, samples)
         samples (int or array (int)): Number of times data points should be generated
 
     """
+    # TODO: fixmeeeee
     fig = plt.figure(figsize=(chain_length.size * 6, 4))
     axes = [fig.add_subplot(1, chain_length.size, ax, projection='3d')
             for ax in range(1, chain_length.size + 1)]
@@ -515,7 +540,7 @@ def generate_fa_values(chain_length, J, B0, A, periodic_boundaries, central_spin
     return np.mean(np.real(exp_Ma * exp_Ma.conj() / exp_Ma_Madagger**2), axis=1)
 
 
-def plot_fa_values(chain_length, J, B0, A, periodic_boundaries, central_spin, samples):
+def plot_fa_values(chain_length, J, B0, A, periodic_boundaries, central_spin, samples, save):
     """
     Plots the f values as done in Figure 2 in https://doi.org/10.1103/PhysRevB.82.174411
 
@@ -563,9 +588,16 @@ def plot_fa_values(chain_length, J, B0, A, periodic_boundaries, central_spin, sa
     plt.xticks(np.arange(chain_length))
     plt.title(f"fa_values for chain_length = {chain_length}")
     plt.legend(loc=4)
+    if save:
+        data = [np.arange(chain_length), mean_fa_values]
+        params = {"plot type": "fa_values", "data structure": "[fa_modes, mean_fa_values]",
+                  "chain_length": chain_length, "J": J, "A": A,
+                  "B0": B0, "periodic_boundaries": periodic_boundaries,
+                  "central_spin": central_spin, "samples": samples}
+        save_data(save, data, params)
 
 
-def plot_Sa_values(times, chain_length, J, B0, As, periodic_boundaries, samples):
+def plot_Sa_values(times, chain_length, J, B0, As, periodic_boundaries, samples, save):
     """
     Plots the Sa(t) values (see fig2 in http://arxiv.org/abs/1806.08316)
 
@@ -629,6 +661,12 @@ def plot_Sa_values(times, chain_length, J, B0, As, periodic_boundaries, samples)
     plt.ylabel("Sa(t)")
     plt.semilogx()
     plt.legend()
+    if save:
+        data = [times, Sa]
+        params = {"plot type": "time_evo", "data structure": "[t, exp_sig_z]",
+                  "chain_length": chain_length, "J": J, "B0": B0, "A": As,
+                  "periodic_boundaries": periodic_boundaries, "samples": samples}
+        save_data(save, data, params)
 
 
 def calc_occupation_imbalance(times, chain_length, J, B0, A, periodic_boundaries, central_spin,
@@ -682,7 +720,7 @@ def calc_occupation_imbalance(times, chain_length, J, B0, A, periodic_boundaries
 
 
 def plot_occupation_imbalance(times, chain_length, J, B0, As, periodic_boundaries, central_spin,
-                              samples, seed):
+                              samples, seed, save):
     """
     Plots the occupation imbalance sum_odd s_z - sum_even s_z
 
@@ -701,9 +739,14 @@ def plot_occupation_imbalance(times, chain_length, J, B0, As, periodic_boundarie
         seed (int): use a seed to produce comparable outcomes if False, then it is initialized
                     randomly
     """
+    if save:
+        occupation_imbalance_means = np.empty(
+            (len(chain_length), len(As), len(B0), len(times)))
+        occupation_imbalance_errors = np.empty(
+            (len(chain_length), len(As), len(B0), len(times)))
     for i, N in enumerate(chain_length):
-        for A in As:
-            for B in B0:
+        for a, A in enumerate(As):
+            for b, B in enumerate(B0):
                 occupation_imbalance = np.zeros((samples[0], times.size))
                 for sample in range(samples[i]):
                     occupation_imbalance[sample] = calc_occupation_imbalance(
@@ -711,6 +754,10 @@ def plot_occupation_imbalance(times, chain_length, J, B0, As, periodic_boundarie
                 occupation_imbalance_mean = occupation_imbalance.mean(axis=0)
                 yerrors = occupation_imbalance.std(
                     axis=0) / np.sqrt(samples[0])
+                if save:
+                    occupation_imbalance_means[i, a,
+                                               b] = occupation_imbalance_mean
+                    occupation_imbalance_errors[i, a, b] = yerrors
                 plt.plot(times, occupation_imbalance_mean, label=f"N={N}")
                 plt.fill_between(times, occupation_imbalance_mean + yerrors,
                                  occupation_imbalance_mean - yerrors, alpha=0.2)
@@ -720,6 +767,14 @@ def plot_occupation_imbalance(times, chain_length, J, B0, As, periodic_boundarie
     plt.semilogx()
     plt.ylabel("occupation imbalance")
     plt.legend(loc=1)
+    if save:
+        data = [times, occupation_imbalance_means,
+                occupation_imbalance_errors]
+        params = {"plot type": "occupation_imbalance", "data structure":
+                  "[times, occupation_imbalance_means, occupation_imbalance_errors]",
+                  "chain_length": chain_length, "J": J, "B0": B0, "A": As,
+                  "periodic_boundaries": periodic_boundaries, "samples": samples, "seed": seed}
+        save_data(save, data, params)
 
 
 def calc_exp_sig_z_central_spin(times, chain_length, J, B0, A, periodic_boundaries, seed):
@@ -769,7 +824,7 @@ def calc_exp_sig_z_central_spin(times, chain_length, J, B0, A, periodic_boundari
 
 
 def plot_exp_sig_z_central_spin(times, chain_length, J, B0, As, periodic_boundaries,
-                                samples, seed):
+                                samples, seed, save):
     """
     Plots the occupation imbalance sum_odd s_z - sum_even s_z
 
@@ -787,14 +842,21 @@ def plot_exp_sig_z_central_spin(times, chain_length, J, B0, As, periodic_boundar
         seed (int): use a seed to produce comparable outcomes if False, then it is initialized
                     randomly
     """
-    for A in As:
-        for B in B0:
+    # for saving the data
+    if save:
+        exp_sig_z_means = np.empty((len(As), len(B0), len(times)))
+        exp_sig_z_errors = np.empty((len(As), len(B0), len(times)))
+    for a, A in enumerate(As):
+        for b, B in enumerate(B0):
             exp_sig_z = np.zeros((samples[0], times.size))
             for sample in range(samples[0]):
                 exp_sig_z[sample] = calc_exp_sig_z_central_spin(
                     times, chain_length, J, B, A, periodic_boundaries, seed)
             exp_sig_z_mean = exp_sig_z.mean(axis=0)
             yerrors = exp_sig_z.std(axis=0) / np.sqrt(samples[0])
+            if save:
+                exp_sig_z_means[a, b] = exp_sig_z_mean
+                exp_sig_z_errors = yerrors
             plt.plot(times, exp_sig_z_mean, label=f"B0={B}, A={A}")
             plt.fill_between(times, exp_sig_z_mean + yerrors,
                              exp_sig_z_mean - yerrors, alpha=0.2)
@@ -803,3 +865,11 @@ def plot_exp_sig_z_central_spin(times, chain_length, J, B0, As, periodic_boundar
     plt.xlabel("time")
     plt.ylabel(r"$<S_z>$")
     plt.legend(loc=1)
+    if save:
+        data = [times, exp_sig_z_means,
+                exp_sig_z_errors]
+        params = {"plot type": "exp_sig_z_central_spin", "data structure":
+                  "[times, exp_sig_z_means, exp_sig_z_errors]",
+                  "chain_length": chain_length, "J": J, "B0": B0, "A": As,
+                  "periodic_boundaries": periodic_boundaries, "seed": seed, "samples": samples}
+        save_data(save, data, params)
