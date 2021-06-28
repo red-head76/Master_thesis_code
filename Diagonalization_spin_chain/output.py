@@ -1,6 +1,6 @@
+import os
 import numpy as np
 import matplotlib.pyplot as plt
-import os
 from time_evo import time_evo_sigma_z
 from diagonalization import eig_values_vectors, eig_values_vectors_spin_const
 from matplotlib import animation
