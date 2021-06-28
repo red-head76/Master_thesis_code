@@ -698,7 +698,7 @@ def calc_occupation_imbalance(times, chain_length, J, B0, A, periodic_boundaries
                                                    axis=1) - total_spins//2))
     eigenvalues, eigenvectors = eig_values_vectors_spin_const(
         chain_length, J, B0, A, periodic_boundaries, central_spin,
-        only_biggest_subspace=True, seed=seed)
+        only_biggest_subspace=True, seed=seed, scaling=scaling)
     eigenvectors = (eigenvectors.T[sub_room_mask]).T
     psi_z = np.arange(0, np.int(2**(total_spins)))[sub_room_mask]
     # discard last spin
@@ -720,7 +720,7 @@ def calc_occupation_imbalance(times, chain_length, J, B0, A, periodic_boundaries
 
 
 def plot_occupation_imbalance(times, chain_length, J, B0, As, periodic_boundaries, central_spin,
-                              samples, seed, save):
+                              samples, seed, scaling, save):
     """
     Plots the occupation imbalance sum_odd s_z - sum_even s_z
 
@@ -747,13 +747,13 @@ def plot_occupation_imbalance(times, chain_length, J, B0, As, periodic_boundarie
     for i, N in enumerate(chain_length):
         for a, A in enumerate(As):
             for b, B in enumerate(B0):
-                occupation_imbalance = np.zeros((samples[0], times.size))
+                occupation_imbalance = np.zeros((samples[i], times.size))
                 for sample in range(samples[i]):
                     occupation_imbalance[sample] = calc_occupation_imbalance(
-                        times, N, J, B, A, periodic_boundaries, central_spin, seed)
+                        times, N, J, B, A, periodic_boundaries, central_spin, seed, scaling=scaling)
                 occupation_imbalance_mean = occupation_imbalance.mean(axis=0)
                 yerrors = occupation_imbalance.std(
-                    axis=0) / np.sqrt(samples[0])
+                    axis=0) / np.sqrt(samples[i])
                 if save:
                     occupation_imbalance_means[i, a,
                                                b] = occupation_imbalance_mean
@@ -762,7 +762,7 @@ def plot_occupation_imbalance(times, chain_length, J, B0, As, periodic_boundarie
                 plt.fill_between(times, occupation_imbalance_mean + yerrors,
                                  occupation_imbalance_mean - yerrors, alpha=0.2)
                 plt.title(
-                    f"Occupation imbalance for \nJ={J}, B={B}, A={A}, central_spin={central_spin}")
+                    f"Occupation imbalance for \nJ={J}, B={B}, A={A}, scaling={scaling}")
     plt.xlabel("time")
     plt.semilogx()
     plt.ylabel("occupation imbalance")
@@ -770,14 +770,14 @@ def plot_occupation_imbalance(times, chain_length, J, B0, As, periodic_boundarie
     if save:
         data = [times, occupation_imbalance_means,
                 occupation_imbalance_errors]
-        params = {"plot type": "occupation_imbalance", "data structure":
-                  "[times, occupation_imbalance_means, occupation_imbalance_errors]",
-                  "chain_length": chain_length, "J": J, "B0": B0, "A": As,
-                  "periodic_boundaries": periodic_boundaries, "samples": samples, "seed": seed}
+        params = {"plot type": "exp_sig_z_central_spin", "data structure":
+                  "[times, exp_sig_z_means, exp_sig_z_errors]", "chain_length": chain_length,
+                  "J": J, "B0": B0, "A": As, "periodic_boundaries": periodic_boundaries,
+                  "seed": seed, "samples": samples, "scaling": scaling}
         save_data(save, data, params)
 
 
-def calc_exp_sig_z_central_spin(times, chain_length, J, B0, A, periodic_boundaries, seed):
+def calc_exp_sig_z_central_spin(times, chain_length, J, B0, A, periodic_boundaries, seed, scaling):
     """
     Calculates the expectation value for the central spin.
 
@@ -797,14 +797,14 @@ def calc_exp_sig_z_central_spin(times, chain_length, J, B0, A, periodic_boundari
     Returns:
         exp_sig_z (array (float) [times]): the expectation value for the central spin
     """
-    total_spins = chain_length[0] + 1
+    total_spins = chain_length + 1
     dim = np.int(2**total_spins)
     # This mask filters out the states of the biggest subspace
     sub_room_mask = np.where(np.logical_not(np.sum(unpackbits(np.arange(dim), total_spins),
                                                    axis=1) - total_spins//2))
     eigenvalues, eigenvectors = eig_values_vectors_spin_const(
-        chain_length[0], J, B0, A, periodic_boundaries, True,
-        only_biggest_subspace=True, seed=seed)
+        chain_length, J, B0, A, periodic_boundaries, True,
+        only_biggest_subspace=True, seed=seed, scaling=scaling)
     eigenvectors = (eigenvectors.T[sub_room_mask]).T
     psi_z = np.arange(0, np.int(2**(total_spins)))[sub_room_mask]
     # discard last spin
@@ -824,7 +824,7 @@ def calc_exp_sig_z_central_spin(times, chain_length, J, B0, A, periodic_boundari
 
 
 def plot_exp_sig_z_central_spin(times, chain_length, J, B0, As, periodic_boundaries,
-                                samples, seed, save):
+                                samples, seed, scaling, save):
     """
     Plots the occupation imbalance sum_odd s_z - sum_even s_z
 
@@ -844,32 +844,36 @@ def plot_exp_sig_z_central_spin(times, chain_length, J, B0, As, periodic_boundar
     """
     # for saving the data
     if save:
-        exp_sig_z_means = np.empty((len(As), len(B0), len(times)))
-        exp_sig_z_errors = np.empty((len(As), len(B0), len(times)))
-    for a, A in enumerate(As):
-        for b, B in enumerate(B0):
-            exp_sig_z = np.zeros((samples[0], times.size))
-            for sample in range(samples[0]):
-                exp_sig_z[sample] = calc_exp_sig_z_central_spin(
-                    times, chain_length, J, B, A, periodic_boundaries, seed)
-            exp_sig_z_mean = exp_sig_z.mean(axis=0)
-            yerrors = exp_sig_z.std(axis=0) / np.sqrt(samples[0])
-            if save:
-                exp_sig_z_means[a, b] = exp_sig_z_mean
-                exp_sig_z_errors = yerrors
-            plt.plot(times, exp_sig_z_mean, label=f"B0={B}, A={A}")
-            plt.fill_between(times, exp_sig_z_mean + yerrors,
-                             exp_sig_z_mean - yerrors, alpha=0.2)
-            plt.title(
-                f"Expectation value of the central spin for \n N={chain_length[0]}, J={J}")
+        exp_sig_z_means = np.empty(
+            (len(chain_length), len(As), len(B0), len(times)))
+        exp_sig_z_errors = np.empty(
+            (len(chain_length), len(As), len(B0), len(times)))
+    for i, N in enumerate(chain_length):
+        for a, A in enumerate(As):
+            for b, B in enumerate(B0):
+                exp_sig_z = np.zeros((samples[i], times.size))
+                for sample in range(samples[i]):
+                    exp_sig_z[sample] = calc_exp_sig_z_central_spin(
+                        times, N, J, B, A, periodic_boundaries, seed, scaling)
+                exp_sig_z_mean = exp_sig_z.mean(axis=0)
+                yerrors = exp_sig_z.std(axis=0) / np.sqrt(samples[i])
+                if save:
+                    exp_sig_z_means[i, a, b] = exp_sig_z_mean
+                    exp_sig_z_errors[i, a, b] = yerrors
+                plt.plot(times, exp_sig_z_mean, label=f"N={N}")
+                plt.fill_between(times, exp_sig_z_mean + yerrors,
+                                 exp_sig_z_mean - yerrors, alpha=0.2)
+                plt.title(
+                    f"Expectation value of the central spin for \nJ={J}, A={A}, B={B}, scaling={scaling}")
     plt.xlabel("time")
     plt.ylabel(r"$<S_z>$")
+    plt.semilogx()
     plt.legend(loc=1)
     if save:
         data = [times, exp_sig_z_means,
                 exp_sig_z_errors]
         params = {"plot type": "exp_sig_z_central_spin", "data structure":
-                  "[times, exp_sig_z_means, exp_sig_z_errors]",
-                  "chain_length": chain_length, "J": J, "B0": B0, "A": As,
-                  "periodic_boundaries": periodic_boundaries, "seed": seed, "samples": samples}
+                  "[times, exp_sig_z_means, exp_sig_z_errors]", "chain_length": chain_length,
+                  "J": J, "B0": B0, "A": As, "periodic_boundaries": periodic_boundaries,
+                  "seed": seed, "samples": samples, "scaling": scaling}
         save_data(save, data, params)
