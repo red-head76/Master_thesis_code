@@ -1,4 +1,5 @@
 import pdb
+import sys
 from os.path import isfile
 from configparser import ConfigParser
 import numpy as np
@@ -24,9 +25,14 @@ def str_to_float(str_list):
 if not isfile("config.ini"):
     create_config()
 
-# Read config.ini file with a config_object
+if len(sys.argv) > 1:
+    config_file = sys.argv[1]
+else:
+    config_file = "config.ini"
+
+# Read config_file with a config_object
 config_object = ConfigParser(converters={"list": convert_list})
-config_object.read("config.ini")
+config_object.read(config_file)
 
 # System setup
 System = config_object["System"]
@@ -36,11 +42,13 @@ total_spins = central_spin + np.array(chain_length)
 dim = np.array(2**total_spins, dtype=int)
 periodic_boundaries = config_object.getboolean("System", "periodic_boundaries")
 spin_constant = config_object.getboolean("System", "spin_constant")
+
 # Coupling Constants
 Constants = config_object["Constants"]
 J = float(Constants["J"])
 B0 = str_to_float(config_object.getlist("Constants", "B0"))
 A = str_to_float(config_object.getlist("Constants", "A"))
+scaling = Constants["scaling"]
 
 # Output option
 Output = config_object["Output"]
@@ -57,16 +65,16 @@ if outputtype in ["plot_time_evo", "animate_time_evo"]:
     # Initial state
     idx_psi_0 = int(Other["idx_psi_0"])
     # Time array
-    t = np.linspace(0, float(Other["timespan"]), int(Other["timesteps"]))
+    t = np.linspace(0, float(Other["timeend"]), int(Other["timesteps"]))
 
 if outputtype in ["plot_g"]:
     # Initial state
     rho0 = [np.eye(d) / d for d in dim]
     # Time array
-    t = np.linspace(0, float(Other["timespan"]), int(Other["timesteps"]) + 1)
+    t = np.linspace(0, float(Other["timeend"]), int(Other["timesteps"]) + 1)
 
 if outputtype in ["plot_sa", "plot_occupation_imbalance", "plot_exp_sig_z_central_spin"]:
-    t = np.logspace(np.log10(float(Other["timestart"])), np.log10(float(Other["timespan"])),
+    t = np.logspace(np.log10(float(Other["timestart"])), np.log10(float(Other["timeend"])),
                     int(Other["timesteps"]) + 1)
 
 if outputtype == "plot_time_evo":
