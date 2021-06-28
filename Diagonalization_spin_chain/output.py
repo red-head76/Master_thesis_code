@@ -613,7 +613,6 @@ def plot_Sa_values(times, chain_length, J, B0, As, periodic_boundaries, samples,
         samples (int or array (int)): Number of times data points should be generated
 
     """
-    # TODO: Samples currently not implemented
     total_spins = chain_length[0] + 1
     dim = np.int(2**total_spins)
     # This mask filters out the states of the biggest subspace
@@ -623,42 +622,42 @@ def plot_Sa_values(times, chain_length, J, B0, As, periodic_boundaries, samples,
     psi_0 = np.zeros(dim)
     psi_0[packbits(np.arange(total_spins) % 2)] = 1
     psi_0 = psi_0[sub_room_mask]
+    Sa = np.empty((samples[0], len(times)))
 
     for A in As:
-        eigenvalues, eigenvectors = eig_values_vectors_spin_const(
-            chain_length[0], J, B0[0], A, periodic_boundaries,
-            central_spin=True, only_biggest_subspace=True)
-        eigenvectors = (eigenvectors.T[sub_room_mask]).T
-        # dimension of the biggest subspace
-        dim_bss = eigenvectors.shape[0]
-        # Time evolution of rho: rho(t) = U+ rho0 U with U = exp(-i H t)
-        # U for all times, i.e. [times, dim, dim]
-        # exp_part = np.apply_along_axis(
-        #     np.diag, 1, np.exp(-1j * np.outer(times, eigenvalues)))
-        # U = eigenvectors.T @ exp_part @ eigenvectors
-        # rho_t = U.transpose(0, 2, 1).conjugate() @ rho_0 @ U
-        exp_part = np.exp(1j * np.outer(times, eigenvalues))
-        psi_t = (eigenvectors @
-                 (exp_part.reshape(times.size, dim_bss, 1) * eigenvectors.T) @ psi_0)
-        # This performs an outer product along axis 1
-        rho_t = psi_t[:, :, np.newaxis] * psi_t.conj()[:, np.newaxis, :]
-        # For now: go back to full space to calculate the partial trace. Even though there must
-        # be a smarter way to do this...
-        rho_t_fullspace = np.zeros((times.size, dim, dim), dtype=complex)
-        sub_room_mask2D = np.meshgrid(sub_room_mask, sub_room_mask)
-        rho_t_fullspace[:, sub_room_mask2D[1], sub_room_mask2D[0]] = rho_t
-        # partial_trace over b -> rho_a(t)
-        rho_a_t = partial_trace(rho_t_fullspace, total_spins//2)
-        # Sa = -tr(rho_a ln(rho_a))
-        #    = -tr(rho ln(rho)) = tr(D ln(D)), where D is the diagonalized matrix
-        eigvals = np.linalg.eigvalsh(rho_a_t)
-        # to prevent errors because of ln(0)
-        eigvals += 1e-20
-        Sa = -np.sum(eigvals * np.log(eigvals), axis=1)
-        plt.plot(times, Sa, label=f"A={A}")
-
+        for sample in range(samples[0]):
+            eigenvalues, eigenvectors = eig_values_vectors_spin_const(
+                chain_length[0], J, B0[0], A, periodic_boundaries,
+                central_spin=True, only_biggest_subspace=True)
+            eigenvectors = (eigenvectors.T[sub_room_mask]).T
+            # dimension of the biggest subspace
+            dim_bss = eigenvectors.shape[0]
+            exp_part = np.exp(1j * np.outer(times, eigenvalues))
+            psi_t = (eigenvectors @
+                     (exp_part.reshape(times.size, dim_bss, 1) * eigenvectors.T) @ psi_0)
+            # This performs an outer product along axis 1
+            rho_t = psi_t[:, :, np.newaxis] * psi_t.conj()[:, np.newaxis, :]
+            # For now: go back to full space to calculate the partial trace. Even though there must
+            # be a smarter way to do this...
+            rho_t_fullspace = np.zeros((times.size, dim, dim), dtype=complex)
+            sub_room_mask2D = np.meshgrid(sub_room_mask, sub_room_mask)
+            rho_t_fullspace[:, sub_room_mask2D[1], sub_room_mask2D[0]] = rho_t
+            # partial_trace over b -> rho_a(t)
+            rho_a_t = partial_trace(rho_t_fullspace, total_spins//2)
+            # Sa = -tr(rho_a ln(rho_a))
+            #    = -tr(rho ln(rho)) = tr(D ln(D)), where D is the diagonalized matrix
+            eigvals = np.linalg.eigvalsh(rho_a_t)
+            # cut out too small eigenvalues because of log (log(< 1e-324) = -inf)
+            Sa[sample] = -np.sum(np.where(eigvals > 1e-323,
+                                          eigvals * np.log(eigvals), 0), axis=1)
+        Sa_mean = np.mean(Sa, axis=0)
+        yerrors = np.std(Sa, axis=0) / np.sqrt(samples[0])
+        plt.plot(times, Sa_mean, label=f"A={A}")
+        plt.fill_between(times, Sa_mean + yerrors,
+                         Sa_mean - yerrors, alpha=0.2)
     plt.xlabel("time t")
     plt.ylabel("Sa(t)")
+    plt.title(f"Entanglement entropy Sa for B={B0[0]}, N={chain_length[0]}")
     plt.semilogx()
     plt.legend()
     if save:
@@ -670,7 +669,7 @@ def plot_Sa_values(times, chain_length, J, B0, As, periodic_boundaries, samples,
 
 
 def calc_occupation_imbalance(times, chain_length, J, B0, A, periodic_boundaries, central_spin,
-                              seed):
+                              seed, scaling):
     """
     Calculates the occupation imbalance sum_odd s_z - sum_even s_z
 
