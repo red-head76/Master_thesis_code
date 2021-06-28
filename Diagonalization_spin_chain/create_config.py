@@ -28,7 +28,9 @@ def create_config():
         # Strength of the external B-field
         "B0": "1",
         # Coupling of the central spin with the spins in the chain
-        "A": "1"
+        "A": "1",
+        # Determines the scaling of A. Options: "inverse" for A/N, or "sqrt" for A/sqrt(N)
+        "scaling": "inverse"
     }
 
     config_object["Output"] = {
@@ -48,7 +50,7 @@ def create_config():
     config_object["Other"] = {
         # Index where psi 0 is nonzero
         "idx_psi_0": "1",
-        "timespan": "10",
+        "timeend": "10",
         "timesteps": "100",
         # In certain cases a random seed can be used to produce comparable outcomes. 0 equals None
         "seed": "0"
