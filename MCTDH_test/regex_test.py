@@ -15,11 +15,11 @@ This script provides
 # ______________________________________________________________________________
 # pattern of expectation values:
 exp_pattern = r"v\d+"
-output_file = "outputtest"
+file_to_read = "outputtest"
 # ______________________________________________________________________________
 
 
-with open(output_file, 'r') as f:
+with open(file_to_read, 'r') as f:
     fulltext = f.read()
 
 # Check if the process have finished and produced a valid output file
