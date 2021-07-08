@@ -12,6 +12,13 @@ def read_output(filename, exp_pattern=r"v\d+"):
       * weights: array of natural weights with shape (time, combined wf, weight basis state)
       * exp_q: array of expectation values <q> with shape (time, expectation values)
       * exp_dq: array of expectation values <dq> with shape (time, expectation values)
+
+    Args:
+      filename (string): the name of the file to read
+      exp_pattern (string, default:"v\d+"): the pattern used for the expectation values
+
+    Returns:
+      data_dict (dict): a dictionary containing all the values declared above
     """
 
     with open(filename, 'r') as f:
