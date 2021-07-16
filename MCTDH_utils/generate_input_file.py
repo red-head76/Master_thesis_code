@@ -113,7 +113,7 @@ def hamiltonian_section():
     if central_spin:
         for cn, on in zip(coupling_names, operator_names):
             for i in range(1, chain_length + 1):
-                hs += f"{cn} |{i} {on} |{total_spins}\n"
+                hs += f"{cn} |{i} {on} |{total_spins} {on}\n"
             hs += "\n"
 
     hs += "END-HAMILTONIAN-SECTION\n\n"
