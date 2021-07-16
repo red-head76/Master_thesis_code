@@ -21,13 +21,12 @@ def str_to_float(str_list):
     return [float(item) for item in str_list]
 
 
-# if there is no config file, create one with default values
-if not isfile("config.ini"):
-    create_config()
-
 if len(sys.argv) > 1:
     config_file = sys.argv[1]
 else:
+    # if there is no config file, create one with default values
+    if not isfile("config.ini"):
+        create_config()
     config_file = "config.ini"
 
 # Read config_file with a config_object

@@ -613,6 +613,7 @@ def plot_Sa_values(times, chain_length, J, B0, As, periodic_boundaries, samples,
         samples (int or array (int)): Number of times data points should be generated
 
     """
+    # TODO: Add option for no central spin
     total_spins = chain_length[0] + 1
     dim = np.int(2**total_spins)
     # This mask filters out the states of the biggest subspace
@@ -812,10 +813,9 @@ def calc_exp_sig_z_central_spin(times, chain_length, J, B0, A, periodic_boundari
     psi_0 = np.zeros(dim)
     psi_0[packbits(np.arange(total_spins) % 2)] = 1
     psi_0 = psi_0[sub_room_mask]
-    # e ^ i D t in shape (times, dim, dim)
-    exp_part = np.apply_along_axis(
-        np.diag, 1, np.exp(1j * np.outer(times, eigenvalues)))
-    psi_t = eigenvectors @ exp_part @ eigenvectors.T @ psi_0
+    exp_part = np.exp(1j * np.outer(times, eigenvalues))
+    psi_t = eigenvectors @ (exp_part.reshape(times.size, eigenvalues.size, 1)
+                            * eigenvectors.T) @ psi_0
     # discard central spin in exp_sig_z
     exp_sig_z = (np.abs(psi_t)**2 @ sigma_z)
     # and norm it to 1
