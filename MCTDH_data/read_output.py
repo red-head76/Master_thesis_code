@@ -9,7 +9,7 @@ def read_output(filename, exp_pattern=r"v\d+"):
       * e_tot: array with size (time)
       * e_corr: array with size (time)
       * delta_e: array with size (time)
-      * weights: list of natural weights with shape (combined wf, time, weight basis state)
+      * weights: array of natural weights with shape (time, combined wf, weight basis state)
       * exp_q: array of expectation values <q> with shape (time, expectation values)
       * exp_dq: array of expectation values <dq> with shape (time, expectation values)
     """
@@ -63,14 +63,13 @@ def read_output(filename, exp_pattern=r"v\d+"):
             r"-?\d+\.\d*(?:E\-\d*)?", matched_block.group(0))
         weights.extend(weights_in_block)
     weights = np.array(weights, dtype=float).reshape(-1, np.sum(n_bs))
-    # in the original file, there are weights * 1000
-    weights /= 1000
     # split into each block of combined wave functions:
     # [:-1] because the last split always returns an empty array
     weights = np.split(weights, np.cumsum(n_bs), axis=1)[:-1]
-    # # transpose it into format (time, combined_wf, basis_state)
-    # weights = np.transpose(weights, (1, 0, 2))
-    # This is not possible anymore, since the number of basis states is not equal in general
+    # transpose it into format (time, combined_wf, basis_state)
+    weights = np.transpose(weights, (1, 0, 2))
+    # in the original file, there are weights * 1000
+    weights /= 1000
 
     # Block for expectation values and variances
     exp_blocks = re.finditer(
