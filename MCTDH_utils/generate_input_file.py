@@ -149,15 +149,20 @@ def wave_function_basis_section():
             n_cwf = n_combined_wf
             wfb = wave_function_basis
     elif len(n_combined_wf) == 1:
-        # split into wf (approx.) equally
+        # split into wf approximately equally
         split = int(ceil(spins_to_combine / n_combined_wf[0]))
         n_cwf = [split] * (spins_to_combine // split)
-        if spins_to_combine % split:
-            n_cwf += [spins_to_combine % split]
+        remainder = spins_to_combine % split
+        if remainder:
+            # By inserting the smallest group in the first place, it will always have a
+            # consistent size, no matter if the central spin is active or not.
+            n_cwf.insert(0, remainder)
+        min_value = min(n_cwf)
+        if 2**min_value < wave_function_basis[0]:
+            print(
+                f"A group with of {min_value} spins can maximally be described with {int(2**min_value)} basis functions, but not with {wave_function_basis[0]}")
+            raise ValueError()
         wfb = wave_function_basis * len(n_cwf)
-        # Switch the first and the last element. This way, the first group will always have a
-        # consistent size, no matter if the central spin is active or not.
-        n_cwf[0], n_cwf[-1] = n_cwf[-1], n_cwf[0]
     idx = 1
     for wf_idx in range(len(n_cwf)):
         for _ in range(n_cwf[wf_idx]):
