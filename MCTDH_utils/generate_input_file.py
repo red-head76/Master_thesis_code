@@ -51,6 +51,8 @@ scaling = Constants["scaling"]
 Output = config_object["Output"]
 filename = Output["filename"]
 title = Output["title"]
+if title == "":
+    title = filename
 
 # Other setup
 Other = config_object["Other"]

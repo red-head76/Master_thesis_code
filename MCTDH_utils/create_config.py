@@ -34,6 +34,7 @@ def create_config():
     config_object["Output"] = {
         # Name of the output file
         "filename": "filename",
+        # title is used in the mctdh log files. if left empty, it is set to the same value as 'filename'
         "title": "title"
     }
 
