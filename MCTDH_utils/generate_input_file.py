@@ -235,14 +235,20 @@ def write_everything():
         raise Warning(
             f"file input_files/{filename}.inp does already exist. Choose another filename in {config_file}")
     else:
-        write_inp_file("./input_files/")
-        write_op_file("./input_files/")
-    if not os.path.isdir("input_files/" + title):
-        os.mkdir("input_files/" + title)
-        write_info_file("input_files/" + title + "/")
-    else:
-        raise Warning(
-            f"Directory \"input_files/\"{title} does already exist. Choose another title in {config_file}")
+        # Try, because there might be wrong inputs
+        try:
+            write_inp_file("./input_files/")
+        except ValueError:
+            os.remove("./input_files/" + filename + ".inp")
+            print(f"No files for {filename} were produced.")
+        else:
+            write_op_file("./input_files/")
+            if not os.path.isdir("input_files/" + title):
+                os.mkdir("input_files/" + title)
+                write_info_file("input_files/" + title + "/")
+            else:
+                raise Warning(
+                    f"Directory \"input_files/\"{title} does already exist. Choose another title in {config_file}")
 
 
 write_everything()
