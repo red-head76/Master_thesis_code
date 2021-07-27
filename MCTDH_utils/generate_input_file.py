@@ -208,7 +208,7 @@ def init_wf_section():
 # ______________________________________________________________________________
 def write_inp_file(path):
     # write the input file
-    with open(path + filename + ".inp", 'w') as f:
+    with open(path + ".inp", 'w') as f:
         f.write(run_section())
         f.write(operator_section())
         f.write(wave_function_basis_section())
@@ -220,7 +220,7 @@ def write_inp_file(path):
 
 def write_op_file(path):
     # Write the operator file
-    with open(path + filename + ".op", 'w') as f:
+    with open(path + ".op", 'w') as f:
         f.write(define_section())
         f.write(parameter_section())
         f.write(hamiltonian_section())
@@ -233,26 +233,29 @@ def write_info_file(path):
 
 
 def write_everything():
-    if not os.path.isdir("input_files"):
-        os.mkdir("input_files")
-    if os.path.isfile("input_files/" + filename + ".inp"):
-        raise Warning(
-            f"file input_files/{filename}.inp does already exist. Choose another filename in {config_file}")
-    else:
-        # Try, because there might be wrong inputs
-        try:
-            write_inp_file("./input_files/")
-        except ValueError:
-            os.remove("./input_files/" + filename + ".inp")
-            print(f"No files for {filename} were produced.")
+    for realization in range(n_realizations):
+        jobname = filename + str(realization)
+        if not os.path.isdir("input_files"):
+            os.mkdir("input_files")
+        if os.path.isfile("input_files/" + jobname + ".inp"):
+            raise Warning(
+                f"file input_files/{jobname}.inp does already exist. Choose another jobname in {config_file}")
         else:
-            write_op_file("./input_files/")
-            if not os.path.isdir("input_files/" + title):
-                os.mkdir("input_files/" + title)
-                write_info_file("input_files/" + title + "/")
+            # Try, because there might be wrong inputs
+            try:
+                write_inp_file("./input_files/" + jobname)
+            except ValueError:
+                os.remove("./input_files/" + jobname + ".inp")
+                print(f"No files for {jobname} were produced.")
             else:
-                raise Warning(
-                    f"Directory \"input_files/\"{title} does already exist. Choose another title in {config_file}")
+                write_op_file("./input_files/" + jobname)
+                job_dir = title + str(realization)
+                if not os.path.isdir("input_files/" + job_dir):
+                    os.mkdir("input_files/" + job_dir)
+                    write_info_file("input_files/" + job_dir + "/")
+                else:
+                    raise Warning(
+                        f"Directory \"input_files/\"{title} does already exist. Choose another title in {config_file}")
 
 
 write_everything()

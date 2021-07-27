@@ -53,7 +53,9 @@ def create_config():
         "wave_function_basis": 40,
         # If the central spin is splitted up, it means it is represented in its own space
         # without combining it with other spins into a wave function
-        "central_spin_splitted": "False"
+        "central_spin_splitted": "False",
+        # Number of realizations
+        "n_realizations": 1,
     }
 
     # Write the above sections to config.ini file
