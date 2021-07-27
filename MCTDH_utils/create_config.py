@@ -41,7 +41,7 @@ def create_config():
     config_object["Other"] = {
         # The endpoint of the calculation in fs
         "timefinal": "10",
-        "timesteps": "100",
+        "timestep": "0.1",
         # The amount of basis wfs (spins) that will be combined
         # If N spins are in the system you can either enter a list, which contains the
         # number of wfs that should be combined, e.g. [n1, n2, n3] with n1+n2+n3 = N

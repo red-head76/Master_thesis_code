@@ -57,7 +57,7 @@ if title == "":
 # Other setup
 Other = config_object["Other"]
 timefinal = config_object.getfloat("Other", "timefinal")
-timesteps = config_object.getfloat("Other", "timesteps")
+timestep = config_object.getfloat("Other", "timestep")
 n_combined_wf = str_to_int(config_object.getlist("Other", "n_combined_wf"))
 wave_function_basis = str_to_int(
     config_object.getlist("Other", "wave_function_basis"))
@@ -126,7 +126,7 @@ def hamiltonian_section():
 # ______________________________________________________________________________
 def run_section():
     rs = f"RUN-SECTION\nname = {title}\npropagate\ngridpop\ntitle = {title}\nsteps\n"
-    rs += f"auto\nveigen\ntinit=0.0  tfinal={timefinal}  tout=0.1\nEND-RUN-SECTION\n\n"
+    rs += f"auto\nveigen\ntinit=0.0  tfinal={timefinal}  tout={timestep}\nEND-RUN-SECTION\n\n"
     return rs
 
 
