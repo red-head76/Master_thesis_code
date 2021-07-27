@@ -1,10 +1,10 @@
 import pdb
 import sys
 import os
+import numpy as np
 from shutil import copy2
 from configparser import ConfigParser
 from math import ceil
-from random import uniform
 
 
 def convert_list(string):
@@ -62,6 +62,8 @@ n_combined_wf = str_to_int(config_object.getlist("Other", "n_combined_wf"))
 wave_function_basis = str_to_int(
     config_object.getlist("Other", "wave_function_basis"))
 central_spin_splitted = config_object.getboolean("Other", "central_spin_splitted")
+n_realizations = config_object.getint("Other", "n_realizations")
+seed = config_object.getint("Other", "seed")
 
 
 # Functions to write operator file
@@ -74,8 +76,10 @@ def define_section():
 
 def parameter_section():
     ps = "PARAMETER-SECTION\n"
+    if seed:
+        np.random.seed(seed)
     for i in range(1, chain_length+1):
-        h_i = uniform(-1, 1)
+        h_i = np.random.uniform(-1, 1)
         ps += (f"h{i} = {h_i}, eV\n")
     ps += f"B = {B}\n"
     ps += f"coupx = {J}, eV\n"
