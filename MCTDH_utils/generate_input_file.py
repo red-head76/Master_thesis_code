@@ -234,22 +234,28 @@ def write_info_file(path):
 
 def write_everything():
     for realization in range(n_realizations):
-        jobname = filename + "_" + str(realization)
+        if n_realizations == 1:
+            job_name = filename
+        else:
+            job_name = filename + "_" + str(realization)
         if not os.path.isdir("input_files"):
             os.mkdir("input_files")
-        if os.path.isfile("input_files/" + jobname + ".inp"):
+        if os.path.isfile("input_files/" + job_name + ".inp"):
             raise Warning(
-                f"file input_files/{jobname}.inp does already exist. Choose another jobname in {config_file}")
+                f"file input_files/{job_name}.inp does already exist. Choose another job_name in {config_file}")
         else:
             # Try, because there might be wrong inputs
             try:
-                write_inp_file("./input_files/" + jobname)
+                write_inp_file("./input_files/" + job_name)
             except ValueError:
-                os.remove("./input_files/" + jobname + ".inp")
-                print(f"No files for {jobname} were produced.")
+                os.remove("./input_files/" + job_name + ".inp")
+                print(f"No files for {job_name} were produced.")
             else:
-                write_op_file("./input_files/" + jobname)
-                job_dir = title + "_" + str(realization)
+                write_op_file("./input_files/" + job_name)
+                if n_realizations == 1:
+                    job_dir = title
+                else:
+                    job_dir = title + "_" + str(realization)
                 if not os.path.isdir("input_files/" + job_dir):
                     os.mkdir("input_files/" + job_dir)
                     write_info_file("input_files/" + job_dir + "/")
