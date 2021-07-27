@@ -26,9 +26,9 @@ def read_output(filename, exp_pattern=r"v\d+"):
         fulltext = fulltext[:last_valid_pos]
 
     # Check if pattern for expectation value matches correctly:
-    if not re.search(exp_pattern + r" +C\*", fulltext):
+    if not re.search(exp_pattern + r" +C[\d\*]", fulltext):
         raise ValueError(
-            f"The search patter '{exp_pattern}' for the expectation values does not seem to occur!")
+            f"The search pattern '{exp_pattern}' for the expectation values does not seem to occur!")
 
     time = np.array(re.findall(r"Time += +(\d+.\d+)", fulltext), dtype=float)
     e_tot = np.array(re.findall(
@@ -56,7 +56,7 @@ def read_output(filename, exp_pattern=r"v\d+"):
     n_exp_vals = mev_block.group(1).count('\n')
 
     # Natural weights *1000
-    weight_blocks = re.finditer(exp_pattern + r"\s+(?:C\*)?:(?:[CE\*\d\.\-> ]+\n)+", fulltext)
+    weight_blocks = re.finditer(exp_pattern + r"\s+(?:C[\d\*])?:(?:[CE\*\d\.\-> ]+\n)+", fulltext)
     # use inside weight block
     weights = []
     for matched_block in weight_blocks:
