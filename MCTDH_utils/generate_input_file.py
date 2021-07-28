@@ -196,11 +196,15 @@ def integrator_section():
 def init_wf_section():
     iwfs = "INIT_WF-SECTION\nbuild\n"
     # initialize in neel state:
-    for i in range(1, total_spins + 1):
+    for i in range(1, chain_length + 1):
         if i % 2 == 0:
             iwfs += f"v{i}\tgauss\t0.5 \t0.0\t0.001\tpop=1\n"
         else:
             iwfs += f"v{i}\tgauss\t-0.5\t0.0\t0.001\tpop=1\n"
+
+    if central_spin:
+        # always initialize the central spin the same (spin down), regardless of chain length
+        iwfs += f"v{total_spins}\tgauss\t-0.5 \t0.0\t0.001\tpop=1\n"
     iwfs += "end-build\nEND-INIT_WF-SECTION\n\n"
     return iwfs
 
