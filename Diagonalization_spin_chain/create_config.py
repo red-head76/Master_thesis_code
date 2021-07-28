@@ -13,18 +13,18 @@ def create_config():
 
     config_object["System"] = {
         # If the system should have a central spin, coupling to all other spins in the chain
-        "central_spin": "",
+        "central_spin": "False",
         # Total number of spins in the chain
         "chain_length": "3",
         # Periodic boundary conditions
         "periodic_boundaries": "True",
         # Whether the total spin of the system is constant or not
-        "spin_constant": ""
+        "spin_constant": "False"
     }
 
     config_object["Constants"] = {
         # Coupling between spins in the chain
-        "J": "2",
+        "J": "1",
         # Strength of the external B-field
         "B0": "1",
         # Coupling of the central spin with the spins in the chain
@@ -50,6 +50,7 @@ def create_config():
     config_object["Other"] = {
         # Index where psi 0 is nonzero
         "idx_psi_0": "1",
+        "timestart": "0",
         "timeend": "10",
         "timesteps": "100",
         # In certain cases a random seed can be used to produce comparable outcomes. 0 equals None
