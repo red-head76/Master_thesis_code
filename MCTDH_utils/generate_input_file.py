@@ -128,14 +128,14 @@ def hamiltonian_section():
 
 # Functions to write input file
 # ______________________________________________________________________________
-def run_section():
-    rs = f"RUN-SECTION\nname = {title}\npropagate\ngridpop\ntitle = {title}\nsteps\n"
+def run_section(job_name):
+    rs = f"RUN-SECTION\nname = {job_name}\npropagate\ngridpop\ntitle = {job_name}\nsteps\n"
     rs += f"auto\nveigen\ntinit=0.0  tfinal={timefinal}  tout={timestep}\nEND-RUN-SECTION\n\n"
     return rs
 
 
-def operator_section():
-    return f"OPERATOR-SECTION\nopname = {filename}\nEND-OPERATOR-SECTION\n\n"
+def operator_section(job_name):
+    return f"OPERATOR-SECTION\nopname = {job_name}\nEND-OPERATOR-SECTION\n\n"
 
 
 def wave_function_basis_section():
@@ -210,11 +210,11 @@ def init_wf_section():
 
 
 # ______________________________________________________________________________
-def write_inp_file(path):
+def write_inp_file(path, job_name):
     # write the input file
     with open(path + ".inp", 'w') as f:
-        f.write(run_section())
-        f.write(operator_section())
+        f.write(run_section(job_name))
+        f.write(operator_section(job_name))
         f.write(wave_function_basis_section())
         f.write(primitive_basis_section())
         f.write(integrator_section())
@@ -250,7 +250,7 @@ def write_everything():
         else:
             # Try, because there might be wrong inputs
             try:
-                write_inp_file("./input_files/" + job_name)
+                write_inp_file("./input_files/" + job_name, job_name)
             except ValueError:
                 os.remove("./input_files/" + job_name + ".inp")
                 print(f"No files for {job_name} were produced.")
