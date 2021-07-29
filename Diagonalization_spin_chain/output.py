@@ -28,6 +28,9 @@ def plot_time_evo(t, idx_psi_0, chain_length, J, B0, A, spin_constant,
                                            to all other spins is used or not
         save (string): If not False, the output is saved with the given filename.
 
+    Returns:
+        If save: data (list [time, exp_sig_z]), None otherwise
+
     """
     total_spins = central_spin + chain_length
     dim = np.array(2**total_spins, dtype=np.int)
@@ -73,6 +76,10 @@ def animate_time_evo(t, idx_psi_0, chain_length, J, B0, A, spin_constant,
         central_spin (bool): determines whether or not a central spin, coupling
                                            to all other spins is used or not
         save (string): If not False, the output is saved with the given filename.
+
+
+    Returns:
+        If save: data (list [time, exp_sig_z]), None otherwise
 
     """
     total_spins = central_spin + chain_length
@@ -202,6 +209,10 @@ def plot_r_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
         samples (int): Number of times data points should be generated for each number
                                     of samples there are (chain_length x chain_length - 2) data
                                     points
+
+    Returns:
+        If save: data (list [r_values]), None otherwise
+
     """
 
     r_values = generate_r_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
@@ -235,6 +246,9 @@ def plot_r_fig3(chain_length, J, B0, periodic_boundaries, samples, save):
                                                   conditions are used in the chain.
         samples (int or array (int)): Number of times data points should be generated
             for each number of samples there are (chain_length x chain_length - 2) data points
+
+    Returns:
+        If save: data (list [B0, mean_r_values]), None otherwise
 
     """
 
@@ -341,6 +355,10 @@ def plot_f_fig2(chain_length, J, B0, periodic_boundaries, samples, save, verbose
                                                   conditions are used in the chain.
         samples (int or array (int)): Number of times data points should be generated
         verbose (bool, default=True): prints some extra information about where the process is
+
+    Returns:
+        If save: data (list [B0, mean_f_values]), None otherwise
+
     """
     mean_f_values = np.empty((np.size(chain_length), np.size(B0)))
     if np.size(samples) == 1:
@@ -531,6 +549,11 @@ def plot_fa_values(chain_length, J, B0, A, periodic_boundaries, central_spin, sa
                                                   conditions are used in the chain.
         samples (int or array (int)): Number of times data points should be generated
             for each number of samples there are binom(total_spins, total_spins // 2) data points
+
+
+    Returns:
+        If save: data (list [arange(chain_length), mean_fa_values]), None otherwise
+
     """
     # convert lists to int
     if chain_length.size > 1:
@@ -583,6 +606,10 @@ def plot_Sa_values(times, chain_length, J, B0, As, periodic_boundaries, samples,
         periodic_boundaries (bool): determines whether or not periodic boundary
                                                   conditions are used in the chain.
         samples (int or array (int)): Number of times data points should be generated
+
+
+    Returns:
+        If save: data (list [time, Sa]), None otherwise
 
     """
     # TODO: Add option for no central spin
@@ -706,6 +733,11 @@ def plot_occupation_imbalance(times, chain_length, J, B0, As, periodic_boundarie
         samples (array (int)[1]): Number of times data points should be generated
         seed (int): use a seed to produce comparable outcomes if False, then it is initialized
                     randomly
+
+    Returns:
+        If save: data (list [time, occupation_imbalance_means, occupation_imbalance_errors]),
+                 None otherwise
+
     """
     if save:
         occupation_imbalance_means = np.empty(
@@ -758,6 +790,7 @@ def calc_exp_sig_z_central_spin(times, chain_length, J, B0, A, periodic_boundari
 
     Returns:
         exp_sig_z (array (float) [times]): the expectation value for the central spin
+
     """
     total_spins = chain_length + 1
     dim = np.int(2**total_spins)
@@ -802,6 +835,10 @@ def plot_exp_sig_z_central_spin(times, chain_length, J, B0, As, periodic_boundar
         samples (array (int)[1]): Number of times data points should be generated
         seed (int): use a seed to produce comparable outcomes if False, then it is initialized
                     randomly
+
+    Returns:
+        If save: data (list [time, exp_sig_z_means, exp_sig_z_errors]), None otherwise
+
     """
     # for saving the data
     if save:
