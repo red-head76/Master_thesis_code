@@ -3,7 +3,7 @@
 #SBATCH -N 1
 #SBATCH --ntasks-per-node=1
 #SBATCH -c 1
-#SBATCH -t 10:00:00
+#SBATCH -t 20:00:00
 #SBATCH --mem=1000
 
 module load compiler/intel/19.1
@@ -16,5 +16,4 @@ export MCTDH_DIR=/home/fr/fr_fr/fr_lr251/mctdh85.13
 if [ -f ~/.mctdhrc ] && [ -t 0 ] ; then . ~/.mctdhrc ; fi
 #*MCTDH*B***********************************************************************
 
-mctdh85 -mnd $input
-
+mctdh85 -c $input
