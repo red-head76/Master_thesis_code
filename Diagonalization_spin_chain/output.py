@@ -50,12 +50,7 @@ def plot_time_evo(t, idx_psi_0, chain_length, J, B0, A, spin_constant,
 
         ax[-1].set_xlabel("Time t")
         if save:
-            data = [t, exp_sig_z]
-            params = {"plot type": "time_evo", "data structure": "[t, exp_sig_z]",
-                      "idx_psi_0": idx_psi_0, "chain_length": chain_length, "J": J,
-                      "B0": B0, "A": A, "spin_constant": spin_constant,
-                      "periodic_boundaries": periodic_boundaries, "central_spin": central_spin}
-            save_data(save, data, params)
+            return [t, exp_sig_z]
 
 
 def animate_time_evo(t, idx_psi_0, chain_length, J, B0, A, spin_constant,
@@ -103,15 +98,10 @@ def animate_time_evo(t, idx_psi_0, chain_length, J, B0, A, spin_constant,
     anim = animation.FuncAnimation(
         fig, run, frames=t.size, blit=True, interval=100)
     if save:
-        data = [t, exp_sig_z]
-        params = {"plot type": "anim_time_evo", "data structure": "[t, exp_sig_z]",
-                  "idx_psi_0": idx_psi_0, "chain_length": chain_length, "J": J,
-                  "B0": B0, "A": A, "spin_constant": spin_constant,
-                  "periodic_boundaries": periodic_boundaries, "central_spin": central_spin}
-        save_data(save, data, params, anim=anim)
-
+        return [t, exp_sig_z]
 
 # Histogram functions for r_value
+
 
 def rice_rule(n):
     """
@@ -229,12 +219,7 @@ def plot_r_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
     plt.title(f"R values averaged over {samples} samples")
     plt.legend()
     if save:
-        data = [r_values]
-        params = {"plot type": "r_values", "data structure": "[r_values]",
-                  "chain_length": chain_length, "J": J,
-                  "B0": B0, "A": A, "spin_constant": spin_constant,
-                  "periodic_boundaries": periodic_boundaries, "central_spin": central_spin}
-        save_data(save, data, params)
+        return [r_values]
 
 
 def plot_r_fig3(chain_length, J, B0, periodic_boundaries, samples, save):
@@ -273,11 +258,7 @@ def plot_r_fig3(chain_length, J, B0, periodic_boundaries, samples, save):
     plt.ylabel("r-value")
     plt.legend()
     if save:
-        data = [B0, mean_r_values]
-        params = {"plot type": "r_values", "data structure": "[B0, mean_r_values]",
-                  "chain_length": chain_length, "J": J,
-                  "B0": B0, "periodic_boundaries": periodic_boundaries, "samples": samples}
-        save_data(save, data, params)
+        return [B0, mean_r_values]
 
 
 def generate_f_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
@@ -387,11 +368,7 @@ def plot_f_fig2(chain_length, J, B0, periodic_boundaries, samples, save, verbose
     plt.ylabel("f-value")
     plt.legend()
     if save:
-        data = [B0, mean_f_values]
-        params = {"plot type": "f_fig2", "data structure": "[B0, mean_f_values]",
-                  "chain_length": chain_length, "J": J,
-                  "B0": B0, "periodic_boundaries": periodic_boundaries, "samples": samples}
-        save_data(save, data, params)
+        return [B0, mean_f_values]
 
 
 def generate_g_values(rho0, times, chain_length, J, B0, A, periodic_boundaries, central_spin,
@@ -589,12 +566,7 @@ def plot_fa_values(chain_length, J, B0, A, periodic_boundaries, central_spin, sa
     plt.title(f"fa_values for chain_length = {chain_length}")
     plt.legend(loc=4)
     if save:
-        data = [np.arange(chain_length), mean_fa_values]
-        params = {"plot type": "fa_values", "data structure": "[fa_modes, mean_fa_values]",
-                  "chain_length": chain_length, "J": J, "A": A,
-                  "B0": B0, "periodic_boundaries": periodic_boundaries,
-                  "central_spin": central_spin, "samples": samples}
-        save_data(save, data, params)
+        return [np.arange(chain_length), mean_fa_values]
 
 
 def plot_Sa_values(times, chain_length, J, B0, As, periodic_boundaries, samples, save):
@@ -662,11 +634,7 @@ def plot_Sa_values(times, chain_length, J, B0, As, periodic_boundaries, samples,
     plt.semilogx()
     plt.legend()
     if save:
-        data = [times, Sa]
-        params = {"plot type": "time_evo", "data structure": "[t, exp_sig_z]",
-                  "chain_length": chain_length, "J": J, "B0": B0, "A": As,
-                  "periodic_boundaries": periodic_boundaries, "samples": samples}
-        save_data(save, data, params)
+        return [times, Sa]
 
 
 def calc_occupation_imbalance(times, chain_length, J, B0, A, periodic_boundaries, central_spin,
@@ -768,13 +736,7 @@ def plot_occupation_imbalance(times, chain_length, J, B0, As, periodic_boundarie
     plt.ylabel("occupation imbalance")
     plt.legend(loc=1)
     if save:
-        data = [times, occupation_imbalance_means,
-                occupation_imbalance_errors]
-        params = {"plot type": "exp_sig_z_central_spin", "data structure":
-                  "[times, exp_sig_z_means, exp_sig_z_errors]", "chain_length": chain_length,
-                  "J": J, "B0": B0, "A": As, "periodic_boundaries": periodic_boundaries,
-                  "seed": seed, "samples": samples, "scaling": scaling}
-        save_data(save, data, params)
+        return [times, occupation_imbalance_means, occupation_imbalance_errors]
 
 
 def calc_exp_sig_z_central_spin(times, chain_length, J, B0, A, periodic_boundaries, seed, scaling):
@@ -869,10 +831,4 @@ def plot_exp_sig_z_central_spin(times, chain_length, J, B0, As, periodic_boundar
     plt.semilogx()
     plt.legend(loc=1)
     if save:
-        data = [times, exp_sig_z_means,
-                exp_sig_z_errors]
-        params = {"plot type": "exp_sig_z_central_spin", "data structure":
-                  "[times, exp_sig_z_means, exp_sig_z_errors]", "chain_length": chain_length,
-                  "J": J, "B0": B0, "A": As, "periodic_boundaries": periodic_boundaries,
-                  "seed": seed, "samples": samples, "scaling": scaling}
-        save_data(save, data, params)
+        return [times, exp_sig_z_means, exp_sig_z_errors]

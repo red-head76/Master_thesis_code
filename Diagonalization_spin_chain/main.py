@@ -1,11 +1,12 @@
 import pdb
 import sys
+import numpy as np
+import output
 from os.path import isfile
 from configparser import ConfigParser
-import numpy as np
 from matplotlib.pyplot import show as show_plot
-import output
 from create_config import create_config
+from support_functions import save_data
 
 
 def convert_list(string):
@@ -60,6 +61,9 @@ show = config_object.getboolean("Output", "show")
 Other = config_object["Other"]
 seed = int(Other["seed"])
 
+# Set to true in the following, if an animation is called
+anim = False
+
 if outputtype in ["plot_time_evo", "animate_time_evo"]:
     # Initial state
     idx_psi_0 = int(Other["idx_psi_0"])
@@ -77,43 +81,46 @@ if outputtype in ["plot_sa", "plot_occupation_imbalance", "plot_exp_sig_z_centra
                     int(Other["timesteps"]) + 1)
 
 if outputtype == "plot_time_evo":
-    output.plot_time_evo(t, idx_psi_0, chain_length[0], J, B0[0], A[0], spin_constant,
-                         periodic_boundaries, central_spin, save)
+    data = output.plot_time_evo(t, idx_psi_0, chain_length[0], J, B0[0], A[0], spin_constant,
+                                periodic_boundaries, central_spin, save)
 
 if outputtype == "animate_time_evo":
-    output.animate_time_evo(t, idx_psi_0, chain_length[0], J, B0[0], A[0], spin_constant,
-                            periodic_boundaries, central_spin, save)
+    data = output.animate_time_evo(t, idx_psi_0, chain_length[0], J, B0[0], A[0], spin_constant,
+                                   periodic_boundaries, central_spin, save)
+    anim = True
 
 if outputtype == "plot_r":
-    output.plot_r_values(chain_length[0], J, B0[0], A[0], periodic_boundaries, central_spin,
-                         spin_constant, samples[0], save)
+    data = output.plot_r_values(chain_length[0], J, B0[0], A[0], periodic_boundaries, central_spin,
+                                spin_constant, samples[0], save)
 
 if outputtype == "plot_r_fig3":
-    output.plot_r_fig3(chain_length, J, B0, periodic_boundaries, samples, save)
+    data = output.plot_r_fig3(chain_length, J, B0, periodic_boundaries, samples, save)
 
 if outputtype == "plot_f_fig2":
-    output.plot_f_fig2(chain_length, J, B0, periodic_boundaries, samples, save)
+    data = output.plot_f_fig2(chain_length, J, B0, periodic_boundaries, samples, save)
 
 if outputtype == "plot_g":
-    output.plot_g_value(rho0, t, chain_length, J, B0,
-                        periodic_boundaries, samples)
+    data = output.plot_g_value(rho0, t, chain_length, J, B0,
+                               periodic_boundaries, samples)
 
 if outputtype == "plot_fa":
-    output.plot_fa_values(chain_length, J, B0, A[0],
-                          periodic_boundaries, central_spin, samples, save)
+    data = output.plot_fa_values(chain_length, J, B0, A[0],
+                                 periodic_boundaries, central_spin, samples, save)
 
 if outputtype == "plot_sa":
-    output.plot_Sa_values(t, chain_length, J, B0, A,
-                          periodic_boundaries, samples, save)
+    data = output.plot_Sa_values(t, chain_length, J, B0, A,
+                                 periodic_boundaries, samples, save)
 
 if outputtype == "plot_occupation_imbalance":
-    output.plot_occupation_imbalance(t, chain_length, J, B0, A, periodic_boundaries,
-                                     central_spin, samples, seed, scaling, save)
+    data = output.plot_occupation_imbalance(t, chain_length, J, B0, A, periodic_boundaries,
+                                            central_spin, samples, seed, scaling, save)
 
 if outputtype == "plot_exp_sig_z_central_spin":
-    output.plot_exp_sig_z_central_spin(t, chain_length, J, B0, A, periodic_boundaries,
-                                       samples, seed, scaling, save)
+    data = output.plot_exp_sig_z_central_spin(t, chain_length, J, B0, A, periodic_boundaries,
+                                              samples, seed, scaling, save)
 
+if save:
+    save_data(save, data, config_file, anim)
 
 if show:
     show_plot()

@@ -4,6 +4,7 @@ from json import dump
 from os.path import isdir
 from os import mkdir
 from matplotlib import animation
+from shutil import copy
 
 
 def pc(matrix, precision=1):
@@ -106,7 +107,7 @@ def partial_trace(rho, spins_a, rho_a=True):
                        axis2=(2+rho_a+axis_offset)).sum(axis=2+axis_offset)
 
 
-def save_data(filename, data, params, anim=False, fps=10):
+def save_data(filename, data, config_file, anim=False, fps=10):
     """
     Saves the data to a given plot with a given filename. There is one file for the plot, the data
     of the plot and the parameters used.
@@ -130,5 +131,4 @@ def save_data(filename, data, params, anim=False, fps=10):
         anim.save(save_path, writer=writervideo)
 
     np.savez(save_path, *data)
-    with open(save_path + "_info.json", 'w') as jsonfile:
-        dump(params, jsonfile)
+    copy(config_file, "./Plots/")
