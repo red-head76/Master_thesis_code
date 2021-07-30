@@ -594,28 +594,31 @@ def plot_fa_values(chain_length, J, B0, A, periodic_boundaries, central_spin, sa
         return [np.arange(chain_length), mean_fa_values]
 
 
-def plot_half_chain_entropy(times, chain_length, J, B0, As, periodic_boundaries, samples, save):
+def calc_half_chain_entropy(times, chain_length, J, B0, A, periodic_boundaries, central_spin,
+                            seed, scaling):
     """
-    Plots the Sa(t) values (see fig2 in http://arxiv.org/abs/1806.08316)
+    Calculates the half chain entropy -tr(rho_a, ln(rho_a))
 
     Args:
         times (array (float) [tD]): the time array, where g should be calculated
-        chain_length (int or array (int)): the length of the spin chain
+        chain_length (int): the length of the spin chain
         J (float): the coupling constant
         B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
                                 between (-1, 1).
-        A (array (float)): the coupling between the central spin and the spins in the chain
+        A (float): coupling between the central spin and the spins in the chain
         periodic_boundaries (bool): determines whether or not periodic boundary
                                                   conditions are used in the chain.
-        samples (int or array (int)): Number of times data points should be generated
-
+        central_spin (bool): determines whether or not a central spin is present
+        seed (int): use a seed to produce comparable outcomes if False, then it is initialized
+                    randomly
+        scaling (string): the scaling of the coupling A with the chain length.
 
     Returns:
-        If save: data (list [time, hce_mean, yerrors]), None otherwise
+        half_chain_entropy (array (float) [times])
 
     """
-    # TODO: Add option for no central spin
-    total_spins = chain_length[0] + 1
+
+    total_spins = chain_length + central_spin
     dim = np.int(2**total_spins)
     # This mask filters out the states of the biggest subspace
     sub_room_mask = np.where(np.logical_not(np.sum(unpackbits(np.arange(dim), total_spins),
@@ -624,50 +627,84 @@ def plot_half_chain_entropy(times, chain_length, J, B0, As, periodic_boundaries,
     psi_0 = np.zeros(dim)
     psi_0[packbits(np.arange(total_spins) % 2)] = 1
     psi_0 = psi_0[sub_room_mask]
-    # half chain entropy
-    hce = np.empty((samples[0], len(times)))
 
-    for A in As:
-        for sample in range(samples[0]):
-            eigenvalues, eigenvectors = eig_values_vectors_spin_const(
-                chain_length[0], J, B0[0], A, periodic_boundaries,
-                central_spin=True, only_biggest_subspace=True)
-            eigenvectors = (eigenvectors.T[sub_room_mask]).T
-            # dimension of the biggest subspace
-            dim_bss = eigenvectors.shape[0]
-            exp_part = np.exp(1j * np.outer(times, eigenvalues))
-            psi_t = (eigenvectors @
-                     (exp_part.reshape(times.size, dim_bss, 1) * eigenvectors.T) @ psi_0)
-            # This performs an outer product along axis 1
-            rho_t = psi_t[:, :, np.newaxis] * psi_t.conj()[:, np.newaxis, :]
-            # For now: go back to full space to calculate the partial trace. Even though there must
-            # be a smarter way to do this...
-            rho_t_fullspace = np.zeros((times.size, dim, dim), dtype=complex)
-            sub_room_mask2D = np.meshgrid(sub_room_mask, sub_room_mask)
-            rho_t_fullspace[:, sub_room_mask2D[1], sub_room_mask2D[0]] = rho_t
-            # partial_trace over b -> rho_a(t)
-            rho_a_t = partial_trace(rho_t_fullspace, total_spins//2)
-            # hce = -tr(rho_a ln(rho_a))
-            #    = -tr(rho ln(rho)) = tr(D ln(D)), where D is the diagonalized matrix
-            eigvals = np.linalg.eigvalsh(rho_a_t)
-            # ugly, but cuts out the the Runtime warning caused by of 0 values in log
-            hce[sample] = -np.sum(eigvals * np.log(eigvals, where=eigvals > 0,
-                                                   out=np.zeros(eigvals.shape)), axis=1)
-            # cut out too small eigenvalues because of log (log(< 1e-324) = -inf)
-            hce[sample] = -np.sum(np.where(eigvals > 1e-323,
-                                           eigvals * np.log(eigvals), 0), axis=1)
-        hce_mean = np.mean(hce, axis=0)
-        yerrors = np.std(hce, axis=0) / np.sqrt(samples[0])
-        plt.plot(times, hce_mean, label=f"A={A}")
-        plt.fill_between(times, hce_mean + yerrors,
-                         hce_mean - yerrors, alpha=0.2)
+    eigenvalues, eigenvectors = eig_values_vectors_spin_const(
+        chain_length, J, B0, A, periodic_boundaries,
+        central_spin, only_biggest_subspace=True, seed=seed, scaling=scaling)
+    eigenvectors = (eigenvectors.T[sub_room_mask]).T
+    # dimension of the biggest subspace
+    dim_bss = eigenvectors.shape[0]
+    exp_part = np.exp(1j * np.outer(times, eigenvalues))
+    psi_t = (eigenvectors @
+             (exp_part.reshape(times.size, dim_bss, 1) * eigenvectors.T) @ psi_0)
+    # This performs an outer product along axis 1
+    rho_t = psi_t[:, :, np.newaxis] * psi_t.conj()[:, np.newaxis, :]
+    # For now: go back to full space to calculate the partial trace. Even though there must
+    # be a smarter way to do this...
+    rho_t_fullspace = np.zeros((times.size, dim, dim), dtype=complex)
+    sub_room_mask2D = np.meshgrid(sub_room_mask, sub_room_mask)
+    rho_t_fullspace[:, sub_room_mask2D[1], sub_room_mask2D[0]] = rho_t
+    # partial_trace over b -> rho_a(t)
+    rho_a_t = partial_trace(rho_t_fullspace, total_spins//2)
+    # hce = -tr(rho_a ln(rho_a))
+    #    = -tr(rho ln(rho)) = tr(D ln(D)), where D is the diagonalized matrix
+    eigvals = np.linalg.eigvalsh(rho_a_t)
+    # ugly, but cuts out the the Runtime warning caused by of 0 values in log
+    return -np.sum(eigvals * np.log(eigvals, where=eigvals > 0,
+                                    out=np.zeros(eigvals.shape)), axis=1)
+    # # cut out too small eigenvalues because of log (log(< 1e-324) = -inf)
+    # hce = -np.sum(np.where(eigvals > 1e-323,
+    #                                eigvals * np.log(eigvals), 0), axis=1)
+
+
+def plot_half_chain_entropy(times, chain_length, J, B0, As, periodic_boundaries, central_spin,
+                            samples, seed, scaling, save):
+    """
+    Plots the Sa(t) values (see fig2 in http://arxiv.org/abs/1806.08316)
+
+    Args:
+        times (array (float) [tD]): the time array, where g should be calculated
+        chain_length (array (int)): the length of the spin chain
+        J (float): the coupling constant
+        B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
+                                between (-1, 1).
+        As (array (float)): the coupling between the central spin and the spins in the chain
+        periodic_boundaries (bool): determines whether or not periodic boundary
+                                                  conditions are used in the chain.
+        central_spin (bool): Whether or not a central spin is present
+        samples (int or array (int)): Number of times data points should be generated
+        seed (int): random seed for reducible results
+        scaling (string): scaling of coupling constant A by chain length
+        save (string): filename, if data needs to be saved
+
+    Returns:
+        If save: data (list [time, hce_mean, yerrors]), None otherwise
+
+    """
+    if save:
+        hce_means = np.empty((len(chain_length), len(As), len(B0), len(times)))
+        hce_errors = np.empty((len(chain_length), len(As), len(B0), len(times)))
+    for i, N in enumerate(chain_length):
+        for a, A in enumerate(As):
+            for b, B in enumerate(B0):
+                hce = np.zeros((samples[i], times.size))
+                for sample in range(samples[i]):
+                    hce[sample] = calc_half_chain_entropy(times, N, J, B, A, periodic_boundaries,
+                                                          central_spin, seed, scaling)
+                hce_mean = np.mean(hce, axis=0)
+                yerrors = np.std(hce, axis=0) / np.sqrt(samples[i])
+                if save:
+                    hce_means[i, a, b] = hce_mean
+                    hce_errors[i, a, b] = yerrors
+                plt.plot(times, hce_mean, label=f"A={A}, L={N}, B={B}")
+                plt.fill_between(times, hce_mean + yerrors, hce_mean - yerrors, alpha=0.2)
     plt.xlabel("time t")
-    plt.ylabel("Half chain entropy(t)")
-    plt.title(f"Entanglement entropy for B={B0[0]}, N={chain_length[0]}")
+    plt.ylabel("Half chain entropy")
+    plt.title(f"Entanglement entropy")
     plt.semilogx()
     plt.legend()
     if save:
-        return [times, hce_mean, yerrors]
+        return [times, hce_means, hce_errors]
 
 
 def calc_occupation_imbalance(times, chain_length, J, B0, A, periodic_boundaries, central_spin,
@@ -676,14 +713,13 @@ def calc_occupation_imbalance(times, chain_length, J, B0, A, periodic_boundaries
     Calculates the occupation imbalance sum_odd s_z - sum_even s_z
 
     Args:
-        rho0 (array (float) [dim, dim]): the initial density matrix, where dim = 2**total_spins
         times (array (float) [tD]): the time array, where g should be calculated
         chain_length (int): the length of the spin chain
         J (float): the coupling constant
         B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
                                 between (-1, 1).
         A (float): coupling between the central spin and the spins in the chain
-        periodic_boundaries (boolx): determines whether or not periodic boundary
+        periodic_boundaries (bool): determines whether or not periodic boundary
                                                   conditions are used in the chain.
         central_spin (bool): determines whether or not a central spin is present
         seed (int): use a seed to produce comparable outcomes if False, then it is initialized
@@ -733,7 +769,7 @@ def plot_occupation_imbalance(times, chain_length, J, B0, As, periodic_boundarie
         B0 (array (float)): the B-field amplitude. Currently random initialized uniformly
                                 between (-1, 1).
         As (array (float)): the coupling between the central spin and the spins in the chain
-        periodic_boundaries (boolx): determines whether or not periodic boundary
+        periodic_boundaries (bool): determines whether or not periodic boundary
                                                   conditions are used in the chain.
         central_spin (bool): determines whether or not a central spin is present
         samples (array (int)[1]): Number of times data points should be generated
@@ -746,10 +782,8 @@ def plot_occupation_imbalance(times, chain_length, J, B0, As, periodic_boundarie
 
     """
     if save:
-        occupation_imbalance_means = np.empty(
-            (len(chain_length), len(As), len(B0), len(times)))
-        occupation_imbalance_errors = np.empty(
-            (len(chain_length), len(As), len(B0), len(times)))
+        occupation_imbalance_means = np.empty((len(chain_length), len(As), len(B0), len(times)))
+        occupation_imbalance_errors = np.empty((len(chain_length), len(As), len(B0), len(times)))
     for i, N in enumerate(chain_length):
         for a, A in enumerate(As):
             for b, B in enumerate(B0):
@@ -758,17 +792,14 @@ def plot_occupation_imbalance(times, chain_length, J, B0, As, periodic_boundarie
                     occupation_imbalance[sample] = calc_occupation_imbalance(
                         times, N, J, B, A, periodic_boundaries, central_spin, seed, scaling=scaling)
                 occupation_imbalance_mean = occupation_imbalance.mean(axis=0)
-                yerrors = occupation_imbalance.std(
-                    axis=0) / np.sqrt(samples[i])
+                yerrors = occupation_imbalance.std(axis=0) / np.sqrt(samples[i])
                 if save:
-                    occupation_imbalance_means[i, a,
-                                               b] = occupation_imbalance_mean
+                    occupation_imbalance_means[i, a, b] = occupation_imbalance_mean
                     occupation_imbalance_errors[i, a, b] = yerrors
                 plt.plot(times, occupation_imbalance_mean, label=f"N={N}")
                 plt.fill_between(times, occupation_imbalance_mean + yerrors,
                                  occupation_imbalance_mean - yerrors, alpha=0.2)
-                plt.title(
-                    f"Occupation imbalance for \nJ={J}, B={B}, A={A}, scaling={scaling}")
+    plt.title(f"Occupation imbalance for \nJ={J}, B={B}, A={A}, scaling={scaling}")
     plt.xlabel("time")
     plt.semilogx()
     plt.ylabel("occupation imbalance")
@@ -789,7 +820,7 @@ def calc_exp_sig_z_central_spin(times, chain_length, J, B0, A, periodic_boundari
         B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
                                 between (-1, 1).
         A (float): the coupling between the central spin and the spins in the chain
-        periodic_boundaries (boolx): determines whether or not periodic boundary
+        periodic_boundaries (bool): determines whether or not periodic boundary
                                                   conditions are used in the chain.
         seed (int): use a seed to produce comparable outcomes if False, then it is initialized
                     randomly
@@ -836,7 +867,7 @@ def plot_exp_sig_z_central_spin(times, chain_length, J, B0, As, periodic_boundar
         B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
                                 between (-1, 1).
         As (array (float)): the coupling between the central spin and the spins in the chain
-        periodic_boundaries (boolx): determines whether or not periodic boundary
+        periodic_boundaries (bool): determines whether or not periodic boundary
                                                   conditions are used in the chain.
         samples (array (int)[1]): Number of times data points should be generated
         seed (int): use a seed to produce comparable outcomes if False, then it is initialized

@@ -108,8 +108,8 @@ if outputtype == "plot_fa":
                                  periodic_boundaries, central_spin, samples, save)
 
 if outputtype == "plot_half_chain_entropy":
-    data = output.plot_half_chain_entropy(t, chain_length, J, B0, A,
-                                          periodic_boundaries, samples, save)
+    data = output.plot_half_chain_entropy(t, chain_length, J, B0, A, periodic_boundaries,
+                                          central_spin, samples, seed, scaling, save)
 
 if outputtype == "plot_occupation_imbalance":
     data = output.plot_occupation_imbalance(t, chain_length, J, B0, A, periodic_boundaries,
