@@ -76,7 +76,7 @@ if outputtype in ["plot_g"]:
     # Time array
     t = np.linspace(0, float(Other["timeend"]), int(Other["timesteps"]) + 1)
 
-if outputtype in ["plot_sa", "plot_occupation_imbalance", "plot_exp_sig_z_central_spin"]:
+if outputtype in ["plot_half_chain_entropy", "plot_occupation_imbalance", "plot_exp_sig_z_central_spin"]:
     t = np.logspace(np.log10(float(Other["timestart"])), np.log10(float(Other["timeend"])),
                     int(Other["timesteps"]) + 1)
 
@@ -101,15 +101,15 @@ if outputtype == "plot_f_fig2":
 
 if outputtype == "plot_g":
     data = output.plot_g_value(rho0, t, chain_length, J, B0,
-                               periodic_boundaries, samples)
+                               periodic_boundaries, samples, save)
 
 if outputtype == "plot_fa":
     data = output.plot_fa_values(chain_length, J, B0, A[0],
                                  periodic_boundaries, central_spin, samples, save)
 
-if outputtype == "plot_sa":
-    data = output.plot_Sa_values(t, chain_length, J, B0, A,
-                                 periodic_boundaries, samples, save)
+if outputtype == "plot_half_chain_entropy":
+    data = output.plot_half_chain_entropy(t, chain_length, J, B0, A,
+                                          periodic_boundaries, samples, save)
 
 if outputtype == "plot_occupation_imbalance":
     data = output.plot_occupation_imbalance(t, chain_length, J, B0, A, periodic_boundaries,

@@ -451,7 +451,7 @@ def generate_g_values(rho0, times, chain_length, J, B0, A, periodic_boundaries, 
     return np.mean(1 - exp_M1_rhot / exp_M1_rho0, axis=1)
 
 
-def plot_g_value(rho0, times, chain_length, J, B0, periodic_boundaries, samples):
+def plot_g_value(rho0, times, chain_length, J, B0, periodic_boundaries, samples, save):
     """
     Plots the f values as done in Figure 2 in https://doi.org/10.1103/PhysRevB.82.174411
 
@@ -494,6 +494,8 @@ def plot_g_value(rho0, times, chain_length, J, B0, periodic_boundaries, samples)
         axes[i].set_zlabel("g-value")
         # plt.errorbar(B0, mean_g_values[i], yerr=yerrors, marker="o", capsize=5,
         #              linestyle="--", label=f"N={N}")
+    if save:
+        return [times, mean_g_values]
 
 
 def generate_fa_values(chain_length, J, B0, A, periodic_boundaries, central_spin):
@@ -592,7 +594,7 @@ def plot_fa_values(chain_length, J, B0, A, periodic_boundaries, central_spin, sa
         return [np.arange(chain_length), mean_fa_values]
 
 
-def plot_Sa_values(times, chain_length, J, B0, As, periodic_boundaries, samples, save):
+def plot_half_chain_entropy(times, chain_length, J, B0, As, periodic_boundaries, samples, save):
     """
     Plots the Sa(t) values (see fig2 in http://arxiv.org/abs/1806.08316)
 
@@ -609,7 +611,7 @@ def plot_Sa_values(times, chain_length, J, B0, As, periodic_boundaries, samples,
 
 
     Returns:
-        If save: data (list [time, Sa]), None otherwise
+        If save: data (list [time, hce_mean, yerrors]), None otherwise
 
     """
     # TODO: Add option for no central spin
@@ -622,7 +624,8 @@ def plot_Sa_values(times, chain_length, J, B0, As, periodic_boundaries, samples,
     psi_0 = np.zeros(dim)
     psi_0[packbits(np.arange(total_spins) % 2)] = 1
     psi_0 = psi_0[sub_room_mask]
-    Sa = np.empty((samples[0], len(times)))
+    # half chain entropy
+    hce = np.empty((samples[0], len(times)))
 
     for A in As:
         for sample in range(samples[0]):
@@ -644,24 +647,27 @@ def plot_Sa_values(times, chain_length, J, B0, As, periodic_boundaries, samples,
             rho_t_fullspace[:, sub_room_mask2D[1], sub_room_mask2D[0]] = rho_t
             # partial_trace over b -> rho_a(t)
             rho_a_t = partial_trace(rho_t_fullspace, total_spins//2)
-            # Sa = -tr(rho_a ln(rho_a))
+            # hce = -tr(rho_a ln(rho_a))
             #    = -tr(rho ln(rho)) = tr(D ln(D)), where D is the diagonalized matrix
             eigvals = np.linalg.eigvalsh(rho_a_t)
+            # ugly, but cuts out the the Runtime warning caused by of 0 values in log
+            hce[sample] = -np.sum(eigvals * np.log(eigvals, where=eigvals > 0,
+                                                   out=np.zeros(eigvals.shape)), axis=1)
             # cut out too small eigenvalues because of log (log(< 1e-324) = -inf)
-            Sa[sample] = -np.sum(np.where(eigvals > 1e-323,
-                                          eigvals * np.log(eigvals), 0), axis=1)
-        Sa_mean = np.mean(Sa, axis=0)
-        yerrors = np.std(Sa, axis=0) / np.sqrt(samples[0])
-        plt.plot(times, Sa_mean, label=f"A={A}")
-        plt.fill_between(times, Sa_mean + yerrors,
-                         Sa_mean - yerrors, alpha=0.2)
+            hce[sample] = -np.sum(np.where(eigvals > 1e-323,
+                                           eigvals * np.log(eigvals), 0), axis=1)
+        hce_mean = np.mean(hce, axis=0)
+        yerrors = np.std(hce, axis=0) / np.sqrt(samples[0])
+        plt.plot(times, hce_mean, label=f"A={A}")
+        plt.fill_between(times, hce_mean + yerrors,
+                         hce_mean - yerrors, alpha=0.2)
     plt.xlabel("time t")
-    plt.ylabel("Sa(t)")
-    plt.title(f"Entanglement entropy Sa for B={B0[0]}, N={chain_length[0]}")
+    plt.ylabel("Half chain entropy(t)")
+    plt.title(f"Entanglement entropy for B={B0[0]}, N={chain_length[0]}")
     plt.semilogx()
     plt.legend()
     if save:
-        return [times, Sa]
+        return [times, hce_mean, yerrors]
 
 
 def calc_occupation_imbalance(times, chain_length, J, B0, A, periodic_boundaries, central_spin,
