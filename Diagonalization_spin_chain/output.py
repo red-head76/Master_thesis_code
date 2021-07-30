@@ -621,17 +621,17 @@ def calc_half_chain_entropy(times, chain_length, J, B0, A, periodic_boundaries, 
     total_spins = chain_length + central_spin
     dim = np.int(2**total_spins)
     # This mask filters out the states of the biggest subspace
-    sub_room_mask = np.where(np.logical_not(np.sum(unpackbits(np.arange(dim), total_spins),
+    subspace_mask = np.where(np.logical_not(np.sum(unpackbits(np.arange(dim), total_spins),
                                                    axis=1) - total_spins//2))[0]
     # Starting with a Neel state , i.e. |up, down, up, down, ...>
     psi_0 = np.zeros(dim)
     psi_0[packbits(np.arange(total_spins) % 2)] = 1
-    psi_0 = psi_0[sub_room_mask]
+    psi_0 = psi_0[subspace_mask]
 
     eigenvalues, eigenvectors = eig_values_vectors_spin_const(
         chain_length, J, B0, A, periodic_boundaries,
         central_spin, only_biggest_subspace=True, seed=seed, scaling=scaling)
-    eigenvectors = (eigenvectors.T[sub_room_mask]).T
+    eigenvectors = (eigenvectors.T[subspace_mask]).T
     # dimension of the biggest subspace
     dim_bss = eigenvectors.shape[0]
     exp_part = np.exp(1j * np.outer(times, eigenvalues))
@@ -642,8 +642,8 @@ def calc_half_chain_entropy(times, chain_length, J, B0, A, periodic_boundaries, 
     # For now: go back to full space to calculate the partial trace. Even though there must
     # be a smarter way to do this...
     rho_t_fullspace = np.zeros((times.size, dim, dim), dtype=complex)
-    sub_room_mask2D = np.meshgrid(sub_room_mask, sub_room_mask)
-    rho_t_fullspace[:, sub_room_mask2D[1], sub_room_mask2D[0]] = rho_t
+    subspace_mask2D = np.meshgrid(subspace_mask, subspace_mask)
+    rho_t_fullspace[:, subspace_mask2D[1], subspace_mask2D[0]] = rho_t
     # partial_trace over b -> rho_a(t)
     rho_a_t = partial_trace(rho_t_fullspace, total_spins//2)
     # hce = -tr(rho_a ln(rho_a))
@@ -704,7 +704,7 @@ def plot_half_chain_entropy(times, chain_length, J, B0, As, periodic_boundaries,
     plt.semilogx()
     plt.legend()
     if save:
-        return [times, hce_means, hce_errors]
+        return [times, hce_means, yerrors]
 
 
 def calc_occupation_imbalance(times, chain_length, J, B0, A, periodic_boundaries, central_spin,
@@ -731,19 +731,19 @@ def calc_occupation_imbalance(times, chain_length, J, B0, A, periodic_boundaries
     total_spins = chain_length + central_spin
     dim = np.int(2**total_spins)
     # This mask filters out the states of the biggest subspace
-    sub_room_mask = np.where(np.logical_not(np.sum(unpackbits(np.arange(dim), total_spins),
+    subspace_mask = np.where(np.logical_not(np.sum(unpackbits(np.arange(dim), total_spins),
                                                    axis=1) - total_spins//2))
     eigenvalues, eigenvectors = eig_values_vectors_spin_const(
         chain_length, J, B0, A, periodic_boundaries, central_spin,
         only_biggest_subspace=True, seed=seed, scaling=scaling)
-    eigenvectors = (eigenvectors.T[sub_room_mask]).T
-    psi_z = np.arange(0, np.int(2**(total_spins)))[sub_room_mask]
+    eigenvectors = (eigenvectors.T[subspace_mask]).T
+    psi_z = np.arange(0, np.int(2**(total_spins)))[subspace_mask]
     # discard last spin
     sigma_z = (unpackbits(psi_z, total_spins) - 1/2)[:, :-1]
     # Initialize in Neel state
     psi_0 = np.zeros(dim)
     psi_0[packbits(np.arange(total_spins) % 2)] = 1
-    psi_0 = psi_0[sub_room_mask]
+    psi_0 = psi_0[subspace_mask]
     exp_part = np.exp(1j * np.outer(times, eigenvalues))
     psi_t = eigenvectors @ (exp_part.reshape(times.size, eigenvalues.size, 1)
                             * eigenvectors.T) @ psi_0
@@ -832,19 +832,19 @@ def calc_exp_sig_z_central_spin(times, chain_length, J, B0, A, periodic_boundari
     total_spins = chain_length + 1
     dim = np.int(2**total_spins)
     # This mask filters out the states of the biggest subspace
-    sub_room_mask = np.where(np.logical_not(np.sum(unpackbits(np.arange(dim), total_spins),
+    subspace_mask = np.where(np.logical_not(np.sum(unpackbits(np.arange(dim), total_spins),
                                                    axis=1) - total_spins//2))
     eigenvalues, eigenvectors = eig_values_vectors_spin_const(
         chain_length, J, B0, A, periodic_boundaries, True,
         only_biggest_subspace=True, seed=seed, scaling=scaling)
-    eigenvectors = (eigenvectors.T[sub_room_mask]).T
-    psi_z = np.arange(0, np.int(2**(total_spins)))[sub_room_mask]
+    eigenvectors = (eigenvectors.T[subspace_mask]).T
+    psi_z = np.arange(0, np.int(2**(total_spins)))[subspace_mask]
     # discard last spin
     sigma_z = (unpackbits(psi_z, total_spins) - 1/2)[:, -1]
     # Initialize in Neel state
     psi_0 = np.zeros(dim)
     psi_0[packbits(np.arange(total_spins) % 2)] = 1
-    psi_0 = psi_0[sub_room_mask]
+    psi_0 = psi_0[subspace_mask]
     exp_part = np.exp(1j * np.outer(times, eigenvalues))
     psi_t = eigenvectors @ (exp_part.reshape(times.size, eigenvalues.size, 1)
                             * eigenvectors.T) @ psi_0
