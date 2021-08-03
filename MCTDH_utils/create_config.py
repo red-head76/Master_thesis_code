@@ -55,7 +55,7 @@ def create_config():
         # without combining it with other spins into a wave function
         "central_spin_splitted": "False",
         # Number of realizations
-        "n_realizations": 1,
+        "samples": 1,
         # In certain cases a random seed can be used to produce comparable outcomes. 0 equals None
         "seed": "0"
     }

@@ -68,7 +68,7 @@ n_combined_wf = str_to_int(config_object.getlist("Other", "n_combined_wf"))
 wave_function_basis = str_to_int(
     config_object.getlist("Other", "wave_function_basis"))
 central_spin_splitted = config_object.getboolean("Other", "central_spin_splitted")
-n_realizations = config_object.getint("Other", "n_realizations")
+samples = config_object.getint("Other", "samples")
 seed = config_object.getint("Other", "seed")
 
 
@@ -243,8 +243,8 @@ def write_info_file(path):
 
 
 def write_everything():
-    for realization in range(n_realizations):
-        if n_realizations == 1:
+    for realization in range(samples):
+        if samples == 1:
             job_name = filename
         else:
             job_name = filename + "_" + str(realization)
@@ -262,7 +262,7 @@ def write_everything():
                 print(f"No files for {job_name} were produced.")
             else:
                 write_op_file("./input_files/" + job_name)
-                if n_realizations == 1:
+                if samples == 1:
                     job_dir = title
                 else:
                     job_dir = title + "_" + str(realization)
