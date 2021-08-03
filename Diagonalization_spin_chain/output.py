@@ -704,7 +704,7 @@ def plot_half_chain_entropy(times, chain_length, J, B0, As, periodic_boundaries,
     plt.semilogx()
     plt.legend()
     if save:
-        return [times, hce_means, yerrors]
+        return [times, hce_means, hce_errors]
 
 
 def calc_occupation_imbalance(times, chain_length, J, B0, A, periodic_boundaries, central_spin,
