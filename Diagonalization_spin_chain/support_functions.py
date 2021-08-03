@@ -71,14 +71,63 @@ def packbits(x):
         num_bits (int, default: chain_length): number of bits
 
     Returns:
-        packed_bits (array [N]): an array of integer
+        packed_bits (array [x.shape[0]]): an array of integer
 
     """
-    mask = 2**np.arange(x.size)
-    return np.inner(mask, x)
+    mask = 2**np.arange(x.shape[-1])
+    return mask @ x.transpose()
 
 
-def partial_trace(rho, spins_a, rho_a=True):
+def partial_trace_subspace(rho_sub, subspace_mask, spins_a, calc_rho_a=True):
+    """
+    Calculates the partial trace for the given rho given in a subpace with constant spin and
+    dimension of new subspace a and b, where the chain is divided.
+    Explanation see Notes/partial_trace_calc.pdf
+
+    Args:
+        rho_sub (array (float) [dim, dim] or [t, dim, dim]): full density matrix with dimensions of
+                            the full hamiltonian. With optional time dimension in front.
+        subspace_mask (array (float)) indices of states with const spin n in terms of the fullspace
+        spins_a (int): spins in subspace a.
+        calc_rho_a (bool, default: True): determines whether the partial trace over b
+                    (if True, results in rho_a) or over a (results in rho_b) should be calculated.
+
+    Returns:
+        rho_a (array (float) [dim_a, dim_a] or [t, dim_a, dim_a]): the partial trace over b
+                (or the other way around if calc_rho_a=False).
+    """
+    # maximum amount of spins used in subspace
+    max_spins = np.int(np.floor(np.log2(np.max(subspace_mask))) + 1)
+    # Split the entries of the mask into entries of the subspaces a and b (unpacked)
+    splitted_idx = np.split(unpackbits(subspace_mask, max_spins), [spins_a], axis=1)
+    # pack bits back in the individual subspaces a and b
+    packed_idx = np.array((packbits(splitted_idx[0]), packbits(splitted_idx[1])))
+    # density matrix with only entries from the subspace of const. total spin
+    # in terms subspaces a and b (i.e. in form of rho_{(a1, b1), (a2, b2)})
+    rho_idx_sub = np.rollaxis(np.array(
+        (np.meshgrid(packed_idx[0], packed_idx[0]),
+         np.meshgrid(packed_idx[1], packed_idx[1]))), 1)
+    if calc_rho_a:
+        # then the second index should be equal (diagonal in b)
+        # the entry at pos_idx shows the position of the entry in the partial trace
+        equal_idx = 1
+        pos_idx = 0
+    else:
+        equal_idx = 0
+        pos_idx = 1
+    # indices of the entries that contribute to the partial trace
+    trace_mask = np.where(rho_idx_sub[0, equal_idx] == rho_idx_sub[1, equal_idx])
+    # indices where the entries should go in the partial trace
+    new_pos = np.array((rho_idx_sub[0, pos_idx][trace_mask], rho_idx_sub[1, pos_idx][trace_mask]))
+    # partial trace (finally)
+    rho_a = np.zeros(rho_sub.shape, dtype=complex)
+    for idx in range(new_pos.shape[1]):
+        rho_a[..., new_pos[0, idx], new_pos[1, idx]] +=\
+            rho_sub[..., trace_mask[0][idx], trace_mask[1][idx]]
+    return rho_a
+
+
+def partial_trace(rho, spins_a, calc_rho_a=True):
     """
     Calculates the partial trace for the given rho and dimensions of the subspaces
     Explanation see Notes/partial_trace_calc.pdf

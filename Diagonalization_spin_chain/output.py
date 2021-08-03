@@ -639,22 +639,21 @@ def calc_half_chain_entropy(times, chain_length, J, B0, A, periodic_boundaries, 
              (exp_part.reshape(times.size, dim_bss, 1) * eigenvectors.T) @ psi_0)
     # This performs an outer product along axis 1
     rho_t = psi_t[:, :, np.newaxis] * psi_t.conj()[:, np.newaxis, :]
-    # For now: go back to full space to calculate the partial trace. Even though there must
-    # be a smarter way to do this...
-    rho_t_fullspace = np.zeros((times.size, dim, dim), dtype=complex)
-    subspace_mask2D = np.meshgrid(subspace_mask, subspace_mask)
-    rho_t_fullspace[:, subspace_mask2D[1], subspace_mask2D[0]] = rho_t
-    # partial_trace over b -> rho_a(t)
-    rho_a_t = partial_trace(rho_t_fullspace, total_spins//2)
+    # # Old way: go back to full space to calculate the partial trace. Even though there must
+    # # be a smarter way to do this...
+    # rho_t_fullspace = np.zeros((times.size, dim, dim), dtype=complex)
+    # subspace_mask2D = np.meshgrid(subspace_mask, subspace_mask)
+    # rho_t_fullspace[:, subspace_mask2D[1], subspace_mask2D[0]] = rho_t
+    # # partial_trace over b -> rho_a(t)
+    # rho_a_t = sf.partial_trace(rho_t_fullspace, total_spins//2)
+    # Smarter way to to it:
+    rho_a_t = sf.partial_trace_subspace(rho_t, subspace_mask, total_spins//2, False)
     # hce = -tr(rho_a ln(rho_a))
     #    = -tr(rho ln(rho)) = tr(D ln(D)), where D is the diagonalized matrix
     eigvals = np.linalg.eigvalsh(rho_a_t)
     # ugly, but cuts out the the Runtime warning caused by of 0 values in log
     return -np.sum(eigvals * np.log(eigvals, where=eigvals > 0,
                                     out=np.zeros(eigvals.shape)), axis=1)
-    # # cut out too small eigenvalues because of log (log(< 1e-324) = -inf)
-    # hce = -np.sum(np.where(eigvals > 1e-323,
-    #                                eigvals * np.log(eigvals), 0), axis=1)
 
 
 def plot_half_chain_entropy(times, chain_length, J, B0, As, periodic_boundaries, central_spin,
