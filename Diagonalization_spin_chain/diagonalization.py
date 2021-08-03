@@ -127,7 +127,7 @@ def eig_values_vectors_spin_const(chain_length, J, B0, A, periodic_boundaries, c
     # Create a new random B-field for every instance
     if seed:
         np.random.seed(seed)
-    B = np.round(np.random.uniform(-1, 1, chain_length), 2)
+    B = np.random.uniform(-1, 1, chain_length)
     if central_spin:
         B = np.append(B, 0)
 
