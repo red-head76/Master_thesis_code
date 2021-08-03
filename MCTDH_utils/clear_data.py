@@ -36,11 +36,12 @@ def del_specified_file(filename):
     entries = os.scandir("./input_files")
     something_removed = False
     for entry in entries:
-        if entry.is_dir and entry.name == filename:
+        entryname = "./input_files/" + entry.name
+        if entry.is_dir and entryname == filename:
             something_removed = True
-            shutil.rmtree("./input_files/" + entry.name)
-        elif entry.is_file and (entry.name == filename + ".inp" or entry.name == filename + ".op"):
-            os.remove("./input_files/" + entry.name)
+            shutil.rmtree(entryname)
+        elif entry.is_file and entryname in (filename + ".inp", filename + ".op"):
+            os.remove(entryname)
             something_removed = True
     return something_removed
 
