@@ -32,6 +32,19 @@ def del_data():
             shutil.rmtree("./input_files/" + entry.name)
 
 
+def del_specified_file(filename):
+    entries = os.scandir("./input_files")
+    something_removed = False
+    for entry in entries:
+        if entry.is_dir and entry.name == filename:
+            something_removed = True
+            shutil.rmtree("./input_files/" + entry.name)
+        elif entry.is_file and (entry.name == filename + ".inp" or entry.name == filename + ".op"):
+            os.remove("./input_files/" + entry.name)
+            something_removed = True
+    return something_removed
+
+
 if len(sys.argv) == 1:
     print("Removing slurm, input and data...")
     del_slurm()
@@ -45,4 +58,9 @@ else:
     elif "-input" in sys.argv:
         del_input()
     else:
-        print("Only available options: '-slurm', '-data', '-input or no argument.")
+        nothing_removed = True
+        for arg in sys.argv:
+            if del_specified_file(arg):
+                nothing_removed = False
+        if nothing_removed:
+            print("Only available options: '-slurm', '-data', '-input', a valid filename or no argument.")
