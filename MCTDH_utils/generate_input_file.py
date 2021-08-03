@@ -46,6 +46,12 @@ J = float(Constants["J"])
 B = config_object.getfloat("Constants", "B")
 A = config_object.getfloat("Constants", "A")
 scaling = Constants["scaling"]
+if scaling == "inverse":
+    A = A / chain_length
+elif scaling == "inverse_sqrt":
+    A = A / np.sqrt(chain_length)
+else:
+    raise ValueError(f"'{scaling}' is not a possible scaling argument.")
 
 # Output option
 Output = config_object["Output"]
@@ -86,7 +92,7 @@ def parameter_section():
     # coupling x = coupling y
     ps += f"coupz = {J}, eV\n"
     if central_spin:
-        ps += f"A = {A}\n"
+        ps += f"coup_cs = {A}\n"
     ps += "END-PARAMETER-SECTION\n\n"
     return ps
 
@@ -117,9 +123,9 @@ def hamiltonian_section():
 
     # Interaction with central spin sum_i S_cs S_i (for all x, y, z)
     if central_spin:
-        for cn, on in zip(coupling_names, operator_names):
+        for on in operator_names:
             for i in range(1, chain_length + 1):
-                hs += f"{cn} |{i} {on} |{total_spins} {on}\n"
+                hs += f"coup_cs |{i} {on} |{total_spins} {on}\n"
             hs += "\n"
 
     hs += "END-HAMILTONIAN-SECTION\n\n"
