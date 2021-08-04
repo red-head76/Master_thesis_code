@@ -85,10 +85,10 @@ def partial_trace_subspace(rho_sub, subspace_mask, spins_a, calc_rho_a=True):
     Explanation see Notes/partial_trace_calc.pdf
 
     Args:
-        rho_sub (array (float) [dim, dim] or [t, dim, dim]): full density matrix with dimensions of
-                            the full hamiltonian. With optional time dimension in front.
+        rho_sub (array (float) [dim_sub, dim_sub] or [t, dim_sub, dim_sub]): density matrix with
+            dimensions of the subspace with constant spin. With optional time dimension in front.
         subspace_mask (array (float)) indices of states with const spin n in terms of the fullspace
-        spins_a (int): spins in subspace a.
+        spins_a (int): spins in subspace a (or subspace b if calc_rho_a=False)
         calc_rho_a (bool, default: True): determines whether the partial trace over b
                     (if True, results in rho_a) or over a (results in rho_b) should be calculated.
 
@@ -104,7 +104,8 @@ def partial_trace_subspace(rho_sub, subspace_mask, spins_a, calc_rho_a=True):
     # Split the entries of the mask into entries of the subspaces a and b (unpacked)
     splitted_idx = np.split(unpackbits(subspace_mask, max_spins), [spins_a], axis=1)
     # pack bits back in the individual subspaces a and b
-    packed_idx = np.array((packbits(splitted_idx[0]), packbits(splitted_idx[1])))
+    # 0 and 1 are reversed here because of implementation of packed_bits
+    packed_idx = np.array((packbits(splitted_idx[1]), packbits(splitted_idx[0])))
     # density matrix with only entries from the subspace of const. total spin
     # in terms subspaces a and b (i.e. in form of rho_{(a1, b1), (a2, b2)})
     rho_idx_sub = np.rollaxis(np.array(
@@ -123,7 +124,7 @@ def partial_trace_subspace(rho_sub, subspace_mask, spins_a, calc_rho_a=True):
     # indices where the entries should go in the partial trace
     new_pos = np.array((rho_idx_sub[0, pos_idx][trace_mask], rho_idx_sub[1, pos_idx][trace_mask]))
     # partial trace (finally)
-    rho_a = np.zeros(rho_sub.shape, dtype=complex)
+    rho_a = np.zeros((np.int(spins_a)**2, np.int(spins_a**2)), dtype=complex)
     for idx in range(new_pos.shape[1]):
         rho_a[..., new_pos[0, idx], new_pos[1, idx]] +=\
             rho_sub[..., trace_mask[0][idx], trace_mask[1][idx]]
