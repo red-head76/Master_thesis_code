@@ -1,8 +1,7 @@
 import numpy as np
 from matplotlib.pyplot import savefig
 from json import dump
-from os.path import isdir
-from os import mkdir
+import os
 from matplotlib import animation
 from shutil import copy
 
@@ -164,7 +163,25 @@ def partial_trace(rho, spins_a, calc_rho_a=True):
                        axis2=(2+calc_rho_a+axis_offset)).sum(axis=2+axis_offset)
 
 
-def save_data(filename, data, config_file, anim=False, fps=10):
+def prepend_line(file_name, line):
+    """ Insert given string as a new line at the beginning of a file
+        (from https://thispointer.com/python-how-to-insert-lines-at-the-top-of-a-file/)"""
+    # define name of temporary dummy file
+    dummy_file = file_name + '.bak'
+    # open original file in read mode and dummy file in write mode
+    with open(file_name, 'r') as read_obj, open(dummy_file, 'w') as write_obj:
+        # Write given line to the dummy file
+        write_obj.write(line + '\n')
+        # Read lines from original file one by one and append them to the dummy file
+        for read_line in read_obj:
+            write_obj.write(read_line)
+    # remove original file
+    os.remove(file_name)
+    # Rename dummy file as the original file
+    os.rename(dummy_file, file_name)
+
+
+def save_data(filename, data, config_file, time_passed, anim=False, fps=10):
     """
     Saves the data to a given plot with a given filename. There is one file for the plot, the data
     of the plot and the parameters used.
@@ -173,13 +190,14 @@ def save_data(filename, data, config_file, anim=False, fps=10):
         filename (string): The filename used for saving
         data (array): the data of the plot
         params (dict): the parameters used to create the plot
+        time_passed ()
         anim (bool, default: False): Determines if the output is an animation
         fps (int, default=10): set the frames per second of an animation
 
     """
 
-    if not isdir("./Plots"):
-        mkdir("./Plots")
+    if not os.path.isdir("./Plots"):
+        os.mkdir("./Plots")
     save_path = "./Plots/" + filename
     if not anim:
         savefig(save_path)
@@ -189,3 +207,5 @@ def save_data(filename, data, config_file, anim=False, fps=10):
 
     np.savez(save_path, *data)
     copy(config_file, "./Plots/")
+    t = int(time_passed)
+    prepend_line("./Plots/" + config_file[12:], f"# Run time {t//3600}h:{(t%3600)//60}m:{t%60}s\n")

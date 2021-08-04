@@ -2,11 +2,15 @@ import pdb
 import sys
 import numpy as np
 import output
+import time
 from os.path import isfile
 from configparser import ConfigParser
 from matplotlib.pyplot import show as show_plot
 from create_config import create_config
 from support_functions import save_data
+
+# measure the time a script needs
+time0 = time.time()
 
 
 def convert_list(string):
@@ -120,7 +124,8 @@ if outputtype == "plot_exp_sig_z_central_spin":
                                               samples, seed, scaling, save)
 
 if save:
-    save_data(save, data, config_file, anim)
+    time_passed = time.time() - time0
+    save_data(save, data, config_file, time_passed, anim)
 
 if show:
     show_plot()
