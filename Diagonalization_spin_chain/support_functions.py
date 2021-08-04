@@ -126,7 +126,7 @@ def partial_trace_subspace(rho_sub, subspace_mask, spins_a, calc_rho_a=True):
     # partial trace (finally)
     # in case there is a time array
     if len(rho_sub.shape) == 3:
-        rho_a = np.zeros((rho_sub.shape[0], np.int(spins_a)**2, np.int(spins_a**2)), dtype=complex)
+        rho_a = np.zeros((rho_sub.shape[0], np.int(2**spins_a), np.int(2**spins_a)), dtype=complex)
     else:
         rho_a = np.zeros((np.int(spins_a)**2, np.int(spins_a**2)), dtype=complex)
     for idx in range(new_pos.shape[1]):
