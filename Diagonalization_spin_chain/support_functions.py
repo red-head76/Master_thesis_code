@@ -124,7 +124,11 @@ def partial_trace_subspace(rho_sub, subspace_mask, spins_a, calc_rho_a=True):
     # indices where the entries should go in the partial trace
     new_pos = np.array((rho_idx_sub[0, pos_idx][trace_mask], rho_idx_sub[1, pos_idx][trace_mask]))
     # partial trace (finally)
-    rho_a = np.zeros((np.int(spins_a)**2, np.int(spins_a**2)), dtype=complex)
+    # in case there is a time array
+    if len(rho_sub.shape) == 3:
+        rho_a = np.zeros((rho_sub.shape[0], np.int(spins_a)**2, np.int(spins_a**2)), dtype=complex)
+    else:
+        rho_a = np.zeros((np.int(spins_a)**2, np.int(spins_a**2)), dtype=complex)
     for idx in range(new_pos.shape[1]):
         rho_a[..., new_pos[0, idx], new_pos[1, idx]] +=\
             rho_sub[..., trace_mask[0][idx], trace_mask[1][idx]]
