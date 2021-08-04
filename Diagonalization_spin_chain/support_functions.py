@@ -97,7 +97,10 @@ def partial_trace_subspace(rho_sub, subspace_mask, spins_a, calc_rho_a=True):
                 (or the other way around if calc_rho_a=False).
     """
     # maximum amount of spins used in subspace
-    max_spins = np.int(np.floor(np.log2(np.max(subspace_mask))) + 1)
+    if np.max(subspace_mask) == 0:
+        max_spins = 1
+    else:
+        max_spins = np.int(np.floor(np.log2(np.max(subspace_mask))) + 1)
     # Split the entries of the mask into entries of the subspaces a and b (unpacked)
     splitted_idx = np.split(unpackbits(subspace_mask, max_spins), [spins_a], axis=1)
     # pack bits back in the individual subspaces a and b
