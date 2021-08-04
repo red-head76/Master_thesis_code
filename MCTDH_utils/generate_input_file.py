@@ -92,7 +92,7 @@ def parameter_section():
     # coupling x = coupling y
     ps += f"coupz = {J}, eV\n"
     if central_spin:
-        ps += f"coup_cs = {A}\n"
+        ps += f"coup_cs = {A}, eV\n"
     ps += "END-PARAMETER-SECTION\n\n"
     return ps
 
