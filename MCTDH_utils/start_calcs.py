@@ -15,5 +15,4 @@ if len(sys.argv) == 1:
 
 else:
     for filename in sys.argv[1:]:
-        print(f"submitting {filename}")
         os.system(f"sbatch --export=ALL,input={filename}, -J {filename} start_job.sh")
