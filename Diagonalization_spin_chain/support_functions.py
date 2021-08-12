@@ -208,4 +208,5 @@ def save_data(filename, data, config_file, time_passed, anim=False, fps=10):
     np.savez(save_path, *data)
     copy(config_file, "./Plots/")
     t = int(time_passed)
-    prepend_line("./Plots/" + config_file[12:], f"# Run time {t//3600}h:{(t%3600)//60}m:{t%60}s\n")
+    prepend_line("./Plots/" + config_file.split('/')[-1],
+                 f"# Run time {t//3600}h:{(t%3600)//60}m:{t%60}s\n")
