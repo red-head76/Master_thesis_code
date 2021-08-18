@@ -50,6 +50,7 @@ def create_config():
     config_object["Other"] = {
         # Index where psi 0 is nonzero
         "idx_psi_0": "1",
+        # Time parameters (in fs)
         "timestart": "0",
         "timeend": "10",
         "timesteps": "100",

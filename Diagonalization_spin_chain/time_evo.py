@@ -1,6 +1,7 @@
 import numpy as np
 import diagonalization
 from support_functions import unpackbits
+from scipy.constants import hbar, e
 
 
 def time_evo_sigma_z(t, psi0, chain_length, J, B0, A, spin_constant,
@@ -51,8 +52,7 @@ def time_evo_sigma_z(t, psi0, chain_length, J, B0, A, spin_constant,
 
     # vectorized notation
     # Compute array with time vector multiplied with diagonal matrix with eigenvalues as entries
-    exp_part = np.exp(1j * np.outer(t, eigenvalues))
-    psi_t = eigenvectors @ (exp_part.reshape(t.size,
-                                             dim, 1) * eigenvectors.T) @ psi0
+    exp_part = np.exp(1j * np.outer(t, eigenvalues) / hbar * e * 1e-15)
+    psi_t = eigenvectors @ (exp_part.reshape(t.size, dim, 1) * eigenvectors.T) @ psi0
 
     return (np.abs(psi_t)**2) @ sigma_z

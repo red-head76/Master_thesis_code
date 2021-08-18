@@ -1,10 +1,11 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+import support_functions as sf
 from time_evo import time_evo_sigma_z
 from diagonalization import eig_values_vectors, eig_values_vectors_spin_const
 from matplotlib import animation
-import support_functions as sf
+from scipy.constants import hbar, e
 
 
 def plot_time_evo(t, idx_psi_0, chain_length, J, B0, A, spin_constant,
@@ -51,7 +52,7 @@ def plot_time_evo(t, idx_psi_0, chain_length, J, B0, A, spin_constant,
         ax[i].axhline(0, color="black")
         ax[i].set_ylim(-0.55, 0.55)
 
-        ax[-1].set_xlabel("Time t")
+        ax[-1].set_xlabel("Time in fs")
         if save:
             return [t, exp_sig_z]
 
@@ -467,7 +468,7 @@ def plot_g_value(rho0, times, chain_length, J, B0, periodic_boundaries, samples,
         samples (int or array (int)): Number of times data points should be generated
 
     """
-    # TODO: fixmeeeee
+    # TODO: fixmeeeee, also time in real units
     fig = plt.figure(figsize=(chain_length.size * 6, 4))
     axes = [fig.add_subplot(1, chain_length.size, ax, projection='3d')
             for ax in range(1, chain_length.size + 1)]
@@ -505,8 +506,7 @@ def generate_fa_values(chain_length, J, B0, A, periodic_boundaries, central_spin
     Args:
         chain_length (int): the length of the spin chain
         J (float): the coupling constant
-        B0 (float): the B-field amplitude. Currently random initialized uniformly
-                                between (-1, 1).
+        B0 (float): the B-field amplitude. Currently random initialized uniformly between (-1, 1).
         A (float): the coupling between the central spin and the spins in the chain
         periodic_boundaries (bool): determines whether or not periodic boundary
                                                   conditions are used in the chain.
@@ -634,7 +634,7 @@ def calc_half_chain_entropy(times, chain_length, J, B0, A, periodic_boundaries, 
     eigenvectors = (eigenvectors.T[subspace_mask]).T
     # dimension of the biggest subspace
     dim_bss = eigenvectors.shape[0]
-    exp_part = np.exp(1j * np.outer(times, eigenvalues))
+    exp_part = np.exp(1j * np.outer(times, eigenvalues) / hbar * e * 1e-15)
     psi_t = (eigenvectors @
              (exp_part.reshape(times.size, dim_bss, 1) * eigenvectors.T) @ psi_0)
     # This performs an outer product along axis 1
@@ -697,7 +697,7 @@ def plot_half_chain_entropy(times, chain_length, J, B0, As, periodic_boundaries,
                     hce_errors[i, a, b] = yerrors
                 plt.plot(times, hce_mean, label=f"A={A}, L={N}, B={B}")
                 plt.fill_between(times, hce_mean + yerrors, hce_mean - yerrors, alpha=0.2)
-    plt.xlabel("time t")
+    plt.xlabel("Time in fs")
     plt.ylabel("Half chain entropy")
     plt.title(f"Entanglement entropy")
     plt.semilogx()
@@ -743,9 +743,9 @@ def calc_occupation_imbalance(times, chain_length, J, B0, A, periodic_boundaries
     psi_0 = np.zeros(dim)
     psi_0[sf.packbits(np.arange(total_spins) % 2)] = 1
     psi_0 = psi_0[subspace_mask]
-    exp_part = np.exp(1j * np.outer(times, eigenvalues))
-    psi_t = eigenvectors @ (exp_part.reshape(times.size, eigenvalues.size, 1)
-                            * eigenvectors.T) @ psi_0
+    exp_part = np.exp(1j * np.outer(times, eigenvalues) / hbar * e * 1e-15)
+    psi_t = (eigenvectors @ (exp_part.reshape(times.size, eigenvalues.size, 1)
+                             * eigenvectors.T) @ psi_0)
     # discard central spin in exp_sig_z
     exp_sig_z = (np.abs(psi_t)**2 @ sigma_z)
     # occupation imbalance mask: even minus odd sites
@@ -799,7 +799,7 @@ def plot_occupation_imbalance(times, chain_length, J, B0, As, periodic_boundarie
                 plt.fill_between(times, occupation_imbalance_mean + yerrors,
                                  occupation_imbalance_mean - yerrors, alpha=0.2)
     plt.title(f"Occupation imbalance for \nJ={J}, B={B}, A={A}, scaling={scaling}")
-    plt.xlabel("time")
+    plt.xlabel("Time in fs")
     plt.semilogx()
     plt.ylabel("occupation imbalance")
     plt.legend(loc=1)
@@ -844,7 +844,7 @@ def calc_exp_sig_z_central_spin(times, chain_length, J, B0, A, periodic_boundari
     psi_0 = np.zeros(dim)
     psi_0[sf.packbits(np.arange(total_spins) % 2)] = 1
     psi_0 = psi_0[subspace_mask]
-    exp_part = np.exp(1j * np.outer(times, eigenvalues))
+    exp_part = np.exp(1j * np.outer(times, eigenvalues) / hbar * e * 1e-15)
     psi_t = eigenvectors @ (exp_part.reshape(times.size, eigenvalues.size, 1)
                             * eigenvectors.T) @ psi_0
     # discard central spin in exp_sig_z
@@ -856,7 +856,7 @@ def calc_exp_sig_z_central_spin(times, chain_length, J, B0, A, periodic_boundari
 def plot_exp_sig_z_central_spin(times, chain_length, J, B0, As, periodic_boundaries,
                                 samples, seed, scaling, save):
     """
-    Plots the occupation imbalance sum_odd s_z - sum_even s_z
+    Plots the expectation value for the central spin.
 
     Args:
         rho0 (array (float) [dim, dim]): the initial density matrix, where dim = 2**total_spins
@@ -899,7 +899,7 @@ def plot_exp_sig_z_central_spin(times, chain_length, J, B0, As, periodic_boundar
                                  exp_sig_z_mean - yerrors, alpha=0.2)
                 plt.title(
                     f"Expectation value of the central spin for \nJ={J}, A={A}, B={B}, scaling={scaling}")
-    plt.xlabel("time")
+    plt.xlabel("Time in fs")
     plt.ylabel(r"$<S_z>$")
     plt.semilogx()
     plt.legend(loc=1)
