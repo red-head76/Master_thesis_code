@@ -682,7 +682,7 @@ def plot_half_chain_entropy(times, chain_length, J, B0, As, periodic_boundaries,
     """
     if save:
         hce_means = np.empty((len(chain_length), len(As), len(B0), len(times)))
-        hce_errors = np.empty((len(chain_length), len(As), len(B0), len(times)))
+        hce_stds = np.empty((len(chain_length), len(As), len(B0), len(times)))
     for i, N in enumerate(chain_length):
         for a, A in enumerate(As):
             for b, B in enumerate(B0):
@@ -691,10 +691,11 @@ def plot_half_chain_entropy(times, chain_length, J, B0, As, periodic_boundaries,
                     hce[sample] = calc_half_chain_entropy(times, N, J, B, A, periodic_boundaries,
                                                           central_spin, seed, scaling)
                 hce_mean = np.mean(hce, axis=0)
-                yerrors = np.std(hce, axis=0) / np.sqrt(samples[i])
+                hce_std = np.std(hce, axis=0)
+                yerrors = hce_std / np.sqrt(samples[i])
                 if save:
                     hce_means[i, a, b] = hce_mean
-                    hce_errors[i, a, b] = yerrors
+                    hce_stds[i, a, b] = hce_std
                 plt.plot(times, hce_mean, label=f"A={A}, L={N}, B={B}")
                 plt.fill_between(times, hce_mean + yerrors, hce_mean - yerrors, alpha=0.2)
     plt.xlabel("Time in fs")
@@ -703,7 +704,7 @@ def plot_half_chain_entropy(times, chain_length, J, B0, As, periodic_boundaries,
     plt.semilogx()
     plt.legend()
     if save:
-        return [times, hce_means, hce_errors]
+        return [times, hce_means, hce_stds]
 
 
 def calc_occupation_imbalance(times, chain_length, J, B0, A, periodic_boundaries, central_spin,
@@ -776,13 +777,13 @@ def plot_occupation_imbalance(times, chain_length, J, B0, As, periodic_boundarie
                     randomly
 
     Returns:
-        If save: data (list [time, occupation_imbalance_means, occupation_imbalance_errors]),
+        If save: data (list [time, occupation_imbalance_means, occupation_imbalance_stds]),
                  None otherwise
 
     """
     if save:
         occupation_imbalance_means = np.empty((len(chain_length), len(As), len(B0), len(times)))
-        occupation_imbalance_errors = np.empty((len(chain_length), len(As), len(B0), len(times)))
+        occupation_imbalance_stds = np.empty((len(chain_length), len(As), len(B0), len(times)))
     for i, N in enumerate(chain_length):
         for a, A in enumerate(As):
             for b, B in enumerate(B0):
@@ -791,10 +792,11 @@ def plot_occupation_imbalance(times, chain_length, J, B0, As, periodic_boundarie
                     occupation_imbalance[sample] = calc_occupation_imbalance(
                         times, N, J, B, A, periodic_boundaries, central_spin, seed, scaling=scaling)
                 occupation_imbalance_mean = occupation_imbalance.mean(axis=0)
+                occupation_imbalance_std = occupation_imbalance.std(axis=0)
                 yerrors = occupation_imbalance.std(axis=0) / np.sqrt(samples[i])
                 if save:
                     occupation_imbalance_means[i, a, b] = occupation_imbalance_mean
-                    occupation_imbalance_errors[i, a, b] = yerrors
+                    occupation_imbalance_stds[i, a, b] = occupation_imbalance_std
                 plt.plot(times, occupation_imbalance_mean, label=f"N={N}")
                 plt.fill_between(times, occupation_imbalance_mean + yerrors,
                                  occupation_imbalance_mean - yerrors, alpha=0.2)
@@ -804,7 +806,7 @@ def plot_occupation_imbalance(times, chain_length, J, B0, As, periodic_boundarie
     plt.ylabel("occupation imbalance")
     plt.legend(loc=1)
     if save:
-        return [times, occupation_imbalance_means, occupation_imbalance_errors]
+        return [times, occupation_imbalance_means, occupation_imbalance_stds]
 
 
 def calc_exp_sig_z_central_spin(times, chain_length, J, B0, A, periodic_boundaries, seed, scaling):
