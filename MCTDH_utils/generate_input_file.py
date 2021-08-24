@@ -181,7 +181,7 @@ def wave_function_basis_section():
             # cut out last ', '
         spfbs = spfbs[:-2]
         spfbs += f" = {wfb[wf_idx]}\n"
-    if central_spin_splitted:
+    if central_spin and central_spin_splitted:
         spfbs += f"v{total_spins} = 2\n"
     spfbs += "END-SPF-BASIS-SECTION\n\n"
     return spfbs
