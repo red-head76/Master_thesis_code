@@ -8,11 +8,12 @@ if len(sys.argv) == 1:
     input_files = []
     for entry in entries:
         if entry.name[-4:] == ".inp":
-            input_files.append(entry.name)
-    for filename in input_files:
-        os.system(f"sbatch --export=ALL,input=input_files/{filename}, -J {filename} start_job.sh")
-
+            os.system(
+                f"sbatch --export=ALL,input=input_files/{entry.name}, -J {entry.name} start_job.sh")
 
 else:
     for filename in sys.argv[1:]:
-        os.system(f"sbatch --export=ALL,input={filename}, -J {filename} start_job.sh")
+        for entry in os.scandir("./input_files"):
+            if entry.name[-4:] == ".inp" and filename in entry.name:
+                os.system(
+                    f"sbatch --export=ALL,input=input_files/{entry.name}, -J {entry.name} start_job.sh")
