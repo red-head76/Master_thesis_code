@@ -189,8 +189,8 @@ def save_data(filename, data, config_file, time_passed, anim=False, fps=10):
     Args:
         filename (string): The filename used for saving
         data (array): the data of the plot
-        params (dict): the parameters used to create the plot
-        time_passed ()
+        config_file (string): the path of the .ini file
+        time_passed (int): the time needed for the calculation
         anim (bool, default: False): Determines if the output is an animation
         fps (int, default=10): set the frames per second of an animation
 
