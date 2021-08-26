@@ -168,9 +168,9 @@ def wave_function_basis_section():
             # consistent size, no matter if the central spin is active or not.
             n_cwf.insert(0, remainder)
         min_value = min(n_cwf)
-        if 2**min_value < wave_function_basis[0]:
+        if 2**min_value-1 < wave_function_basis[0]:
             print(
-                f"A group with of {min_value} spins can maximally be described with {int(2**min_value)} basis functions, but not with {wave_function_basis[0]}")
+                f"A group with of {min_value} spins can maximally be described with {int(2**min_value)}-1 basis functions, but not with {wave_function_basis[0]}")
             raise ValueError()
         wfb = wave_function_basis * len(n_cwf)
     idx = 1
