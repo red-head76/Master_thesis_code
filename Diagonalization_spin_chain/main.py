@@ -80,7 +80,8 @@ if outputtype in ["plot_g"]:
     # Time array
     t = np.linspace(0, float(Other["timeend"]), int(Other["timesteps"]) + 1)
 
-if outputtype in ["plot_half_chain_entropy", "plot_occupation_imbalance", "plot_exp_sig_z_central_spin"]:
+if outputtype in ["plot_half_chain_entropy", "plot_occupation_imbalance",
+                  "plot_exp_sig_z_central_spin"]:
     t = np.logspace(np.log10(float(Other["timestart"])), np.log10(float(Other["timeend"])),
                     int(Other["timesteps"]) + 1)
 
