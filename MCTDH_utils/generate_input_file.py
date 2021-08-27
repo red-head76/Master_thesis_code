@@ -69,7 +69,7 @@ wave_function_basis = str_to_int(
     config_object.getlist("Other", "wave_function_basis"))
 central_spin_splitted = config_object.getboolean("Other", "central_spin_splitted")
 samples = config_object.getint("Other", "samples")
-seed = config_object.getint("Other", "seed")
+seed = config_object.getboolean("Other", "seed")
 
 
 # Functions to write operator file
@@ -80,10 +80,10 @@ def define_section():
     return f"OP_DEFINE-SECTION\nTITLE\n{title}\nEND-TITLE\nEND-OP_DEFINE-SECTION\n\n"
 
 
-def parameter_section():
+def parameter_section(realization):
     ps = "PARAMETER-SECTION\n"
     if seed:
-        np.random.seed(seed)
+        np.random.seed(realization)
     for i in range(1, chain_length+1):
         h_i = np.random.uniform(-1, 1)
         ps += (f"h{i} = {h_i}, eV\n")
@@ -228,11 +228,11 @@ def write_inp_file(path, job_name):
         f.write("end-input\n")
 
 
-def write_op_file(path):
+def write_op_file(path, realization):
     # Write the operator file
     with open(path + ".op", 'w') as f:
         f.write(define_section())
-        f.write(parameter_section())
+        f.write(parameter_section(realization))
         f.write(hamiltonian_section())
         f.write("END-OPERATOR\n")
 
@@ -261,7 +261,7 @@ def write_everything():
                 os.remove("./input_files/" + job_name + ".inp")
                 print(f"No files for {job_name} were produced.")
             else:
-                write_op_file("./input_files/" + job_name)
+                write_op_file("./input_files/" + job_name, realization)
                 if samples == 1:
                     job_dir = title
                 else:

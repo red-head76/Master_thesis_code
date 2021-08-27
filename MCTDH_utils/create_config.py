@@ -56,8 +56,10 @@ def create_config():
         "central_spin_splitted": "False",
         # Number of realizations
         "samples": 1,
-        # In certain cases a random seed can be used to produce comparable outcomes. 0 equals None
-        "seed": "0"
+        # In certain cases a random seed can be used to produce comparable outcomes.
+        # If false, random seeds are generated for every sample, if true a fix seed is set
+        # (0 for the first realization, 1 for the second and so on ...)
+        "seed": "False"
     }
 
     # Write the above sections to config.ini file
