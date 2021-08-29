@@ -12,16 +12,8 @@ if len(sys.argv) == 1:
                 f"sbatch --export=ALL,input=input_files/{entry.name}, -J {entry.name} start_job.sh")
 
 else:
-    if "-c" in sys.argv:
-        continue_job = True
-    else:
-        continue_job = False
     for arg in sys.argv[1:]:
         for entry in os.scandir("./input_files"):
             if entry.name[-4:] == ".inp" and arg in entry.name:
-                if continue_job:
-                    os.system(
-                        f"sbatch --export=ALL,input=input_files/{entry.name}, -J {entry.name} continue_job.sh")
-                else:
-                    os.system(
-                        f"sbatch --export=ALL,input=input_files/{entry.name}, -J {entry.name} start_job.sh")
+                os.system(
+                    f"sbatch --export=ALL,input=input_files/{entry.name}, -J {entry.name} start_job.sh")
