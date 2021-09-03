@@ -907,3 +907,120 @@ def plot_exp_sig_z_central_spin(times, chain_length, J, B0, As, periodic_boundar
     plt.legend(loc=1)
     if save:
         return [times, exp_sig_z_means, exp_sig_z_errors]
+
+
+def calc_correlation(times, chain_length, J, B0, A, periodic_boundaries,
+                     seed, scaling):
+    """
+    Calculates the correlation function sigma^2(t) from 
+    https://journals.aps.org/prl/pdf/10.1103/PhysRevLett.114.100601
+    (in comments, G_r(t) from page 7 of http://arxiv.org/abs/1610.08993)
+
+    For more details on the implementation see Notes/Correlation_function.xopp
+
+    Args:
+        times (array (float) [tD]): the time array, where g should be calculated
+        chain_length (int or array (int)): the length of the spin chain
+        J (float): the coupling constant
+        B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
+                                between (-1, 1).
+        A (float): the coupling between the central spin and the spins in the chain
+        periodic_boundaries (bool): determines whether or not periodic boundary
+                                                  conditions are used in the chain.
+        seed (int): use a seed to produce comparable outcomes if False, then it is initialized
+                    randomly
+
+    Returns:
+        Correlation sigma^2(t) (array (float) [chain_length, times])
+    # Before: G_r(t) (array (float) [chain_length, times])
+
+    """
+    total_spins = chain_length + 1
+    dim = np.int(2**total_spins)
+    # This mask filters out the states of the biggest subspace
+    subspace_mask = np.where(np.logical_not(np.sum(sf.unpackbits(np.arange(dim), total_spins),
+                                                   axis=1) - total_spins//2))[0]
+    eigenvalues, eigenvectors = eig_values_vectors_spin_const(
+        chain_length, J, B0, A, periodic_boundaries, True,
+        only_biggest_subspace=True, seed=seed, scaling=scaling)
+    eigenvectors = (eigenvectors.T[subspace_mask]).T
+    psi_z = np.arange(0, np.int(2**(total_spins)))[subspace_mask]
+    # discard the central spin from sigma_z
+    sigma_z = (sf.unpackbits(psi_z, total_spins) - 1/2)[:, :chain_length]
+    # # Initialize in Neel state
+    # psi_0 = np.zeros(dim)
+    # psi_0[sf.packbits(np.arange(total_spins) % 2)] = 1
+    # Initialize in 'domain wall state' |1 1 (...) 1 0 0 (...) 0>
+    psi_0 = np.zeros(dim)
+    unpacked_psi_0 = np.concatenate((np.ones(total_spins // 2),
+                                     np.zeros(total_spins - total_spins // 2))).astype(np.int)
+    psi_0[sf.packbits(unpacked_psi_0)] = 1
+    psi_0 = psi_0[subspace_mask]
+    exp_part = np.exp(1j * np.outer(times, eigenvalues) / hbar * e * 1e-15)
+    psi_t = eigenvectors @ (exp_part.reshape(times.size, eigenvalues.size, 1)
+                            * eigenvectors.T) @ psi_0
+    S_0 = psi_0 @ sigma_z
+    S_t = np.abs(psi_t)**2 @ sigma_z
+    # Previously: G_r(t)
+    # G = np.empty((chain_length, times.size))
+    # for r in range(chain_length):
+    #     # 4 * to 'norm' it to [-1, 1]
+    #     G[r] = 4 * (np.roll(S_t, r, axis=1) * S_0).mean(axis=1)
+    n = np.arange(0, chain_length)  # First entry is zero anyways
+    return (n**2 * (S_t * S_0[0] - S_0 * S_0[0])).mean(axis=1)
+
+
+def plot_correlation(times, chain_length, J, B0, As, periodic_boundaries,
+                     samples, seed, scaling, save):
+    """
+    Plots the correlation function sigma_squared(t) from page 7 of
+    http://arxiv.org/abs/1610.08993
+
+
+    Args:
+        times (array (float) [tD]): the time array, where g should be calculated
+        chain_length (int or array (int)): the length of the spin chain
+        J (float): the coupling constant
+        B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
+                                between (-1, 1).
+        As (float or array (float)): the coupling between the central spin and the spins in the chain
+        periodic_boundaries (bool): determines whether or not periodic boundary
+                                                  conditions are used in the chain.
+        samples (array (int)): Number of times data points should be generated
+        seed (int): use a seed to produce comparable outcomes if False, then it is initialized
+                    randomly
+
+    Returns:
+        If save: data (list [time, sigma_squared_means, sigma_squared_errors]), None otherwise
+
+    """
+    # for saving the data
+    if save:
+        # sigma_squareds for different chain length have different sizes,
+        # I have to put them in a list.
+        sigma_squared_means = np.empty((len(chain_length), len(As), len(B0), len(times)))
+        sigma_squared_stds = np.empty((len(chain_length), len(As), len(B0), len(times)))
+    for i, N in enumerate(chain_length):
+        for a, A in enumerate(As):
+            for b, B in enumerate(B0):
+                sigma_squareds = np.zeros((samples[i], times.size))
+                for sample in range(samples[i]):
+                    sigma_squareds[sample] = calc_correlation(
+                        times, N, J, B, A, periodic_boundaries, seed, scaling)
+                sigma_squared_mean = sigma_squareds.mean(axis=0)
+                sigma_squared_std = sigma_squareds.std(axis=0)
+                if save:
+                    sigma_squared_means[i][a][b] = sigma_squared_mean
+                    sigma_squared_stds[i][a][b] = sigma_squared_std
+                plt.plot(times, sigma_squared_mean, label=f"N={N}")
+                plt.fill_between(times, sigma_squared_mean + sigma_squared_std,
+                                 sigma_squared_mean - sigma_squared_std, alpha=0.2)
+    if len(As) == 1 and len(B0) == 1:
+        plt.title(
+            f"Correlation sigma^2(t) for \nJ={J}, A={As[0]}, B={B0[0]}")
+    plt.xlabel("Time in fs")
+    plt.ylabel(r"Correlation $\sigma^2(t)$")
+    plt.semilogx()
+    plt.legend(loc=1)
+    if save:
+        return [times, sigma_squared_means, sigma_squared_stds]
