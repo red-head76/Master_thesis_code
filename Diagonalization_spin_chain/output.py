@@ -814,7 +814,6 @@ def calc_exp_sig_z_central_spin(times, chain_length, J, B0, A, periodic_boundari
     Calculates the expectation value for the central spin.
 
     Args:
-        rho0 (array (float) [dim, dim]): the initial density matrix, where dim = 2**total_spins
         times (array (float) [tD]): the time array, where g should be calculated
         chain_length (int or array (int)): the length of the spin chain
         J (float): the coupling constant
@@ -840,7 +839,7 @@ def calc_exp_sig_z_central_spin(times, chain_length, J, B0, A, periodic_boundari
         only_biggest_subspace=True, seed=seed, scaling=scaling)
     eigenvectors = (eigenvectors.T[subspace_mask]).T
     psi_z = np.arange(0, np.int(2**(total_spins)))[subspace_mask]
-    # discard last spin
+    # only the last spin
     sigma_z = (sf.unpackbits(psi_z, total_spins) - 1/2)[:, -1]
     # Initialize in Neel state
     psi_0 = np.zeros(dim)
@@ -849,7 +848,6 @@ def calc_exp_sig_z_central_spin(times, chain_length, J, B0, A, periodic_boundari
     exp_part = np.exp(1j * np.outer(times, eigenvalues) / hbar * e * 1e-15)
     psi_t = eigenvectors @ (exp_part.reshape(times.size, eigenvalues.size, 1)
                             * eigenvectors.T) @ psi_0
-    # discard central spin in exp_sig_z
     exp_sig_z = (np.abs(psi_t)**2 @ sigma_z)
     # and norm it to 1
     return exp_sig_z
@@ -861,7 +859,6 @@ def plot_exp_sig_z_central_spin(times, chain_length, J, B0, As, periodic_boundar
     Plots the expectation value for the central spin.
 
     Args:
-        rho0 (array (float) [dim, dim]): the initial density matrix, where dim = 2**total_spins
         times (array (float) [tD]): the time array, where g should be calculated
         chain_length (int or array (int)): the length of the spin chain
         J (float): the coupling constant
@@ -899,8 +896,9 @@ def plot_exp_sig_z_central_spin(times, chain_length, J, B0, As, periodic_boundar
                 plt.plot(times, exp_sig_z_mean, label=f"N={N}")
                 plt.fill_between(times, exp_sig_z_mean + yerrors,
                                  exp_sig_z_mean - yerrors, alpha=0.2)
-                plt.title(
-                    f"Expectation value of the central spin for \nJ={J}, A={A}, B={B}, scaling={scaling}")
+    if len(As) == 1 and len(B0) == 1:
+        plt.title(
+            f"Expectation value of the central spin for \nJ={J}, A={As[0]}, B={B0[0]}")
     plt.xlabel("Time in fs")
     plt.ylabel(r"$<S_z>$")
     plt.semilogx()
