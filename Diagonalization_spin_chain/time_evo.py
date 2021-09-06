@@ -33,8 +33,8 @@ def time_evo_sigma_z(t, psi0, chain_length, J, B0, A, spin_constant,
     total_spins = chain_length + central_spin
     dim = np.int(2**total_spins)
     if spin_constant:
-        eigenvalues, eigenvectors = diagonalization.eig_values_vectors_spin_const(
-            chain_length, J, B0, A, periodic_boundaries, central_spin, only_biggest_subspace=False)
+        eigenvalues, eigenvectors = diagonalization.eig_values_vectors_spin_const_all_subspaces(
+            chain_length, J, B0, A, periodic_boundaries, central_spin)
     else:
         eigenvalues, eigenvectors = diagonalization.eig_values_vectors(
             chain_length, J, B0, A, periodic_boundaries, central_spin)

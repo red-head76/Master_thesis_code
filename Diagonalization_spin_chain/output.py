@@ -2,8 +2,8 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import support_functions as sf
+import diagonalization as diag
 from time_evo import time_evo_sigma_z
-from diagonalization import eig_values_vectors, eig_values_vectors_spin_const
 from matplotlib import animation
 from scipy.constants import hbar, e
 
@@ -168,13 +168,13 @@ def generate_r_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
 
     """
     # Get the energy eigenvalues
+    total_spins = chain_length + central_spin
     if spin_constant:
-        E = eig_values_vectors_spin_const(
-            chain_length, J, B0, A, periodic_boundaries, central_spin,
-            only_biggest_subspace=True)[0]
+        E = diag.eig_values_vectors_spin_const(
+            chain_length, J, B0, A, periodic_boundaries, central_spin, n_up=total_spins//2)[0]
     else:
         raise Warning("r_value with the fullspace H doesn't make sense!")
-        E = eig_values_vectors(
+        E = diag.eig_values_vectors(
             chain_length, J, B0, A, periodic_boundaries, central_spin)[0]
 
     E = np.sort(E)
@@ -258,11 +258,9 @@ def plot_r_fig3(chain_length, J, B0, periodic_boundaries, samples, save):
         samples = np.ones(np.size(chain_length), dtype=np.int) * samples
     for i, N in enumerate(chain_length):
         for j, B in enumerate(B0):
-            r_values = generate_r_values(N, J, B,
-                                         0, periodic_boundaries, False, True)
+            r_values = generate_r_values(N, J, B, 0, periodic_boundaries, False, True)
             for _ in range(samples[i] - 1):
-                r_values += generate_r_values(N, J, B,
-                                              0, periodic_boundaries, False, True)
+                r_values += generate_r_values(N, J, B, 0, periodic_boundaries, False, True)
             r_values /= samples[i]
             # Averaging over samples and states at the same time
             mean_r_values[i, j] = np.mean(r_values)
@@ -299,11 +297,10 @@ def generate_f_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
 
     # Get the eigenvectors n of the Hamiltonian
     if spin_constant:
-        eigenvectors = eig_values_vectors_spin_const(
-            chain_length, J, B0, A, periodic_boundaries, central_spin,
-            only_biggest_subspace=False)[1]
+        eigenvectors = diag.eig_values_vectors_spin_const_all_subspaces(
+            chain_length, J, B0, A, periodic_boundaries, central_spin)[1]
     else:
-        eigenvectors = eig_values_vectors(
+        eigenvectors = diag.eig_values_vectors(
             chain_length, J, B0, A, periodic_boundaries, central_spin)[1]
 
     total_spins = chain_length + central_spin
@@ -375,8 +372,7 @@ def plot_f_fig2(chain_length, J, B0, periodic_boundaries, samples, save, verbose
                 # print every 20% step
                 if ((s*5 % (samples[i])) < 5) and verbose:
                     print(f"{s}/{samples[i]} samples done")
-                f_value += generate_f_values(N, J, B,
-                                             0, periodic_boundaries, False, True)
+                f_value += generate_f_values(N, J, B, 0, periodic_boundaries, False, True)
             # Averaging over samples
             mean_f_values[i, j] = f_value / samples[i]
 
@@ -415,11 +411,10 @@ def generate_g_values(rho0, times, chain_length, J, B0, A, periodic_boundaries, 
 
     # Get the eigenvectors n of the Hamiltonian
     if spin_constant:
-        eigenvalues, eigenvectors = eig_values_vectors_spin_const(
-            chain_length, J, B0, A, periodic_boundaries, central_spin,
-            only_biggest_subspace=False)
+        eigenvalues, eigenvectors = diag.eig_values_vectors_spin_const_all_subspaces(
+            chain_length, J, B0, A, periodic_boundaries, central_spin)
     else:
-        eigenvalues, eigenvectors = eig_values_vectors(
+        eigenvalues, eigenvectors = diag.eig_values_vectors(
             chain_length, J, B0, A, periodic_boundaries, central_spin)
 
     total_spins = chain_length + central_spin
@@ -515,12 +510,10 @@ def generate_fa_values(chain_length, J, B0, A, periodic_boundaries, central_spin
     Returns:
         fa_value (array (float) [chain_length])
     """
-    eigenvectors = eig_values_vectors_spin_const(
-        chain_length, J, B0, A, periodic_boundaries, central_spin,
-        only_biggest_subspace=True)[1]
-
-    N_states = eigenvectors.shape[0]
     total_spins = chain_length + central_spin
+    eigenvectors = diag.eig_values_vectors_spin_const(
+        chain_length, J, B0, A, periodic_boundaries, central_spin, n_up=total_spins//2)[1]
+
     dim = np.int(2**(total_spins))
 
     psi_z = np.arange(dim)
@@ -559,14 +552,11 @@ def plot_fa_values(chain_length, J, B0, A, periodic_boundaries, central_spin, sa
     """
     # convert lists to int
     if chain_length.size > 1:
-        raise Warning(
-            "chain length should be an integer, not a list when plotting fa")
+        raise Warning("chain length should be an integer, not a list when plotting fa")
     chain_length = chain_length[0]
     if samples.size > 1:
-        raise Warning(
-            "samples should be an integer, not a list when plotting fa")
+        raise Warning("samples should be an integer, not a list when plotting fa")
     samples = samples[0]
-    total_spins = chain_length + central_spin
     mean_fa_values = np.empty((np.size(B0), chain_length))
     # Allow only one chain length for the moment
     # if np.size(samples) == 1:
@@ -580,9 +570,7 @@ def plot_fa_values(chain_length, J, B0, A, periodic_boundaries, central_spin, sa
                                             periodic_boundaries, central_spin)
         # Averaging over samples
         mean_fa_values[j] = fa_values / samples
-
-        yerrors = (
-            1 / np.sqrt(samples))
+        yerrors = (1 / np.sqrt(samples))
         plt.errorbar(np.arange(chain_length, dtype=int), mean_fa_values[j],
                      yerr=yerrors, marker="o", capsize=5, linestyle="--", label=f"B0={B}")
     plt.xlabel("Fourier mode a")
@@ -628,15 +616,14 @@ def calc_half_chain_entropy(times, chain_length, J, B0, A, periodic_boundaries, 
     psi_0[sf.packbits(np.arange(total_spins) % 2)] = 1
     psi_0 = psi_0[subspace_mask]
 
-    eigenvalues, eigenvectors = eig_values_vectors_spin_const(
+    eigenvalues, eigenvectors = diag.eig_values_vectors_spin_const(
         chain_length, J, B0, A, periodic_boundaries,
-        central_spin, only_biggest_subspace=True, seed=seed, scaling=scaling)
+        central_spin, n_up=total_spins//2, seed=seed, scaling=scaling)
     eigenvectors = (eigenvectors.T[subspace_mask]).T
     # dimension of the biggest subspace
     dim_bss = eigenvectors.shape[0]
     exp_part = np.exp(1j * np.outer(times, eigenvalues) / hbar * e * 1e-15)
-    psi_t = (eigenvectors @
-             (exp_part.reshape(times.size, dim_bss, 1) * eigenvectors.T) @ psi_0)
+    psi_t = (eigenvectors @ (exp_part.reshape(times.size, dim_bss, 1) * eigenvectors.T) @ psi_0)
     # This performs an outer product along axis 1
     rho_t = psi_t[:, :, np.newaxis] * psi_t.conj()[:, np.newaxis, :]
     # # Old way: go back to full space to calculate the partial trace. Even though there must
@@ -733,9 +720,9 @@ def calc_occupation_imbalance(times, chain_length, J, B0, A, periodic_boundaries
     # This mask filters out the states of the biggest subspace
     subspace_mask = np.where(np.logical_not(np.sum(sf.unpackbits(np.arange(dim), total_spins),
                                                    axis=1) - total_spins//2))
-    eigenvalues, eigenvectors = eig_values_vectors_spin_const(
+    eigenvalues, eigenvectors = diag.eig_values_vectors_spin_const(
         chain_length, J, B0, A, periodic_boundaries, central_spin,
-        only_biggest_subspace=True, seed=seed, scaling=scaling)
+        n_up=total_spins//2, seed=seed, scaling=scaling)
     eigenvectors = (eigenvectors.T[subspace_mask]).T
     psi_z = np.arange(0, np.int(2**(total_spins)))[subspace_mask]
     # discard last spin
@@ -834,9 +821,9 @@ def calc_exp_sig_z_central_spin(times, chain_length, J, B0, A, periodic_boundari
     # This mask filters out the states of the biggest subspace
     subspace_mask = np.where(np.logical_not(np.sum(sf.unpackbits(np.arange(dim), total_spins),
                                                    axis=1) - total_spins//2))
-    eigenvalues, eigenvectors = eig_values_vectors_spin_const(
-        chain_length, J, B0, A, periodic_boundaries, True,
-        only_biggest_subspace=True, seed=seed, scaling=scaling)
+    eigenvalues, eigenvectors = diag.eig_values_vectors_spin_const(
+        chain_length, J, B0, A, periodic_boundaries, central_spin=True,
+        n_up=total_spins//2, seed=seed, scaling=scaling)
     eigenvectors = (eigenvectors.T[subspace_mask]).T
     psi_z = np.arange(0, np.int(2**(total_spins)))[subspace_mask]
     # only the last spin
@@ -897,8 +884,7 @@ def plot_exp_sig_z_central_spin(times, chain_length, J, B0, As, periodic_boundar
                 plt.fill_between(times, exp_sig_z_mean + yerrors,
                                  exp_sig_z_mean - yerrors, alpha=0.2)
     if len(As) == 1 and len(B0) == 1:
-        plt.title(
-            f"Expectation value of the central spin for \nJ={J}, A={As[0]}, B={B0[0]}")
+        plt.title(f"Expectation value of the central spin for \nJ={J}, A={As[0]}, B={B0[0]}")
     plt.xlabel("Time in fs")
     plt.ylabel(r"$<S_z>$")
     plt.semilogx()
@@ -938,21 +924,22 @@ def calc_correlation(times, chain_length, J, B0, A, periodic_boundaries,
     # This mask filters out the states of the biggest subspace
     subspace_mask = np.where(np.logical_not(np.sum(sf.unpackbits(np.arange(dim), total_spins),
                                                    axis=1) - total_spins//2))[0]
-    eigenvalues, eigenvectors = eig_values_vectors_spin_const(
-        chain_length, J, B0, A, periodic_boundaries, True,
-        only_biggest_subspace=True, seed=seed, scaling=scaling)
+    eigenvalues, eigenvectors = diag.eig_values_vectors_spin_const(
+        chain_length, J, B0, A, periodic_boundaries, central_spin=True,
+        n_up=total_spins//2, seed=seed, scaling=scaling)
     eigenvectors = (eigenvectors.T[subspace_mask]).T
     psi_z = np.arange(0, np.int(2**(total_spins)))[subspace_mask]
     # discard the central spin from sigma_z
     sigma_z = (sf.unpackbits(psi_z, total_spins) - 1/2)[:, :chain_length]
-    # # Initialize in Neel state
-    # psi_0 = np.zeros(dim)
-    # psi_0[sf.packbits(np.arange(total_spins) % 2)] = 1
-    # Initialize in 'domain wall state' |1 1 (...) 1 0 0 (...) 0>
     psi_0 = np.zeros(dim)
-    unpacked_psi_0 = np.concatenate((np.ones(total_spins // 2),
-                                     np.zeros(total_spins - total_spins // 2))).astype(np.int)
-    psi_0[sf.packbits(unpacked_psi_0)] = 1
+    # # Initialize in Neel state
+    # psi_0[sf.packbits(np.arange(total_spins) % 2)] = 1
+    # # Initialize in 'domain wall state' |1 1 (...) 1 0 0 (...) 0>
+    # psi_0 = np.zeros(dim)
+    # unpacked_psi_0 = np.concatenate((np.ones(total_spins // 2),
+    #                                  np.zeros(total_spins - total_spins // 2))).astype(np.int)
+    # psi_0[sf.packbits(unpacked_psi_0)] = 1
+    # Initialize in one spin up state: |1 0 (...) 0>
     psi_0 = psi_0[subspace_mask]
     exp_part = np.exp(1j * np.outer(times, eigenvalues) / hbar * e * 1e-15)
     psi_t = eigenvectors @ (exp_part.reshape(times.size, eigenvalues.size, 1)
@@ -1014,8 +1001,7 @@ def plot_correlation(times, chain_length, J, B0, As, periodic_boundaries,
                 plt.fill_between(times, sigma_squared_mean + sigma_squared_std,
                                  sigma_squared_mean - sigma_squared_std, alpha=0.2)
     if len(As) == 1 and len(B0) == 1:
-        plt.title(
-            f"Correlation sigma^2(t) for \nJ={J}, A={As[0]}, B={B0[0]}")
+        plt.title(f"Correlation sigma^2(t) for \nJ={J}, A={As[0]}, B={B0[0]}")
     plt.xlabel("Time in fs")
     plt.ylabel(r"Correlation $\sigma^2(t)$")
     plt.semilogx()
