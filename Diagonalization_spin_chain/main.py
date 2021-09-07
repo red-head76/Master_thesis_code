@@ -2,6 +2,7 @@ import pdb
 import sys
 import numpy as np
 import output
+import output_trash
 import time
 from os.path import isfile
 from configparser import ConfigParser
@@ -89,44 +90,47 @@ if outputtype == "plot_time_evo":
     data = output.plot_time_evo(t, idx_psi_0, chain_length[0], J, B0[0], A[0], spin_constant,
                                 periodic_boundaries, central_spin, save)
 
-if outputtype == "animate_time_evo":
+elif outputtype == "animate_time_evo":
     data = output.animate_time_evo(t, idx_psi_0, chain_length[0], J, B0[0], A[0], spin_constant,
                                    periodic_boundaries, central_spin, save)
     anim = True
 
-if outputtype == "plot_r":
+elif outputtype == "plot_r":
     data = output.plot_r_values(chain_length[0], J, B0[0], A[0], periodic_boundaries, central_spin,
                                 spin_constant, samples[0], save)
 
-if outputtype == "plot_r_fig3":
+elif outputtype == "plot_r_fig3":
     data = output.plot_r_fig3(chain_length, J, B0, periodic_boundaries, samples, save)
 
-if outputtype == "plot_f_fig2":
-    data = output.plot_f_fig2(chain_length, J, B0, periodic_boundaries, samples, save)
-
-if outputtype == "plot_g":
-    data = output.plot_g_value(rho0, t, chain_length, J, B0,
-                               periodic_boundaries, samples, save)
-
-if outputtype == "plot_fa":
-    data = output.plot_fa_values(chain_length, J, B0, A[0],
-                                 periodic_boundaries, central_spin, samples, save)
-
-if outputtype == "plot_half_chain_entropy":
+elif outputtype == "plot_half_chain_entropy":
     data = output.plot_half_chain_entropy(t, chain_length, J, B0, A, periodic_boundaries,
                                           central_spin, samples, seed, scaling, save)
 
-if outputtype == "plot_occupation_imbalance":
+elif outputtype == "plot_occupation_imbalance":
     data = output.plot_occupation_imbalance(t, chain_length, J, B0, A, periodic_boundaries,
                                             central_spin, samples, seed, scaling, save)
 
-if outputtype == "plot_exp_sig_z_central_spin":
+elif outputtype == "plot_exp_sig_z_central_spin":
     data = output.plot_exp_sig_z_central_spin(t, chain_length, J, B0, A, periodic_boundaries,
                                               samples, seed, scaling, save)
 
-if outputtype == "plot_correlation":
+elif outputtype == "plot_correlation":
     data = output.plot_correlation(t, chain_length, J, B0, A, periodic_boundaries, samples,
                                    seed, scaling, save)
+
+# Old stuff
+elif outputtype == "plot_f_fig2":
+    data = output_trash.plot_f_fig2(chain_length, J, B0, periodic_boundaries, samples, save)
+
+elif outputtype == "plot_g":
+    data = output_trash.plot_g_value(rho0, t, chain_length, J, B0,
+                                     periodic_boundaries, samples, save)
+
+elif outputtype == "plot_fa":
+    data = output_trash.plot_fa_values(chain_length, J, B0, A[0],
+                                       periodic_boundaries, central_spin, samples, save)
+else:
+    raise ValueError(f"Option '{outputtype}' unknown")
 
 if save:
     time_passed = time.time() - time0
