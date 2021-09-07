@@ -1,6 +1,6 @@
 import numpy as np
 import diagonalization
-from support_functions import unpackbits
+from support_functions import unpackbits, packbits
 from scipy.constants import hbar, e
 
 
@@ -56,3 +56,48 @@ def time_evo_sigma_z(t, psi0, chain_length, J, B0, A, spin_constant,
     psi_t = eigenvectors @ (exp_part.reshape(t.size, dim, 1) * eigenvectors.T) @ psi0
 
     return (np.abs(psi_t)**2) @ sigma_z
+
+
+def time_evo_subspace(times, eigenvalues, eigenvectors, total_spins, initial_state="neel",
+                      float_precision=32):
+    """
+    Computes the time evolution of an inital state
+
+    Args:
+        times (float [times])
+        eigenvalues (float [dim_sub])
+        eigenvectors (float [dim_sub, dim_sub])
+        total_spins (int)
+        inital (string, default: "neel"): the type of inital state. Possible arguments:
+            "neel"
+        float_precision (int, default: 32): determines the precision of floats. Possible
+            arguments: 32, 64
+
+    Returns:
+        psi_t (complex [times, dim_sub]): the state vector at each timestep
+
+    """
+    if float_precision == 32:
+        # float and complex dtype
+        fdtype = np.float32
+        cdtype = np.complex64
+    elif float_precision == 64:
+        fdtype = np.float64
+        cdtype = np.complex128
+    else:
+        raise ValueError()
+    dim = int(2**total_spins)
+    # This mask filters out the states of the subspace
+    subspace_mask = np.where(np.logical_not(np.sum(unpackbits(np.arange(dim), total_spins),
+                                                   axis=1) - total_spins//2))[0]
+    if initial_state == "neel":
+        psi_0 = np.zeros(dim).astype(fdtype)
+        psi_0[packbits(np.arange(total_spins) % 2)] = 1
+        psi_0 = psi_0[subspace_mask]
+    else:
+        raise ValueError()
+    dim = np.int(2**total_spins)
+    eigenvectors = eigenvectors.astype(cdtype)
+
+    exp_part = np.exp(1j * np.outer(times, eigenvalues) / hbar * e * 1e-15).astype(cdtype)
+    return (eigenvectors @ (exp_part[:, :, np.newaxis] * eigenvectors.T)) @ psi_0

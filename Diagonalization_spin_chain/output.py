@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import support_functions as sf
 import diagonalization as diag
-from time_evo import time_evo_sigma_z
+from time_evo import time_evo_sigma_z, time_evo_subspace
 from matplotlib import animation
 from scipy.constants import hbar, e
 
@@ -513,8 +513,11 @@ def generate_fa_values(chain_length, J, B0, A, periodic_boundaries, central_spin
     total_spins = chain_length + central_spin
     eigenvectors = diag.eig_values_vectors_spin_const(
         chain_length, J, B0, A, periodic_boundaries, central_spin, n_up=total_spins//2)[1]
-
     dim = np.int(2**(total_spins))
+    # change to fullspace representation
+    subspace = np.where(np.logical_not(np.sum(sf.unpackbits(np.arange(dim), total_spins),
+                                              axis=1) - total_spins//2))[0]
+    eigenvectors = eigenvectors @ sf.create_basis_vectors(subspace, dim)
 
     psi_z = np.arange(dim)
     sigma_z = sf.unpackbits(psi_z, total_spins) - 1/2
@@ -611,19 +614,10 @@ def calc_half_chain_entropy(times, chain_length, J, B0, A, periodic_boundaries, 
     # This mask filters out the states of the biggest subspace
     subspace_mask = np.where(np.logical_not(np.sum(sf.unpackbits(np.arange(dim), total_spins),
                                                    axis=1) - total_spins//2))[0]
-    # Starting with a Neel state , i.e. |up, down, up, down, ...>
-    psi_0 = np.zeros(dim)
-    psi_0[sf.packbits(np.arange(total_spins) % 2)] = 1
-    psi_0 = psi_0[subspace_mask]
-
     eigenvalues, eigenvectors = diag.eig_values_vectors_spin_const(
         chain_length, J, B0, A, periodic_boundaries,
         central_spin, n_up=total_spins//2, seed=seed, scaling=scaling)
-    eigenvectors = (eigenvectors.T[subspace_mask]).T
-    # dimension of the biggest subspace
-    dim_bss = eigenvectors.shape[0]
-    exp_part = np.exp(1j * np.outer(times, eigenvalues) / hbar * e * 1e-15)
-    psi_t = (eigenvectors @ (exp_part.reshape(times.size, dim_bss, 1) * eigenvectors.T) @ psi_0)
+    psi_t = time_evo_subspace(times, eigenvalues, eigenvectors, total_spins)
     # This performs an outer product along axis 1
     rho_t = psi_t[:, :, np.newaxis] * psi_t.conj()[:, np.newaxis, :]
     # # Old way: go back to full space to calculate the partial trace. Even though there must
@@ -716,29 +710,21 @@ def calc_occupation_imbalance(times, chain_length, J, B0, A, periodic_boundaries
         occupation_imbalance (array (float) [times])
     """
     total_spins = chain_length + central_spin
-    dim = np.int(2**total_spins)
-    # This mask filters out the states of the biggest subspace
-    subspace_mask = np.where(np.logical_not(np.sum(sf.unpackbits(np.arange(dim), total_spins),
-                                                   axis=1) - total_spins//2))
+    dim = int(2**total_spins)
     eigenvalues, eigenvectors = diag.eig_values_vectors_spin_const(
         chain_length, J, B0, A, periodic_boundaries, central_spin,
         n_up=total_spins//2, seed=seed, scaling=scaling)
-    eigenvectors = (eigenvectors.T[subspace_mask]).T
+    psi_t = time_evo_subspace(times, eigenvalues, eigenvectors, total_spins)
+    # This mask filters out the states of the biggest subspace
+    subspace_mask = np.where(np.logical_not(np.sum(sf.unpackbits(np.arange(dim), total_spins),
+                                                   axis=1) - total_spins//2))[0]
     psi_z = np.arange(0, np.int(2**(total_spins)))[subspace_mask]
     # discard last spin
     sigma_z = (sf.unpackbits(psi_z, total_spins) - 1/2)[:, :-1]
-    # Initialize in Neel state
-    psi_0 = np.zeros(dim)
-    psi_0[sf.packbits(np.arange(total_spins) % 2)] = 1
-    psi_0 = psi_0[subspace_mask]
-    exp_part = np.exp(1j * np.outer(times, eigenvalues) / hbar * e * 1e-15)
-    psi_t = (eigenvectors @ (exp_part.reshape(times.size, eigenvalues.size, 1)
-                             * eigenvectors.T) @ psi_0)
     # discard central spin in exp_sig_z
     exp_sig_z = (np.abs(psi_t)**2 @ sigma_z)
     # occupation imbalance mask: even minus odd sites
-    occ_imbalance = np.where(np.arange(chain_length) %
-                             2, exp_sig_z, -exp_sig_z).sum(axis=1)
+    occ_imbalance = np.where(np.arange(chain_length) % 2, exp_sig_z, -exp_sig_z).sum(axis=1)
     # and norm it to 1
     return occ_imbalance / (chain_length / 2)
 
@@ -824,17 +810,10 @@ def calc_exp_sig_z_central_spin(times, chain_length, J, B0, A, periodic_boundari
     eigenvalues, eigenvectors = diag.eig_values_vectors_spin_const(
         chain_length, J, B0, A, periodic_boundaries, central_spin=True,
         n_up=total_spins//2, seed=seed, scaling=scaling)
-    eigenvectors = (eigenvectors.T[subspace_mask]).T
+    psi_t = time_evo_subspace(times, eigenvalues, eigenvectors, total_spins)
     psi_z = np.arange(0, np.int(2**(total_spins)))[subspace_mask]
     # only the last spin
     sigma_z = (sf.unpackbits(psi_z, total_spins) - 1/2)[:, -1]
-    # Initialize in Neel state
-    psi_0 = np.zeros(dim)
-    psi_0[sf.packbits(np.arange(total_spins) % 2)] = 1
-    psi_0 = psi_0[subspace_mask]
-    exp_part = np.exp(1j * np.outer(times, eigenvalues) / hbar * e * 1e-15)
-    psi_t = eigenvectors @ (exp_part.reshape(times.size, eigenvalues.size, 1)
-                            * eigenvectors.T) @ psi_0
     exp_sig_z = (np.abs(psi_t)**2 @ sigma_z)
     # and norm it to 1
     return exp_sig_z
@@ -896,7 +875,7 @@ def plot_exp_sig_z_central_spin(times, chain_length, J, B0, As, periodic_boundar
 def calc_correlation(times, chain_length, J, B0, A, periodic_boundaries,
                      seed, scaling):
     """
-    Calculates the correlation function sigma^2(t) from 
+    Calculates the correlation function sigma^2(t) from
     https://journals.aps.org/prl/pdf/10.1103/PhysRevLett.114.100601
     (in comments, G_r(t) from page 7 of http://arxiv.org/abs/1610.08993)
 
@@ -927,7 +906,6 @@ def calc_correlation(times, chain_length, J, B0, A, periodic_boundaries,
     eigenvalues, eigenvectors = diag.eig_values_vectors_spin_const(
         chain_length, J, B0, A, periodic_boundaries, central_spin=True,
         n_up=total_spins//2, seed=seed, scaling=scaling)
-    eigenvectors = (eigenvectors.T[subspace_mask]).T
     psi_z = np.arange(0, np.int(2**(total_spins)))[subspace_mask]
     # discard the central spin from sigma_z
     sigma_z = (sf.unpackbits(psi_z, total_spins) - 1/2)[:, :chain_length]

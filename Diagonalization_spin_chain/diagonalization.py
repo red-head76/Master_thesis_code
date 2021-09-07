@@ -190,12 +190,7 @@ def eig_values_vectors_spin_const(chain_length, J, B0, A, periodic_boundaries, c
                     H_sub[state_index, np.argwhere(
                         subspace == flipped_state).item()] += A/2
 
-    # Diagonalization of subspace
-    eigenvalues_sub, eigenvectors_sub = np.linalg.eigh(H_sub)
-    # Generate eigenvector with respect to full space basis
-    eigenvectors_fullspace = eigenvectors_sub @ create_basis_vectors(subspace, dim)
-
-    return eigenvalues_sub, eigenvectors_fullspace
+    return np.linalg.eigh(H_sub)
 
 
 def eig_values_vectors_spin_const_all_subspaces(chain_length, J, B0, A, periodic_boundaries,
