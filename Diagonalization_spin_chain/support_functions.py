@@ -199,9 +199,9 @@ def save_data(filename, data, config_file, time_passed, anim=False, fps=10):
     if not os.path.isdir("./Plots"):
         os.mkdir("./Plots")
     save_path = "./Plots/" + filename
-    if not anim:
+    if anim == False:
         savefig(save_path)
-    else:
+    elif anim:
         writervideo = animation.FFMpegWriter(fps=fps)
         anim.save(save_path, writer=writervideo)
 

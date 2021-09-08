@@ -82,7 +82,7 @@ if outputtype in ["plot_g"]:
     t = np.linspace(0, float(Other["timeend"]), int(Other["timesteps"]) + 1)
 
 if outputtype in ["plot_half_chain_entropy", "plot_occupation_imbalance",
-                  "plot_exp_sig_z_central_spin", "plot_correlation"]:
+                  "plot_exp_sig_z_central_spin", "plot_correlation", "calc_psi_t"]:
     t = np.logspace(np.log10(float(Other["timestart"])), np.log10(float(Other["timeend"])),
                     int(Other["timesteps"]) + 1)
 
@@ -129,6 +129,17 @@ elif outputtype == "plot_g":
 elif outputtype == "plot_fa":
     data = output_trash.plot_fa_values(chain_length, J, B0, A[0],
                                        periodic_boundaries, central_spin, samples, save)
+
+elif outputtype == "calc_eigvals_eigvecs":
+    data = output.calc_eigvals_eigvecs_biggest_subspace(chain_length, J, B0, A,
+                                                        periodic_boundaries, central_spin, seed,
+                                                        scaling)
+    anim = None
+elif outputtype == "calc_psi_t":
+    data = output.calc_psi_t(t, chain_length, J, B0, A, periodic_boundaries, central_spin,
+                             seed, scaling)
+    anim = None
+
 else:
     raise ValueError(f"Option '{outputtype}' unknown")
 

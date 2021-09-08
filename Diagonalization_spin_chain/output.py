@@ -108,6 +108,59 @@ def animate_time_evo(t, idx_psi_0, chain_length, J, B0, A, spin_constant,
         return [t, exp_sig_z]
 
 
+def calc_eigvals_eigvecs_biggest_subspace(chain_length, J, B0, A, periodic_boundaries,
+                                          central_spin, seed, scaling):
+    """
+    Calculates the eigenvalues and vectors of the biggest subspace
+
+    Args:
+        chain_length (int): the length of the spin chain
+        J (float): the coupling constant
+        B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
+                                between (-1, 1).
+        A (float): coupling between the central spin and the spins in the chain
+        periodic_boundaries (bool): determines whether or not periodic boundary
+                                                  conditions are used in the chain.
+        central_spin (bool): determines whether or not a central spin is present
+        seed (int): use a seed to produce comparable outcomes if False, then it is initialized
+                    randomly
+
+    Returns:
+        eigenvalues (float [dim]), eigenvectors (float [dim, dim])
+    """
+    n_up = (chain_length[0] + central_spin) // 2
+    return diag.eig_values_vectors_spin_const(chain_length[0], J, B0[0], A[0], periodic_boundaries,
+                                              central_spin, n_up, seed, scaling)
+
+
+def calc_psi_t(times, chain_length, J, B0, A, periodic_boundaries, central_spin, seed, scaling,
+               inital_state="neel"):
+    """
+    Calculates the time evolution of an initial state
+
+    Args:
+        times (float [times]): time array
+        chain_length (int): the length of the spin chain
+        J (float): the coupling constant
+        B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
+                                between (-1, 1).
+        A (float): coupling between the central spin and the spins in the chain
+        periodic_boundaries (bool): determines whether or not periodic boundary
+                                                  conditions are used in the chain.
+        central_spin (bool): determines whether or not a central spin is present
+        seed (int): use a seed to produce comparable outcomes if False, then it is initialized
+                    randomly
+
+    Returns:
+        eigenvalues (float [dim]), eigenvectors (float [dim, dim])
+    """
+    total_spins = chain_length + central_spin
+    n_up = (total_spins) // 2
+    eigvals, eigvecs = diag.eig_values_vectors_spin_const(chain_length, J, B0, A,
+                                                          periodic_boundaries, central_spin,
+                                                          n_up, seed, scaling)
+    return time_evo_subspace(times, eigvals, eigvecs, total_spins, inital_state, 32)
+
 
 # Histogram functions for r_value
 def rice_rule(n):
