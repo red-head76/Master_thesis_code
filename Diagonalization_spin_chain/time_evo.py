@@ -4,7 +4,7 @@ from support_functions import unpackbits, packbits
 from scipy.constants import hbar, e
 
 
-def time_evo_sigma_z(t, psi0, chain_length, J, B0, A, spin_constant,
+def time_evo_sigma_z(t, psi_0, chain_length, J, B0, A, spin_constant,
                      periodic_boundaries, central_spin):
     """
     Computes the time evolution of the spin operator sigma_z for the given state
@@ -52,8 +52,10 @@ def time_evo_sigma_z(t, psi0, chain_length, J, B0, A, spin_constant,
 
     # vectorized notation
     # Compute array with time vector multiplied with diagonal matrix with eigenvalues as entries
-    exp_part = np.exp(1j * np.outer(t, eigenvalues) / hbar * e * 1e-15)
-    psi_t = eigenvectors @ (exp_part.reshape(t.size, dim, 1) * eigenvectors.T) @ psi0
+    propagator = np.exp(-1j * np.outer(t, eigenvalues) / hbar * e * 1e-15)
+    # Old
+    # psi_t = (eigenvectors @ (propagator[:, :, np.newaxis] * eigenvectors.T)) @ psi_0
+    psi_t = (eigenvectors @ (propagator * (eigenvectors.T @ psi_0)).T).T
 
     return (np.abs(psi_t)**2) @ sigma_z
 
@@ -96,8 +98,9 @@ def time_evo_subspace(times, eigenvalues, eigenvectors, total_spins, initial_sta
         psi_0 = psi_0[subspace_mask]
     else:
         raise ValueError()
-    dim = np.int(2**total_spins)
     eigenvectors = eigenvectors.astype(cdtype)
 
-    exp_part = np.exp(1j * np.outer(times, eigenvalues) / hbar * e * 1e-15).astype(cdtype)
-    return (eigenvectors @ (exp_part[:, :, np.newaxis] * eigenvectors.T)) @ psi_0
+    propagator = np.exp(-1j * np.outer(times, eigenvalues) / hbar * e * 1e-15).astype(cdtype)
+    # Old
+    # return (eigenvectors @ (propagator[:, :, np.newaxis] * eigenvectors.T)) @ psi_0
+    return (eigenvectors @ (propagator * (eigenvectors.T @ psi_0)).T).T
