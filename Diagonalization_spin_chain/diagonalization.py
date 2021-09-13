@@ -170,10 +170,8 @@ def eig_values_vectors_old_way(chain_length, J, B0, A, periodic_boundaries, cent
                     flipped_state = packbits(np.logical_xor(state, flipmask))
                     H_ext[state_index, flipped_state] = A/2
 
-        return H_ext
-    return H
-    #     return np.linalg.eigh(H_ext)
-    # return np.linalg.eigh(H)
+        return np.linalg.eigh(H_ext)
+    return np.linalg.eigh(H)
 
 
 def eig_values_vectors_spin_const(chain_length, J, B0, A, periodic_boundaries,
@@ -376,7 +374,6 @@ def eig_values_vectors_spin_const_old_way(chain_length, J, B0, A, periodic_bound
                         np.logical_xor(state, flipmask))
                     H_sub[state_index, np.argwhere(
                         subspace == flipped_state).item()] += A/2
-
     return np.linalg.eigh(H_sub)
 
 
