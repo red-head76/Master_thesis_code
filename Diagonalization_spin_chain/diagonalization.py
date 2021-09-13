@@ -6,8 +6,86 @@ from support_functions import packbits, unpackbits, create_basis_vectors
 def eig_values_vectors(chain_length, J, B0, A, periodic_boundaries, central_spin, seed=False,
                        scaling="inverse"):
     """
-    Computes the the Heisenberg Hamiltonian without coupling
-    to a central spin: H = Sum_i (J * S_i * S_i+1 + B_i S_i^z).
+    Computes the the Heisenberg Hamiltonian with coupling to a central spin:
+    H = Sum_i (J * S_i * S_i+1 + B_i S_i^z + I^z S_i^z).
+
+    Args:
+        chain_length (int): the length of the spin chain
+        J (float): the coupling constant
+        B0 (float): the B-field amplitude. Currently random initialized uniformly
+                                between (-1, 1).
+        A (float): the coupling between the spins in the chain and the central spin
+        periodic_boundaries (bool): determines whether or not periodic boundary
+                                                  conditions are used in the chain.
+        central_spin (bool): determines whethere or not a central spin is present
+        seed (bool, default=False): if a seed is used, its always the same realization.
+        scaling (string, default=inverse): if "inverse", the coupling A is scaled by 1/N,
+                                          if "sqrt", the coupling A is scaled by 1/sqrt(N)
+
+    Returns:
+        eigenvalues (float array [total_spins]): the eigenvalues of the Hamiltonian
+        eigenvectors (float array [total_spins, total_spins]): the eigenvectors
+    """
+    total_spins = chain_length + central_spin
+    dim = int(2**total_spins)
+    # Create a new random B-field for every instance
+    if seed:
+        np.random.seed(seed)
+    B = np.random.uniform(-1, 1, chain_length)
+    if central_spin:
+        B = np.append(B, 0)
+    if scaling == "inverse":
+        A = A / chain_length
+    elif scaling == "sqrt":
+        A = A / np.sqrt(chain_length)
+    else:
+        raise ValueError(
+            f"{scaling} is not a viable option for scaling")
+    states = unpackbits(np.arange(dim), total_spins)
+    # Ising term in the hamiltonian: J * Sum(S_i^z * S_i+1^z)
+    if not periodic_boundaries:
+        diff_states = np.diff(states[:, :chain_length], axis=1)
+    else:
+        diff_states = np.diff(states[:, :chain_length], axis=1,
+                              prepend=states[:, -1 - central_spin, None])
+    ising = J / 2 * ((chain_length - 1 + periodic_boundaries) / 2 - np.abs(diff_states).sum(axis=1))
+    # Outer magnetic field term: Sum(B_i S_i^z)
+    disorder = (B0 * B * (states - 1/2)).sum(axis=1)
+    H = np.diag(ising + disorder)
+    # Ladder operator terms: J/2 * Sum(S_i^+ S_i+1^- + S_i^- S_i+1^+)
+    where_to_flip = np.array(np.where(diff_states != 0))
+    states_to_flip = states[where_to_flip[0]]
+    rolled_flipmasks = np.diag(np.ones(chain_length)) + np.roll(
+        np.diag(np.ones(chain_length)), 1, axis=1).astype(int)
+    if central_spin:
+        rolled_flipmasks = np.append(rolled_flipmasks, np.zeros(chain_length)[:, None], axis=1)
+    flipmasks = rolled_flipmasks[where_to_flip[1] - periodic_boundaries]
+    flipped_states = np.logical_xor(states_to_flip, flipmasks)
+    H[packbits(states_to_flip), packbits(flipped_states)] = J/2
+    # Central spin term (z-direction): A/N * Sum(S_c^z * S_i^z)
+    if central_spin:
+        non_equal_z = (np.ones((dim, chain_length), dtype=int) *
+                       states[:, -1:] != states[:, :chain_length])
+        central_z = A / 4 * (chain_length - 2 * non_equal_z.sum(axis=1))
+        H += np.diag(central_z)
+        # Central spin term (ladder terms): A/N * Sum(S_c^+ S_i^- + S_c^- S_i^+)
+        where_to_flip_central = np.where(non_equal_z)
+        states_to_flip_central = states[where_to_flip_central[0]]
+        rolled_flipmasks_central = np.append(np.diag(np.ones(chain_length)),
+                                             np.ones(chain_length)[:, None], axis=1).astype(int)
+        flipmasks_central = rolled_flipmasks_central[where_to_flip_central[1]]
+        flipped_states_central = np.logical_xor(states_to_flip_central, flipmasks_central)
+        H[packbits(states_to_flip_central), packbits(flipped_states_central)] = A/2
+
+    return np.linalg.eigh(H)
+
+
+def eig_values_vectors_old_way(chain_length, J, B0, A, periodic_boundaries, central_spin,
+                               seed=False, scaling="inverse"):
+    """
+    Old way with for loops
+    Computes the the Heisenberg Hamiltonian with coupling to a central spin:
+    H = Sum_i (J * S_i * S_i+1 + B_i S_i^z + I^z S_i^z).
 
     Args:
         chain_length (int): the length of the spin chain
@@ -36,7 +114,14 @@ def eig_values_vectors(chain_length, J, B0, A, periodic_boundaries, central_spin
     # Create a new random B-field for every instance
     if seed:
         np.random.seed(seed)
-    B = np.round(np.random.uniform(-1, 1, chain_length), 2)
+    B = np.random.uniform(-1, 1, chain_length)
+    if scaling == "inverse":
+        A = A / chain_length
+    elif scaling == "sqrt":
+        A = A / np.sqrt(chain_length)
+    else:
+        raise ValueError(
+            f"{scaling} is not a viable option for scaling")
     # For every state
     for state_index in range(dim):
         state = unpackbits(psi_z[state_index], chain_length)
@@ -70,13 +155,6 @@ def eig_values_vectors(chain_length, J, B0, A, periodic_boundaries, central_spin
         H_ext = np.zeros((dim_ext, dim_ext))
         H_ext[:dim, :dim] = H
         H_ext[dim:, dim:] = H
-        if scaling == "inverse":
-            A = A / chain_length
-        elif scaling == "sqrt":
-            A = A / np.sqrt(chain_length)
-        else:
-            raise ValueError(
-                f"{scaling} is not a viable option for scaling")
         # Now treat the last spin as the new central spin
         for state_index in range(dim_ext):
             state = unpackbits(psi_z_ext[state_index], chain_length+1)
@@ -91,16 +169,19 @@ def eig_values_vectors(chain_length, J, B0, A, periodic_boundaries, central_spin
                     flipmask[-1] = 1
                     flipped_state = packbits(np.logical_xor(state, flipmask))
                     H_ext[state_index, flipped_state] = A/2
-        return np.linalg.eigh(H_ext)
 
-    return np.linalg.eigh(H)
+        return H_ext
+    return H
+    #     return np.linalg.eigh(H_ext)
+    # return np.linalg.eigh(H)
 
 
-def eig_values_vectors_spin_const(chain_length, J, B0, A, periodic_boundaries, central_spin,
-                                  n_up, seed=False, scaling="inverse"):
+def eig_values_vectors_spin_const(chain_length, J, B0, A, periodic_boundaries,
+                                  central_spin, n_up, seed=False, scaling="inverse"):
     """
-    Computes the the Heisenberg Hamiltonian without coupling
-    to a central spin: H = Sum_i (J * S_i * S_i+1 + B_i S_i^z).
+    Computes the the Heisenberg Hamiltonian with coupling to a central spin:
+    H = Sum_i (J * S_i * S_i+1 + B_i S_i^z + I^z S_i^z)
+    for the subspace with n_up spins
 
     Args:
         chain_length (int): the length of the spin chain
@@ -119,8 +200,98 @@ def eig_values_vectors_spin_const(chain_length, J, B0, A, periodic_boundaries, c
 
 
     Returns:
-        eigenvalues (float array [total_spins]): the eigenvalues of the Hamiltonian
-        eigenvectors (float array [total_spins, total_spins]): the eigenvectors
+        eigenvalues (float [dim_sub]): the eigenvalues of the Hamiltonian
+        eigenvectors (float [dim_sub, dim_sub]): the eigenvectors
+    """
+    total_spins = chain_length + central_spin
+    dim = int(2**total_spins)
+    # Create a new random B-field for every instance
+    if seed:
+        np.random.seed(seed)
+    B = np.random.uniform(-1, 1, chain_length)
+    if central_spin:
+        B = np.append(B, 0)
+    if scaling == "inverse":
+        A = A / chain_length
+    elif scaling == "sqrt":
+        A = A / np.sqrt(chain_length)
+    else:
+        raise ValueError(
+            f"{scaling} is not a viable option for scaling")
+    # Creates each state, sums up all spins, subtracts n_up and filters out the zeros
+    subspace = np.where(np.logical_not(np.sum(unpackbits(np.arange(dim), total_spins),
+                                              axis=1) - n_up))[0]
+    # Generate Hamiltonian for subspace
+    states = unpackbits(subspace, total_spins)
+    # Ising term in the hamiltonian: J * Sum(S_i^z * S_i+1^z)
+    if not periodic_boundaries:
+        diff_states = np.diff(states[:, :chain_length], axis=1)
+    else:
+        diff_states = np.diff(states[:, :chain_length], axis=1,
+                              prepend=states[:, -1 - central_spin, None])
+    ising = J / 2 * ((chain_length - 1 + periodic_boundaries) / 2 - np.abs(diff_states).sum(axis=1))
+    # Outer magnetic field term: Sum(B_i S_i^z)
+    disorder = (B0 * B * (states - 1/2)).sum(axis=1)
+    H = np.diag(ising + disorder)
+    # Ladder operator terms: J/2 * Sum(S_i^+ S_i+1^- + S_i^- S_i+1^+)
+
+    def map_states_to_subspace(states):
+        return (packbits(states) == subspace[:, None]).argmax(axis=0)
+    where_to_flip = np.array(np.where(diff_states != 0))
+    states_to_flip = states[where_to_flip[0]]
+    rolled_flipmasks = np.diag(np.ones(chain_length)) + np.roll(
+        np.diag(np.ones(chain_length)), 1, axis=1).astype(int)
+    if central_spin:
+        rolled_flipmasks = np.append(rolled_flipmasks, np.zeros(chain_length)[:, None], axis=1)
+    flipmasks = rolled_flipmasks[where_to_flip[1] - periodic_boundaries]
+    flipped_states = np.logical_xor(states_to_flip, flipmasks)
+    H[map_states_to_subspace(states_to_flip), map_states_to_subspace(flipped_states)] = J/2
+    # Central spin term (z-direction): A/N * Sum(S_c^z * S_i^z)
+    if central_spin:
+        non_equal_z = (np.ones((subspace.size, chain_length), dtype=int) *
+                       states[:, -1:] != states[:, :chain_length])
+        central_z = A / 4 * (chain_length - 2 * non_equal_z.sum(axis=1))
+        H += np.diag(central_z)
+        # Central spin term (ladder terms): A/N * Sum(S_c^+ S_i^- + S_c^- S_i^+)
+        where_to_flip_central = np.where(non_equal_z)
+        states_to_flip_central = states[where_to_flip_central[0]]
+        rolled_flipmasks_central = np.append(np.diag(np.ones(chain_length)),
+                                             np.ones(chain_length)[:, None], axis=1).astype(int)
+        flipmasks_central = rolled_flipmasks_central[where_to_flip_central[1]]
+        flipped_states_central = np.logical_xor(states_to_flip_central, flipmasks_central)
+        H[map_states_to_subspace(states_to_flip_central),
+          map_states_to_subspace(flipped_states_central)] = A/2
+
+    return np.linalg.eigh(H)
+
+
+def eig_values_vectors_spin_const_old_way(chain_length, J, B0, A, periodic_boundaries,
+                                          central_spin, n_up, seed=False, scaling="inverse"):
+    """
+    Old way with for loops
+    Computes the the Heisenberg Hamiltonian with coupling to a central spin:
+    H = Sum_i (J * S_i * S_i+1 + B_i S_i^z + I^z S_i^z)
+    for the subspace with n_up spins
+
+    Args:
+        chain_length (int): the length of the spin chain
+        J (float): the coupling constant
+        B0 (float): the B-field amplitude. Currently random initialized uniformly
+                                between (-1, 1).
+        A (float): the coupling between the spins in the chain and the central spin
+        periodic_boundaries (bool): determines whether or not periodic boundary
+                                    conditions are used in the chain.
+        central_spin (bool): determines whethere or not a central spin is present
+        n_up (int): The amount of total spin up of the subspace considered.
+                        Legal values range from 0 to total spins.
+        seed (bool, default=False): if a seed is used, its always the same realization.
+        scaling (string, default=inverse): if "inverse", the coupling A is scaled by 1/N,
+                                          if "sqrt", the coupling A is scaled by 1/sqrt(N)
+
+
+    Returns:
+        eigenvalues (float [dim_sub]): the eigenvalues of the Hamiltonian
+        eigenvectors (float [dim_sub, dim_sub]): the eigenvectors
     """
 
     total_spins = chain_length + central_spin
@@ -131,11 +302,34 @@ def eig_values_vectors_spin_const(chain_length, J, B0, A, periodic_boundaries, c
     B = np.random.uniform(-1, 1, chain_length)
     if central_spin:
         B = np.append(B, 0)
+    if scaling == "inverse":
+        A = A / chain_length
+    elif scaling == "sqrt":
+        A = A / np.sqrt(chain_length)
+    else:
+        raise ValueError(
+            f"{scaling} is not a viable option for scaling")
 
     # Create subspace
+    # Creates each state, sums up all spins, subtracts n_up and filters out the zeros
     subspace = np.where(np.logical_not(np.sum(unpackbits(np.arange(dim), total_spins),
-                                              axis=1) - total_spins//2))[0]
+                                              axis=1) - n_up))[0]
     # Generate Hamiltonian for subspace
+    states = unpackbits(subspace, total_spins)
+    # Ising term in the hamiltonian: J * Sum(S_i^z * S_i+1^z)
+    B2 = np.random.uniform(-1, 1, total_spins)
+    if central_spin:
+        B2[-1] = 0
+    if not periodic_boundaries:
+        diff_states = np.diff(states[:, :chain_length], axis=1)
+    else:
+        diff_states = np.diff(states[:, :chain_length], axis=1,
+                              prepend=states[:, -1 - central_spin, None])
+    ising = ((chain_length - 1 + periodic_boundaries) / 2 - np.abs(diff_states).sum(axis=1))
+    # Outer magnetic field term: Sum(B_i S_i^z)
+    disorder = (B0 * B2 * (states - 1/2)).sum(axis=1)
+    H_sub2 = np.diag(ising + disorder)
+    # Ladder operator terms: J/2 * Sum(S_i^+ S_i+1^- + S_i^- S_i+1^+)
     dim_sub = len(subspace)
     H_sub = np.zeros((dim_sub, dim_sub))
     # For every state (in subspace)
@@ -166,13 +360,6 @@ def eig_values_vectors_spin_const(chain_length, J, B0, A, periodic_boundaries, c
         H_sub[state_index, state_index] += np.sum(B0 * B * (state - 1/2))
 
     if central_spin:
-        if scaling == "inverse":
-            A = A / chain_length
-        elif scaling == "sqrt":
-            A = A / np.sqrt(chain_length)
-        else:
-            raise ValueError(
-                f"{scaling} is not a viable option for scaling")
         # Now treat the last spin as the new central spin
         for state_index in range(dim_sub):
             state = unpackbits(subspace[state_index], total_spins)
