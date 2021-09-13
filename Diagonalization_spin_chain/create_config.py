@@ -44,7 +44,9 @@ def create_config():
         # In case of multiple instances, a list is also possible.
         "samples": "100",
         # Determines if the output should be displayed or not
-        "show": "True"
+        "show": "True",
+        # Whether or not the plot should be saved
+        "save_plot": "True"
     }
 
     config_object["Other"] = {

@@ -61,6 +61,7 @@ outputtype = Output["outputtype"]
 save = Output["filename"]
 samples = str_to_int(config_object.getlist("Output", "samples"))
 show = config_object.getboolean("Output", "show")
+save_plot = config_object.getboolean("Output", "save_plot")
 
 # Other setup
 Other = config_object["Other"]
@@ -145,7 +146,7 @@ else:
 
 if save:
     time_passed = time.time() - time0
-    save_data(save, data, config_file, time_passed, anim)
+    save_data(save, data, config_file, time_passed, save_plot, anim)
 
 if show:
     show_plot()

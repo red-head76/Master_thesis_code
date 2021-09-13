@@ -1,9 +1,9 @@
-import numpy as np
-from matplotlib.pyplot import savefig
-from json import dump
-import os
-from matplotlib import animation
 from shutil import copy
+import os
+from configparser import ConfigParser
+from matplotlib.pyplot import savefig, close
+from matplotlib import animation
+import numpy as np
 
 
 def pc(matrix, precision=1):
@@ -181,7 +181,7 @@ def prepend_line(file_name, line):
     os.rename(dummy_file, file_name)
 
 
-def save_data(filename, data, config_file, time_passed, anim=False, fps=10):
+def save_data(filename, data, config_file, time_passed, save_plot=True, anim=False, fps=10):
     """
     Saves the data to a given plot with a given filename. There is one file for the plot, the data
     of the plot and the parameters used.
@@ -191,6 +191,7 @@ def save_data(filename, data, config_file, time_passed, anim=False, fps=10):
         data (array): the data of the plot
         config_file (string): the path of the .ini file
         time_passed (int): the time needed for the calculation
+        save_plot (bool, default: True): Whether or not the plot should be saved
         anim (bool, default: False): Determines if the output is an animation
         fps (int, default=10): set the frames per second of an animation
 
@@ -199,14 +200,32 @@ def save_data(filename, data, config_file, time_passed, anim=False, fps=10):
     if not os.path.isdir("./Plots"):
         os.mkdir("./Plots")
     save_path = "./Plots/" + filename
-    if anim == False:
-        savefig(save_path)
-    elif anim:
-        writervideo = animation.FFMpegWriter(fps=fps)
-        anim.save(save_path, writer=writervideo)
+    if save_plot:
+        if anim == False:
+            savefig(save_path)
+        elif anim:
+            writervideo = animation.FFMpegWriter(fps=fps)
+            anim.save(save_path, writer=writervideo)
+    else:
+        close()
 
     np.savez(save_path, *data)
     copy(config_file, "./Plots/")
     t = int(time_passed)
     prepend_line("./Plots/" + config_file.split('/')[-1],
                  f"# Run time {t//3600}h:{(t%3600)//60}m:{t%60}s\n")
+
+
+def convert_list(string):
+    # Converts a string to a list of floats
+    return ([i.strip() for i in string.split(',')])
+
+
+def str_to_int(str_list):
+    return [int(item) for item in str_list]
+
+
+def read_config(config_file):
+    config_object = ConfigParser(converters={"list": convert_list})
+    config_object.read(config_file)
+    return config_object
