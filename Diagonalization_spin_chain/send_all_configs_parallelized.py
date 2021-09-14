@@ -7,6 +7,12 @@ import fileinput
 import pdb
 
 
+def replace_text(filename, text, replacement):
+    with fileinput.FileInput(filename, inplace=True) as file:
+        for line in file:
+            print(line.replace(text, replacement), end='')
+
+
 def send_single_config(config_name):
     """
     This function creates a directory named config_name in "./Plots/" and places all
@@ -20,32 +26,19 @@ def send_single_config(config_name):
     config_object.read("config_files/" + config_name)
     samples = config_object.getint("Output", "samples")
     filename = config_object.get("Output", "filename")
-    # Set samples to one
-    with fileinput.FileInput("./config_files/" + config_name, inplace=True) as file:
-        for line in file:
-            print(line.replace(f"samples = {samples}", "samples = 1"), end='')
 
     for i in range(samples):
-        if i == 0:
-            old_filename = filename
-        else:
-            old_filename = f"{config_name[:-4]}/{filename}_{i-1}"
-        with fileinput.FileInput("./config_files/" + config_name, inplace=True) as file:
-            for line in file:
-                print(line.replace(f"filename = {old_filename}",
-                                   f"filename = {config_name[:-4]}/{filename}_{i}"), end='')
+        new_config_name = f"./Plots/{config_name[:-4]}/{config_name[:-4]}_{i}.ini"
+        new_filename = f"{config_name[:-4]}/{filename}_{i}"
+        shutil.copyfile("./config_files/" + config_name, new_config_name)
+        # Set samples to one
+        replace_text(new_config_name, f"samples = {samples}", "samples = 1")
+        # Set filename in config
+        replace_text(new_config_name, f"filename = {filename}", f"filename = {new_filename}")
         # sbatch --export=ALL,input=*your_input_file1*.inp -J *name_of_job1* start_job.sh
         os.system(
-            f"sbatch --export=ALL,input=config_files/{config_name}, -J {filename}_{i} start_job.sh")
-
-    # Restore original config
-    with fileinput.FileInput("./config_files/" + config_name, inplace=True) as file:
-        for line in file:
-            print(line.replace(f"samples = 1", f"samples = {samples}"), end='')
-    with fileinput.FileInput("./config_files/" + config_name, inplace=True) as file:
-        for line in file:
-            print(line.replace(f"filename = {config_name[:-4]}/{filename}_{samples-1}",
-                               f"filename = {filename}"), end='')
+            f"sbatch --export=ALL,input={new_config_name}, -J {new_filename}_{i} start_job.sh")
+        # os.system(f"python3 main.py {new_config_name}")
     shutil.copyfile("./config_files/" + config_name, "./Plots/" +
                     config_name[:-4] + "/" + config_name)
 
