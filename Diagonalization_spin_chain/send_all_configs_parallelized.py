@@ -39,8 +39,7 @@ def send_single_config(config_name):
         os.system(
             f"sbatch --export=ALL,input={new_config_name}, -J {new_filename}_{i} start_job.sh")
         # os.system(f"python3 main.py {new_config_name}")
-    shutil.copyfile("./config_files/" + config_name, "./Plots/" +
-                    config_name[:-4] + "/" + config_name)
+    shutil.copyfile(f"./config_files/{config_name}", f"./Plots/{config_name[:-4]}/{config_name}")
 
 
 def pool_data_files(config_name):
