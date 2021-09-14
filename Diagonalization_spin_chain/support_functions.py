@@ -181,7 +181,8 @@ def prepend_line(file_name, line):
     os.rename(dummy_file, file_name)
 
 
-def save_data(filename, data, config_file, time_passed, save_plot=True, anim=False, fps=10):
+def save_data(filename, data, config_file, time_passed, save_plot=True, parallelized=False,
+              anim=False, fps=10):
     """
     Saves the data to a given plot with a given filename. There is one file for the plot, the data
     of the plot and the parameters used.
@@ -208,12 +209,12 @@ def save_data(filename, data, config_file, time_passed, save_plot=True, anim=Fal
             anim.save(save_path, writer=writervideo)
     else:
         close()
-
     np.savez(save_path, *data)
-    copy(config_file, "./Plots/")
-    t = int(time_passed)
-    prepend_line("./Plots/" + config_file.split('/')[-1],
-                 f"# Run time {t//3600}h:{(t%3600)//60}m:{t%60}s\n")
+    if not parallelized:
+        copy(config_file, "./Plots/")
+        t = int(time_passed)
+        prepend_line("./Plots/" + config_file.split('/')[-1],
+                     f"# Run time {t//3600}h:{(t%3600)//60}m:{t%60}s\n")
 
 
 def convert_list(string):

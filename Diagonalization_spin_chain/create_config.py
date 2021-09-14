@@ -46,7 +46,9 @@ def create_config():
         # Determines if the output should be displayed or not
         "show": "True",
         # Whether or not the plot should be saved
-        "save_plot": "True"
+        "save_plot": "True",
+        # If True, the the configs won't be copied twice in save_data in support_functions
+        "parallelized": "False"
     }
 
     config_object["Other"] = {
