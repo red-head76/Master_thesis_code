@@ -41,9 +41,9 @@ def send_single_config(config_name):
         # Set boolean parallelized to True (if it isn't the case yet)
         replace_text(new_config_name, "parallelized = False", "parallelized = True")
         # sbatch --export=ALL,input=*your_input_file1*.inp -J *name_of_job1* start_job.sh
-        # os.system(
-        #     f"sbatch --export=ALL,input={new_config_name}, -J {new_filename}_{i} start_job.sh")
-        os.system(f"python3 main.py {new_config_name}")
+        os.system(
+            f"sbatch --export=ALL,input={new_config_name}, -J {new_filename}_{i} start_job.sh")
+        # os.system(f"python3 main.py {new_config_name}")
     # Create a file that flags the need of pooling the data into one set
     with open(f"./Plots/{config_name[:-4]}/ToPool", 'w') as flagfile:
         flagfile.write("Data pooling isn't done yet.")
