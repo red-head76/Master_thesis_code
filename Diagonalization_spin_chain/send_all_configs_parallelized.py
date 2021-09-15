@@ -21,6 +21,9 @@ def send_single_config(config_name):
     """
     if not os.path.isdir("./Plots/" + config_name[:-4]):
         os.mkdir("./Plots/" + config_name[:-4])
+    # Copy original config
+    shutil.copyfile(f"./config_files/{config_name}",
+                    f"./Plots/{config_name[:-4]}/{config_name[:-4]}_config.ini")
     # Read config_file with a config_object
     config_object = ConfigParser()
     config_object.read("config_files/" + config_name)
@@ -33,39 +36,17 @@ def send_single_config(config_name):
         shutil.copyfile("./config_files/" + config_name, new_config_name)
         # Set samples to one
         replace_text(new_config_name, f"samples = {samples}", "samples = 1")
-        # Set filename in config
+        # Set new filename
         replace_text(new_config_name, f"filename = {filename}", f"filename = {new_filename}")
+        # Set boolean parallelized to True (if it isn't the case yet)
+        replace_text(new_config_name, "parallelized = False", "parallelized = True")
         # sbatch --export=ALL,input=*your_input_file1*.inp -J *name_of_job1* start_job.sh
-        os.system(
-            f"sbatch --export=ALL,input={new_config_name}, -J {new_filename}_{i} start_job.sh")
-        # os.system(f"python3 main.py {new_config_name}")
-    shutil.copyfile(f"./config_files/{config_name}", f"./Plots/{config_name[:-4]}/{config_name}")
-
-
-def pool_data_files(config_name):
-    path = "./Plots/" + config_name[:-4] + "/"
-    config_object = ConfigParser()
-    config_object.read("config_files/" + config_name)
-    outputtype = config_object.get("Output", "outputtype")
-    samples = config_object.getint("Output", "samples")
-    filename = config_object.get("Output", "filename")
-    if outputtype == "calc_eigvals_eigvecs":
-        # data : eigenvalues [dim], eigenvectors [dim, dim]
-        pooled_eigenvalues = []
-        pooled_eigenvectors = []
-        for entry in os.scandir(path):
-            if entry.name[-4:] == ".npz":
-                data = np.load(path + entry.name)
-                pooled_eigenvalues.append(data["arr_0"])
-                pooled_eigenvectors.append(data["arr_1"])
-        pooled_data = {}
-        np.savez(path + filename + "_pooled.npz", eigenvalues=np.array(pooled_eigenvalues),
-                 eigenvectors=np.array(pooled_eigenvectors))
-        # for entry in os.scandir(path):
-        #     if entry.name[-4:] == ".npz" and entry.name[-10:] != "pooled.npz":
-        #         os.remove(path + entry.name)
-    else:
-        raise Warning(f"Pooling of {outputtype} isn't implemented yet.")
+        # os.system(
+        #     f"sbatch --export=ALL,input={new_config_name}, -J {new_filename}_{i} start_job.sh")
+        os.system(f"python3 main.py {new_config_name}")
+    # Create a file that flags the need of pooling the data into one set
+    with open(f"./Plots/{config_name[:-4]}/ToPool", 'w') as flagfile:
+        flagfile.write("Data pooling isn't done yet.")
 
 
 if len(sys.argv) == 1:
