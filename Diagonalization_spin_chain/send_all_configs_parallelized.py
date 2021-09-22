@@ -18,43 +18,47 @@ def replace_text(filename, text, replacement):
             print(line.replace(text, replacement), end='')
 
 
-def send_single_config(config_name, scan_ids):
+# Make "scan_ids" optional because i don't want to rewrite all the configs
+def send_single_config(config_name, scan_ids=False):
     """
     This function creates a directory named config_name in "./Plots/" and places all
     sub-calculations for each sample in it while parallelizing the job by dividing the full job
     for all samples for one job for each sample.
     """
-    if not os.path.isdir("./Plots/" + config_name[:-4]):
-        os.mkdir("./Plots/" + config_name[:-4])
-    # Copy original config
-    shutil.copyfile(f"./config_files/{config_name}",
-                    f"./Plots/{config_name[:-4]}/{config_name[:-4]}_config.ini")
     # Read config_file with a config_object
     config_object = ConfigParser(converters={"list": convert_list})
     config_object.read("config_files/" + config_name)
     samples = config_object.getint("Output", "samples")
-    filename = config_object.get("Output", "filename")
+    # path + filename
+    filename = config_object.get("Output", "filename").rstrip('/')
+    real_filename = filename.split('/')[-1]
+    path = filename[:-len(real_filename)]
+    if not os.path.isdir(path):
+        os.mkdir(path)
+    else:
+        raise Warning(f"{path} is already a directory!")
     if scan_ids:
         iterating_list = config_object.getlist("Other", "ids")
     else:
         iterating_list = range(samples)
-
+    # Copy original config
+    shutil.copyfile(f"./config_files/{config_name}",
+                    f"{path}/{config_name[:-4]}_config.ini")
     for i in iterating_list:
-        new_config_name = f"./Plots/{config_name[:-4]}/{config_name[:-4]}_{i}.ini"
-        new_filename = f"{config_name[:-4]}/{filename}_{i}"
+        new_config_name = f"{path}/{config_name[:-4]}_{i}.ini"
         shutil.copyfile("./config_files/" + config_name, new_config_name)
         # Set samples to one
         replace_text(new_config_name, f"samples = {samples}", "samples = 1")
         # Set new filename
-        replace_text(new_config_name, f"filename = {filename}", f"filename = {new_filename}")
+        replace_text(new_config_name, f"filename = {filename}", f"filename = {filename}_{i}")
         # Set boolean parallelized to True (if it isn't the case yet)
         replace_text(new_config_name, "parallelized = False", "parallelized = True")
         # sbatch --export=ALL,input=*your_input_file1*.inp -J *name_of_job1* start_job.sh
-        os.system(
-            f"sbatch --export=ALL,input={new_config_name}, -J {new_filename}_{i} start_job.sh")
-        # os.system(f"python3 main.py {new_config_name}")
+        # os.system(
+        #     f"sbatch --export=ALL,input={new_config_name}, -J {filename}_{i} start_job.sh")
+        os.system(f"python3 main.py {new_config_name}")
     # Create a file that flags the need of pooling the data into one set
-    with open(f"./Plots/{config_name[:-4]}/ToPool", 'w') as flagfile:
+    with open(f"{path}/ToPool", 'w') as flagfile:
         flagfile.write("Data pooling isn't done yet.")
 
 
@@ -71,6 +75,6 @@ if len(sys.argv) == 1:
 
 else:
     for config_name in sys.argv[1:]:
-        send_single_config(config_name, scan_ids=True)
+        send_single_config(config_name)
         # os.system(
         #     f"sbatch --export=ALL,input=config_files/{config_name}, -J {config_name} start_job.sh")
