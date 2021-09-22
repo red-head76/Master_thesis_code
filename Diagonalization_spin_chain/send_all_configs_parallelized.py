@@ -33,13 +33,13 @@ def send_single_config(config_name, scan_ids=False):
     filename = config_object.get("Output", "filename").rstrip('/')
     real_filename = filename.split('/')[-1]
     path = filename[:-len(real_filename)]
-    if not os.path.isdir(path):
-        os.mkdir(path)
-    else:
-        raise Warning(f"{path} is already a directory!")
     if scan_ids:
         iterating_list = config_object.getlist("Other", "ids")
     else:
+        if not os.path.isdir(path):
+            os.mkdir(path)
+        else:
+            raise Warning(f"{path} is already a directory!")
         iterating_list = range(samples)
     # Copy original config
     shutil.copyfile(f"./config_files/{config_name}",
@@ -54,8 +54,8 @@ def send_single_config(config_name, scan_ids=False):
         # Set boolean parallelized to True (if it isn't the case yet)
         replace_text(new_config_name, "parallelized = False", "parallelized = True")
         # sbatch --export=ALL,input=*your_input_file1*.inp -J *name_of_job1* start_job.sh
-        # os.system(
-        #     f"sbatch --export=ALL,input={new_config_name}, -J {filename}_{i} start_job.sh")
+        os.system(
+            f"sbatch --export=ALL,input={new_config_name}, -J {filename}_{i} start_job.sh")
         os.system(f"python3 main.py {new_config_name}")
     # Create a file that flags the need of pooling the data into one set
     with open(f"{path}/ToPool", 'w') as flagfile:
