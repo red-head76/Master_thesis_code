@@ -19,7 +19,7 @@ def replace_text(filename, text, replacement):
 
 
 # Make "scan_ids" optional because i don't want to rewrite all the configs
-def send_single_config(config_name, scan_ids=False):
+def send_single_config(config_name):
     """
     This function creates a directory named config_name in "./Plots/" and places all
     sub-calculations for each sample in it while parallelizing the job by dividing the full job
@@ -33,18 +33,12 @@ def send_single_config(config_name, scan_ids=False):
     filename = config_object.get("Output", "filename").rstrip('/')
     real_filename = filename.split('/')[-1]
     path = filename[:-len(real_filename)]
-    if scan_ids:
-        iterating_list = config_object.getlist("Other", "ids")
-    else:
-        if not os.path.isdir(path):
-            os.mkdir(path)
-        else:
-            raise Warning(f"{path} is already a directory!")
-        iterating_list = range(samples)
+    if not os.path.isdir(path):
+        os.mkdir(path)
     # Copy original config
     shutil.copyfile(f"./config_files/{config_name}",
                     f"{path}/{config_name[:-4]}_config.ini")
-    for i in iterating_list:
+    for i in range(samples):
         new_config_name = f"{path}/{config_name[:-4]}_{i}.ini"
         shutil.copyfile("./config_files/" + config_name, new_config_name)
         # Set samples to one
@@ -53,10 +47,13 @@ def send_single_config(config_name, scan_ids=False):
         replace_text(new_config_name, f"filename = {filename}", f"filename = {filename}_{i}")
         # Set boolean parallelized to True (if it isn't the case yet)
         replace_text(new_config_name, "parallelized = False", "parallelized = True")
-        # sbatch --export=ALL,input=*your_input_file1*.inp -J *name_of_job1* start_job.sh
-        os.system(
-            f"sbatch --export=ALL,input={new_config_name}, -J {filename}_{i} start_job.sh")
-        os.system(f"python3 main.py {new_config_name}")
+        if not os.path.isfile(f"{filename}_{i}.npz"):
+            # sbatch --export=ALL,input=*your_input_file1*.inp -J *name_of_job1* start_job.sh
+            # os.system(
+            #     f"sbatch --export=ALL,input={new_config_name}, -J {filename}_{i} start_job.sh")
+            os.system(f"python3 main.py {new_config_name}")
+        else:
+            print(f"{filename}_{i}.npz does already exist")
     # Create a file that flags the need of pooling the data into one set
     with open(f"{path}/ToPool", 'w') as flagfile:
         flagfile.write("Data pooling isn't done yet.")
