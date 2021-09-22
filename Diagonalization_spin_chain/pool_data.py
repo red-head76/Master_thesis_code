@@ -1,7 +1,13 @@
+import sys
 import numpy as np
 import os
 from configparser import ConfigParser
 from support_functions import prepend_line
+
+if len(sys.argv) > 1:
+    path_to_look = sys.argv[1]
+else:
+    path_to_look = "./Plots/"
 
 
 def pool_data_files(root):
@@ -39,7 +45,7 @@ def pool_data_files(root):
             f"Error for {config_name}: Pooling of {outputtype} isn't implemented yet.")
 
 
-for root, dirs, files in os.walk("./Plots/"):
+for root, dirs, files in os.walk(path_to_look):
     if "ToPool" in files:
         pool_data_files(root + "/")
         os.remove(root + "/ToPool")
