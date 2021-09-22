@@ -49,9 +49,9 @@ def send_single_config(config_name):
         replace_text(new_config_name, "parallelized = False", "parallelized = True")
         if not os.path.isfile(f"{filename}_{i}.npz"):
             # sbatch --export=ALL,input=*your_input_file1*.inp -J *name_of_job1* start_job.sh
-            # os.system(
-            #     f"sbatch --export=ALL,input={new_config_name}, -J {filename}_{i} start_job.sh")
-            os.system(f"python3 main.py {new_config_name}")
+            os.system(
+                f"sbatch --export=ALL,input={new_config_name}, -J {filename}_{i} start_job.sh")
+            # os.system(f"python3 main.py {new_config_name}")
         else:
             print(f"{filename}_{i}.npz does already exist")
     # Create a file that flags the need of pooling the data into one set
