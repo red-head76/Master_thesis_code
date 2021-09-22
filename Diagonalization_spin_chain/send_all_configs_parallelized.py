@@ -7,13 +7,18 @@ import fileinput
 import pdb
 
 
+def convert_list(string):
+    # Converts a string to a list of floats
+    return ([i.strip() for i in string.split(',')])
+
+
 def replace_text(filename, text, replacement):
     with fileinput.FileInput(filename, inplace=True) as file:
         for line in file:
             print(line.replace(text, replacement), end='')
 
 
-def send_single_config(config_name):
+def send_single_config(config_name, scan_ids):
     """
     This function creates a directory named config_name in "./Plots/" and places all
     sub-calculations for each sample in it while parallelizing the job by dividing the full job
@@ -25,12 +30,16 @@ def send_single_config(config_name):
     shutil.copyfile(f"./config_files/{config_name}",
                     f"./Plots/{config_name[:-4]}/{config_name[:-4]}_config.ini")
     # Read config_file with a config_object
-    config_object = ConfigParser()
+    config_object = ConfigParser(converters={"list": convert_list})
     config_object.read("config_files/" + config_name)
     samples = config_object.getint("Output", "samples")
     filename = config_object.get("Output", "filename")
+    if scan_ids:
+        iterating_list = config_object.getlist("Other", "ids")
+    else:
+        iterating_list = range(samples)
 
-    for i in range(samples):
+    for i in iterating_list:
         new_config_name = f"./Plots/{config_name[:-4]}/{config_name[:-4]}_{i}.ini"
         new_filename = f"{config_name[:-4]}/{filename}_{i}"
         shutil.copyfile("./config_files/" + config_name, new_config_name)
@@ -62,6 +71,6 @@ if len(sys.argv) == 1:
 
 else:
     for config_name in sys.argv[1:]:
-        send_single_config(config_name)
+        send_single_config(config_name, scan_ids=True)
         # os.system(
         #     f"sbatch --export=ALL,input=config_files/{config_name}, -J {config_name} start_job.sh")
