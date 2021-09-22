@@ -181,7 +181,7 @@ def prepend_line(file_name, line):
     os.rename(dummy_file, file_name)
 
 
-def save_data(filename, data, config_file, time_passed, save_plot=True, parallelized=False,
+def save_data(save_path, data, config_file, time_passed, save_plot=True, parallelized=False,
               anim=False, fps=10):
     """
     Saves the data to a given plot with a given filename. There is one file for the plot, the data
@@ -197,10 +197,10 @@ def save_data(filename, data, config_file, time_passed, save_plot=True, parallel
         fps (int, default=10): set the frames per second of an animation
 
     """
-
-    if not os.path.isdir("./Plots"):
-        os.mkdir("./Plots")
-    save_path = "./Plots/" + filename
+    filename = save_path.split('/')[-1]
+    dir_path = save_path[:-len(filename)]
+    if not os.path.isdir(dir_path):
+        os.mkdir(dir_path)
     if save_plot:
         if anim == False:
             savefig(save_path)
