@@ -54,9 +54,6 @@ def send_single_config(config_name):
             # os.system(f"python3 main.py {new_config_name}")
         else:
             print(f"{filename}_{i}.npz does already exist")
-    # Create a file that flags the need of pooling the data into one set
-    with open(f"{path}/ToPool", 'w') as flagfile:
-        flagfile.write("Data pooling isn't done yet.")
 
 
 if len(sys.argv) == 1:
