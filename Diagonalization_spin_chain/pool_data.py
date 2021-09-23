@@ -37,16 +37,16 @@ def pool_data_files(root):
             dim = data0["arr_0"].size
             pooled_eigenvalues = np.empty((samples, dim))
             pooled_eigenvectors = np.empty((samples, dim, dim))
-            do_pooling = True
             for i in range(samples):
                 data = np.load(root + real_filename + f"_{i}.npz")
                 pooled_eigenvalues[i] = data["arr_0"]
                 pooled_eigenvectors[i] = data["arr_1"]
-                os.remove(root + real_filename + f"_{i}.npz")
-                os.remove(root + config_name + f"_{i}.ini")
             np.savez(root + real_filename + ".npz", eigenvalues=np.array(pooled_eigenvalues),
                      eigenvectors=np.array(pooled_eigenvectors))
             os.rename(root + config_name + "_config.ini", root + config_name + ".ini")
+            for i in range(samples):
+                os.remove(root + real_filename + f"_{i}.npz")
+                os.remove(root + config_name + f"_{i}.ini")
         else:
             raise NotImplementedError(
                 f"Error for {config_name}: Pooling of {outputtype} isn't implemented yet.")
