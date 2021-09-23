@@ -54,12 +54,8 @@ def pool_data_files(root):
         print("Not all npz files are generated yet")
 
 
-pooled_roots = []
 for root, dirs, files in os.walk(path_to_look):
     if "ToPool" in files:
-        pooled_roots.append(root)
         pool_data_files(root + "/")
         os.remove(root + "/ToPool")
 
-with open("pooled_roots.txt", 'w') as f:
-    f.writelines(pooled_roots)
