@@ -55,7 +55,7 @@ for data_config_file in data_configs:
     data_config_object.read(data_config_file)
 
     # System
-    chain_length = data_config_object.getfloat("System", "chain_length")
+    chain_length = data_config_object.getint("System", "chain_length")
     central_spin = data_config_object.getboolean("System", "central_spin")
     total_spins = int(chain_length + central_spin)
     dim = int(2**total_spins)
