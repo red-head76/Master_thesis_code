@@ -2,7 +2,7 @@ from shutil import copy
 import sys
 import os
 import numpy as np
-import support_functions as sf
+from support_functions import unpackbits
 from time_evo import time_evo_subspace
 from configparser import ConfigParser
 
@@ -90,11 +90,11 @@ for data_config_file in data_configs:
             eigenvalues, eigenvectors = read_eigvals_evecs(filename, idx)
             psi_t = time_evo_subspace(times, eigenvalues, eigenvectors, total_spins)
             # This mask filters out the states of the biggest subspace
-            subspace_mask = np.where(np.logical_not(np.sum(sf.unpackbits(
+            subspace_mask = np.where(np.logical_not(np.sum(unpackbits(
                 np.arange(dim), total_spins), axis=1) - total_spins//2))[0]
             psi_z = np.arange(0, int(2**(total_spins)))[subspace_mask]
             # discard last spin
-            sigma_z = (sf.unpackbits(psi_z, total_spins) - 1/2)[:, :-1]
+            sigma_z = (unpackbits(psi_z, total_spins) - 1/2)[:, :-1]
             # discard central spin in exp_sig_z
             exp_sig_z = (np.abs(psi_t)**2 @ sigma_z)
             # occupation imbalance mask: even minus odd sites (normed by chain length)
