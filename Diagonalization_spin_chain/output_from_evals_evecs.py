@@ -94,7 +94,7 @@ for data_config_file in data_configs:
                 np.arange(dim), total_spins), axis=1) - total_spins//2))[0]
             psi_z = np.arange(0, int(2**(total_spins)))[subspace_mask]
             # discard central_spin
-            sigma_z = (unpackbits(psi_z, total_spins) - 1/2)[:, :central_spin]
+            sigma_z = (unpackbits(psi_z, total_spins) - 1/2)[:, :chain_length]
             # discard central spin in exp_sig_z
             exp_sig_z = (np.abs(psi_t)**2 @ sigma_z)
             # occupation imbalance mask: even minus odd sites (normed by chain length)
