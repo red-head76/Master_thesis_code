@@ -42,7 +42,7 @@ Other = ofee_config_object["Other"]
 idx_psi_0 = int(Other["idx_psi_0"])
 timestart = float(Other["timestart"])
 timeend = float(Other["timeend"])
-timesteps = float(Other["timesteps"])
+timesteps = int(Other["timesteps"])
 
 data_configs = []
 for path in data_paths:
