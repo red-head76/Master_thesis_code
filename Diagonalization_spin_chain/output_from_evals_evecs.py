@@ -1,10 +1,10 @@
 from shutil import copy
 import sys
 import os
+from configparser import ConfigParser
 import numpy as np
 from support_functions import unpackbits
 from time_evo import time_evo_subspace
-from configparser import ConfigParser
 
 
 def convert_list(string):
@@ -40,8 +40,9 @@ save_plot = ofee_config_object.getboolean("Output", "save_plot")
 # Other setup
 Other = ofee_config_object["Other"]
 idx_psi_0 = int(Other["idx_psi_0"])
-timeend = int(Other["timeend"])
-timesteps = int(Other["timesteps"])
+timestart = float(Other["timestart"])
+timeend = float(Other["timeend"])
+timesteps = float(Other["timesteps"])
 
 data_configs = []
 for path in data_paths:
@@ -77,8 +78,7 @@ for data_config_file in data_configs:
 
     if outputtype in ["plot_half_chain_entropy", "plot_occupation_imbalance",
                       "plot_exp_sig_z_central_spin", "plot_correlation", "calc_psi_t"]:
-        times = np.logspace(np.log10(float(Other["timestart"])), np.log10(float(Other["timeend"])),
-                            int(Other["timesteps"]) + 1)
+        times = np.logspace(np.log10(timestart), np.log10(timeend), timesteps + 1)
 
     def read_eigvals_evecs(filename, idx):
         data = np.load(filename + f"_{idx}.npz")
@@ -106,7 +106,7 @@ for data_config_file in data_configs:
             os.mkdir(save_path)
         copy(data_config_file, save_path + '/' + filename.rstrip('/').split('/')[-1] + ".ini")
         np.savez(save_path + '/' + filename.rstrip('/').split('/')[-1] + ".npz",
-                 occ_imbalance_mean, occ_imbalance_std)
+                 times, occ_imbalance_mean, occ_imbalance_std)
 
     else:
         raise NotImplementedError()
