@@ -61,7 +61,7 @@ def time_evo_sigma_z(t, psi_0, chain_length, J, B0, A, spin_constant,
 
 
 def time_evo_subspace(times, eigenvalues, eigenvectors, total_spins, initial_state="neel",
-                      float_precision=32):
+                      float_precision=64):
     """
     Computes the time evolution of an inital state
 
