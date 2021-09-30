@@ -557,7 +557,6 @@ def calc_exp_sig_z_central_spin(times, chain_length, J, B0, A, periodic_boundari
     # only the last spin
     sigma_z = (sf.unpackbits(psi_z, total_spins) - 1/2)[:, -1]
     exp_sig_z = (np.abs(psi_t)**2 @ sigma_z)
-    # and norm it to 1
     return exp_sig_z
 
 

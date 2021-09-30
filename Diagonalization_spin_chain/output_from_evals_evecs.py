@@ -3,7 +3,7 @@ import sys
 import os
 from configparser import ConfigParser
 import numpy as np
-from support_functions import unpackbits
+import support_functions as sf
 from time_evo import time_evo_subspace
 
 
@@ -69,7 +69,7 @@ for data_config_file in data_configs:
 
     # Output option
     Output = data_config_object["Output"]
-    filename = Output["filename"]
+    filename = Output["filename"].rstrip('/')
     samples = data_config_object.getint("Output", "samples")
 
     # Other setup
@@ -84,17 +84,21 @@ for data_config_file in data_configs:
         data = np.load(filename + f"_{idx}.npz")
         return data["arr_0"], data["arr_1"]
 
+    if not os.path.isdir(save_path):
+        os.mkdir(save_path)
+    copy(data_config_file, save_path + '/' + filename.rstrip('/').split('/')[-1] + ".ini")
+
     if outputtype == "plot_occupation_imbalance":
         occ_imbalance = np.empty((samples, times.size))
         for idx in range(samples):
             eigenvalues, eigenvectors = read_eigvals_evecs(filename, idx)
             psi_t = time_evo_subspace(times, eigenvalues, eigenvectors, total_spins)
             # This mask filters out the states of the biggest subspace
-            subspace_mask = np.where(np.logical_not(np.sum(unpackbits(
+            subspace_mask = np.where(np.logical_not(np.sum(sf.unpackbits(
                 np.arange(dim), total_spins), axis=1) - total_spins//2))[0]
             psi_z = np.arange(0, int(2**(total_spins)))[subspace_mask]
             # discard central_spin
-            sigma_z = (unpackbits(psi_z, total_spins) - 1/2)[:, :chain_length]
+            sigma_z = (sf.unpackbits(psi_z, total_spins) - 1/2)[:, :chain_length]
             # discard central spin in exp_sig_z
             exp_sig_z = (np.abs(psi_t)**2 @ sigma_z)
             # occupation imbalance mask: even minus odd sites (normed by chain length)
@@ -102,11 +106,23 @@ for data_config_file in data_configs:
                                            -exp_sig_z).sum(axis=1) / (chain_length / 2))
         occ_imbalance_mean = occ_imbalance.mean(axis=0)
         occ_imbalance_std = occ_imbalance.std(axis=0)
-        if not os.path.isdir(save_path):
-            os.mkdir(save_path)
-        copy(data_config_file, save_path + '/' + filename.rstrip('/').split('/')[-1] + ".ini")
         np.savez(save_path + '/' + filename.rstrip('/').split('/')[-1] + ".npz",
                  times, occ_imbalance_mean, occ_imbalance_std)
 
+    if outputtype == "plot_exp_sig_z_central_spin":
+        exp_sig_z = np.empty((samples, times.size))
+        for idx in range(samples):
+            eigenvalues, eigenvectors = read_eigvals_evecs(filename, idx)
+            psi_t = time_evo_subspace(times, eigenvalues, eigenvectors, total_spins)
+            subspace_mask = np.where(np.logical_not(np.sum(sf.unpackbits(
+                np.arange(dim), total_spins), axis=1) - total_spins//2))[0]
+            psi_z = np.arange(0, int(2**(total_spins)))[subspace_mask]
+            # only the last spin
+            sigma_z = (sf.unpackbits(psi_z, total_spins) - 1/2)[:, -1]
+            exp_sig_z[idx] = (np.abs(psi_t)**2 @ sigma_z)
+        exp_sig_z_mean = exp_sig_z.mean(axis=0)
+        exp_sig_z_std = exp_sig_z.std(axis=0)
+        np.savez(save_path + '/' + filename.rstrip('/').split('/')[-1] + ".npz",
+                 times, exp_sig_z_mean, exp_sig_z_std)
     else:
         raise NotImplementedError()
