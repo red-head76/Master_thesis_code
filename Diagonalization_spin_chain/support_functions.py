@@ -100,8 +100,12 @@ def partial_trace_subspace(rho_sub, subspace_mask, spins_a, calc_rho_a=True):
         max_spins = 1
     else:
         max_spins = np.int(np.floor(np.log2(np.max(subspace_mask))) + 1)
+    if calc_rho_a:
+        spins_subspace = spins_a
+    else:
+        spins_subspace = int(max_spins - spins_a)
     # Split the entries of the mask into entries of the subspaces a and b (unpacked)
-    splitted_idx = np.split(unpackbits(subspace_mask, max_spins), [spins_a], axis=1)
+    splitted_idx = np.split(unpackbits(subspace_mask, max_spins), [spins_subspace], axis=1)
     # pack bits back in the individual subspaces a and b
     # 0 and 1 are reversed here because of implementation of packed_bits
     packed_idx = np.array((packbits(splitted_idx[1]), packbits(splitted_idx[0])))
@@ -113,11 +117,11 @@ def partial_trace_subspace(rho_sub, subspace_mask, spins_a, calc_rho_a=True):
     if calc_rho_a:
         # then the second index should be equal (diagonal in b)
         # the entry at pos_idx shows the position of the entry in the partial trace
-        equal_idx = 1
-        pos_idx = 0
-    else:
         equal_idx = 0
         pos_idx = 1
+    else:
+        equal_idx = 1
+        pos_idx = 0
     # indices of the entries that contribute to the partial trace
     trace_mask = np.where(rho_idx_sub[0, equal_idx] == rho_idx_sub[1, equal_idx])
     # indices where the entries should go in the partial trace
@@ -125,9 +129,10 @@ def partial_trace_subspace(rho_sub, subspace_mask, spins_a, calc_rho_a=True):
     # partial trace (finally)
     # in case there is a time array
     if len(rho_sub.shape) == 3:
-        rho_a = np.zeros((rho_sub.shape[0], np.int(2**spins_a), np.int(2**spins_a)), dtype=complex)
+        rho_a = np.zeros((rho_sub.shape[0], np.int(2**spins_subspace),
+                          np.int(2**spins_subspace)), dtype=complex)
     else:
-        rho_a = np.zeros((np.int(spins_a)**2, np.int(spins_a**2)), dtype=complex)
+        rho_a = np.zeros((np.int(spins_subspace)**2, np.int(spins_subspace**2)), dtype=complex)
     for idx in range(new_pos.shape[1]):
         rho_a[..., new_pos[0, idx], new_pos[1, idx]] +=\
             rho_sub[..., trace_mask[0][idx], trace_mask[1][idx]]

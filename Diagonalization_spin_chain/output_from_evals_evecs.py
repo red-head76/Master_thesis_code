@@ -135,6 +135,8 @@ for data_config_file in data_configs:
             # Outer product along axis 1
             rho_t = psi_t[:, :, np.newaxis] * psi_t.conj()[:, np.newaxis, :]
             # Partial trace
+            subspace_mask = np.where(np.logical_not(np.sum(sf.unpackbits(
+                np.arange(dim), total_spins), axis=1) - total_spins//2))[0]
             rho_a_t = sf.partial_trace_subspace(rho_t, subspace_mask, total_spins//2, True)
             # hce = -tr(rho_a ln(rho_a))
             #    = -tr(rho ln(rho)) = tr(D ln(D)), where D is the diagonalized matrix
