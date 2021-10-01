@@ -128,7 +128,7 @@ for data_config_file in data_configs:
                  times, exp_sig_z_mean, exp_sig_z_std)
 
     elif outputtype == "plot_half_chain_entropy":
-        hce = np.emtpy((samples, times.size))
+        hce = np.empty((samples, times.size))
         for idx in range(samples):
             eigenvalues, eigenvectors = read_eigvals_evecs(filename, idx)
             psi_t = time_evo_subspace(times, eigenvalues, eigenvectors, total_spins)
