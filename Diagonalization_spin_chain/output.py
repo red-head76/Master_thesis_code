@@ -370,7 +370,7 @@ def calc_half_chain_entropy(times, chain_length, J, B0, A, periodic_boundaries, 
     # # partial_trace over b -> rho_a(t)
     # rho_a_t = sf.partial_trace(rho_t_fullspace, total_spins//2)
     # Smarter way to to it:
-    rho_a_t = sf.partial_trace_subspace(rho_t, subspace_mask, total_spins//2, False)
+    rho_a_t = sf.partial_trace_subspace(rho_t, subspace_mask, total_spins//2)
     # hce = -tr(rho_a ln(rho_a))
     #    = -tr(rho ln(rho)) = tr(D ln(D)), where D is the diagonalized matrix
     eigvals = np.linalg.eigvalsh(rho_a_t)

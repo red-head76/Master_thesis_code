@@ -124,5 +124,26 @@ for data_config_file in data_configs:
         exp_sig_z_std = exp_sig_z.std(axis=0)
         np.savez(save_path + '/' + filename.rstrip('/').split('/')[-1] + ".npz",
                  times, exp_sig_z_mean, exp_sig_z_std)
+
+    if outputtype == "plot_half_chain_entropy":
+        hce = np.emtpy((samples, times.size))
+        for idx in range(samples):
+            eigenvalues, eigenvectors = read_eigvals_evecs(filename, idx)
+            psi_t = time_evo_subspace(times, eigenvalues, eigenvectors, total_spins)
+            # Outer product along axis 1
+            rho_t = psi_t[:, :, np.newaxis] * psi_t.conj()[:, np.newaxis, :]
+            # Partial trace
+            rho_a_t = sf.partial_trace_subspace(rho_t, subspace_mask, total_spins//2, True)
+            # hce = -tr(rho_a ln(rho_a))
+            #    = -tr(rho ln(rho)) = tr(D ln(D)), where D is the diagonalized matrix
+            eigvals = np.linalg.eigvalsh(rho_a_t)
+            # ugly, but cuts out the the Runtime warning caused by of 0 values in log
+            hce[idx] = -np.sum(eigvals * np.log(eigvals, where=eigvals > 0,
+                                                out=np.zeros(eigvals.shape)), axis=1)
+        hce_mean = hce.mean(axis=0)
+        hce_std = hce.std(axis=0)
+        np.savez(save_path + '/' + filename.rstrip('/').split('/')[-1] + ".npz",
+                 times, hce_mean, hce_std)
+
     else:
         raise NotImplementedError()
