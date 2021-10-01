@@ -44,6 +44,10 @@ timestart = float(Other["timestart"])
 timeend = float(Other["timeend"])
 timesteps = int(Other["timesteps"])
 
+if not os.path.isdir(save_path):
+    os.mkdir(save_path)
+copy(ofee_config_file, save_path + '/' + ofee_config_file.rstrip('/').split('/')[-1])
+
 data_configs = []
 for path in data_paths:
     for entry in os.scandir(path):
@@ -84,8 +88,6 @@ for data_config_file in data_configs:
         data = np.load(filename + f"_{idx}.npz")
         return data["arr_0"], data["arr_1"]
 
-    if not os.path.isdir(save_path):
-        os.mkdir(save_path)
     copy(data_config_file, save_path + '/' + filename.rstrip('/').split('/')[-1] + ".ini")
 
     if outputtype == "plot_occupation_imbalance":
@@ -109,7 +111,7 @@ for data_config_file in data_configs:
         np.savez(save_path + '/' + filename.rstrip('/').split('/')[-1] + ".npz",
                  times, occ_imbalance_mean, occ_imbalance_std)
 
-    if outputtype == "plot_exp_sig_z_central_spin":
+    elif outputtype == "plot_exp_sig_z_central_spin":
         exp_sig_z = np.empty((samples, times.size))
         for idx in range(samples):
             eigenvalues, eigenvectors = read_eigvals_evecs(filename, idx)
@@ -125,7 +127,7 @@ for data_config_file in data_configs:
         np.savez(save_path + '/' + filename.rstrip('/').split('/')[-1] + ".npz",
                  times, exp_sig_z_mean, exp_sig_z_std)
 
-    if outputtype == "plot_half_chain_entropy":
+    elif outputtype == "plot_half_chain_entropy":
         hce = np.emtpy((samples, times.size))
         for idx in range(samples):
             eigenvalues, eigenvectors = read_eigvals_evecs(filename, idx)
