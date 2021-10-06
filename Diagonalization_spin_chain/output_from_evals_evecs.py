@@ -132,15 +132,20 @@ for data_config_file in data_configs:
         for idx in range(samples):
             eigenvalues, eigenvectors = read_eigvals_evecs(filename, idx)
             psi_t = time_evo_subspace(times, eigenvalues, eigenvectors, total_spins)
-            # Outer product along axis 1
-            rho_t = psi_t[:, :, np.newaxis] * psi_t.conj()[:, np.newaxis, :]
-            # Partial trace
+            # This take too much storage
+            # # Outer product along axis 1
+            # rho_t = psi_t[:, :, np.newaxis] * psi_t.conj()[:, np.newaxis, :]
             subspace_mask = np.where(np.logical_not(np.sum(sf.unpackbits(
                 np.arange(dim), total_spins), axis=1) - total_spins//2))[0]
-            rho_a_t = sf.partial_trace_subspace(rho_t, subspace_mask, total_spins//2, True)
-            # hce = -tr(rho_a ln(rho_a))
-            #    = -tr(rho ln(rho)) = tr(D ln(D)), where D is the diagonalized matrix
-            eigvals = np.linalg.eigvalsh(rho_a_t)
+            # So we need a for-loop
+            eigvals = np.empty((times.size, int(2**(total_spins//2))))
+            for t_idx in range(len(psi_t)):
+                rho_t = np.outer(psi_t[t_idx], psi_t[t_idx].conj())
+                # Partial trace
+                rho_a_t = sf.partial_trace_subspace(rho_t, subspace_mask, total_spins//2, True)
+                # hce = -tr(rho_a ln(rho_a))
+                #    = -tr(rho ln(rho)) = tr(D ln(D)), where D is the diagonalized matrix
+                eigvals[t_idx] = np.linalg.eigvalsh(rho_a_t)
             # ugly, but cuts out the the Runtime warning caused by of 0 values in log
             hce[idx] = -np.sum(eigvals * np.log(eigvals, where=eigvals > 0,
                                                 out=np.zeros(eigvals.shape)), axis=1)
