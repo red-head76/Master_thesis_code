@@ -499,6 +499,8 @@ def plot_occupation_imbalance(times, chain_length, J, B0, As, periodic_boundarie
     if save:
         occupation_imbalance_means = np.empty((len(chain_length), len(As), len(B0), len(times)))
         occupation_imbalance_stds = np.empty((len(chain_length), len(As), len(B0), len(times)))
+    if len(samples) == 1:
+        samples = samples * len(chain_length)
     for i, N in enumerate(chain_length):
         for a, A in enumerate(As):
             for b, B in enumerate(B0):

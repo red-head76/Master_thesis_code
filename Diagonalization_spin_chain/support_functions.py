@@ -205,6 +205,7 @@ def save_data(save_path, data, config_file, time_passed, save_plot=True, paralle
     save_path = save_path.rstrip('/')
     filename = save_path.split('/')[-1]
     dir_path = save_path[:-len(filename)]
+    copy_config_path = dir_path + '/' + config_file.rstrip('/').split('/')[-1]
     if not os.path.isdir(dir_path):
         os.mkdir(dir_path)
     if save_plot:
@@ -217,9 +218,9 @@ def save_data(save_path, data, config_file, time_passed, save_plot=True, paralle
         close()
     np.savez(save_path, *data)
     if not parallelized:
-        copy(config_file, "./Plots/")
+        copy(config_file, copy_config_path)
         t = int(time_passed)
-        prepend_line("./Plots/" + config_file.split('/')[-1],
+        prepend_line(copy_config_path,
                      f"# Run time {t//3600}h:{(t%3600)//60}m:{t%60}s\n")
     else:
         t = int(time_passed)
