@@ -12,10 +12,52 @@ def convert_list(string):
     return ([i.strip() for i in string.split(',')])
 
 
+def str_to_int(str_list):
+    return [int(item) for item in str_list]
+
+
+def str_to_float(str_list):
+    return [float(item) for item in str_list]
+
+
 def replace_text(filename, text, replacement):
     with fileinput.FileInput(filename, inplace=True) as file:
         for line in file:
             print(line.replace(text, replacement), end='')
+
+
+def strip_float(float_number):
+    return str(float_number).rstrip('0').replace('.', '')
+
+
+def create_subconfigs(config_name):
+    # Read config_file with a config_object
+    # and returns the path it puts it so the main function in this script can run them
+    config_object = ConfigParser(converters={"list": convert_list})
+    config_object.read("config_files/" + config_name)
+    filename = config_object.get("Output", "filename").rstrip('/')
+    real_filename = filename.split('/')[-1]
+    path = filename[:-len(real_filename)]
+    if not os.path.isdir(path):
+        os.mkdir(path)
+    Ls = str_to_int(config_object.getlist("System", "chain_length"))
+    Bs = str_to_float(config_object.getlist("Constants", "B0"))
+    As = str_to_float(config_object.getlist("Constants", "A"))
+    Samples = str_to_int(config_object.getlist("Output", "samples"))
+    for L in Ls:
+        for B in Bs:
+            for A in As:
+                config_object["System"]["chain_length"] = str(L)
+                config_object["Constants"]["B0"] = str(B)
+                config_object["Constants"]["A"] = str(A)
+                config_object["Output"]["filename"] = f"{filename}_L{L}_B{strip_float(B)}_A{strip_float(A)}"
+                if len(Samples) != 1:
+                    config_object["Output"]["samples"] = str(Samples[Ls.index(L)])
+                # Write the new config file
+                with open(f'{path}/{config_name[:-4]}_L{L}_B{strip_float(B)}_A{strip_float(A)}.ini',
+                          'w') as conf:
+                    config_object.write(conf)
+    return path
 
 
 # Make "scan_ids" optional because i don't want to rewrite all the configs
@@ -24,23 +66,23 @@ def send_single_config(config_name):
     This function creates a directory named config_name in "./Plots/" and places all
     sub-calculations for each sample in it while parallelizing the job by dividing the full job
     for all samples for one job for each sample.
+    config_name is already the full path to the config_file, not just the filename itself
     """
     # Read config_file with a config_object
     config_object = ConfigParser(converters={"list": convert_list})
-    config_object.read("config_files/" + config_name)
+    config_object.read(config_name)
     samples = config_object.getint("Output", "samples")
-    # path + filename
+    # filename = path + real_filename
     filename = config_object.get("Output", "filename").rstrip('/')
     real_filename = filename.split('/')[-1]
     path = filename[:-len(real_filename)]
     if not os.path.isdir(path):
         os.mkdir(path)
     # Copy original config
-    shutil.copyfile(f"./config_files/{config_name}",
-                    f"{path}/{config_name[:-4]}_config.ini")
+    shutil.copyfile(config_name, f"{config_name[:-4]}_config.ini")
     for i in range(samples):
-        new_config_name = f"{path}/{config_name[:-4]}_{i}.ini"
-        shutil.copyfile("./config_files/" + config_name, new_config_name)
+        new_config_name = f"{config_name[:-4]}_{i}.ini"
+        shutil.copyfile(config_name, new_config_name)
         # Set samples to one
         replace_text(new_config_name, f"samples = {samples}", "samples = 1")
         # Set new filename
@@ -54,6 +96,8 @@ def send_single_config(config_name):
             # os.system(f"python3 main.py {new_config_name}")
         else:
             print(f"{filename}_{i}.npz does already exist")
+        os.remove(new_config_name)
+    os.remove(f"{config_name[:-4]}_config.ini")
 
 
 if len(sys.argv) == 1:
@@ -64,11 +108,16 @@ if len(sys.argv) == 1:
         if entry.name[-4:] == ".ini":
             config_files.append(entry.name)
     for config_name in config_files:
-        send_single_config(config_name)
+        path = create_subconfigs(config_name)
+        for sub_entry in os.scandir(path):
+            if sub_entry.name[-4:] == ".ini":
+                send_single_config(path + sub_entry.name)
         # pool_data_files(config_name)
 
 else:
     for config_name in sys.argv[1:]:
-        send_single_config(config_name)
-        # os.system(
-        #     f"sbatch --export=ALL,input=config_files/{config_name}, -J {config_name} start_job.sh")
+        path = create_subconfigs(config_name)
+        for sub_entry in os.scandir(path):
+            if sub_entry.name[-4:] == ".ini":
+                send_single_config(path + sub_entry.name)
+        # pool_data_files(config_name)
