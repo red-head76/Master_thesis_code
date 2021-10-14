@@ -14,7 +14,7 @@ else:
 def pool_data_files(root):
     config_names = []
     for entry in os.scandir(root):
-        if entry.name[-4:] == ".ini" and not search("_\d.ini", entry.name):
+        if entry.name[-4:] == ".ini" and not search("_\d+.ini", entry.name):
             config_names.append(entry.name)
     for config_name in config_names:
         config_object = ConfigParser()

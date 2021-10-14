@@ -57,7 +57,8 @@ def create_subconfigs(config_name):
                           'w') as conf:
                     config_object.write(conf)
     # create a 'ToPool' flagfile to sign that pooling needs to be done in this directory
-    os.mknod(f"{path}/ToPool")
+    if not os.path.isfile(f"{path}/ToPool"):
+        os.mknod(f"{path}/ToPool")
     return path
 
 
