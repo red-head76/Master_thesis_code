@@ -4,7 +4,6 @@ import sys
 import shutil
 from configparser import ConfigParser
 import fileinput
-import pdb
 
 
 def convert_list(string):
@@ -113,7 +112,6 @@ if len(sys.argv) == 1:
         for sub_entry in os.scandir(path):
             if sub_entry.name[-4:] == ".ini":
                 send_single_config(path + sub_entry.name)
-        # pool_data_files(config_name)
 
 else:
     for config_name in sys.argv[1:]:
@@ -121,5 +119,3 @@ else:
         for sub_entry in os.scandir(path):
             if sub_entry.name[-4:] == ".ini":
                 send_single_config(path + sub_entry.name)
-        # Pooling can't be done until every job has run
-        # pool_data_files(config_name)
