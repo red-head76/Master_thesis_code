@@ -4,7 +4,7 @@ import sys
 import shutil
 from configparser import ConfigParser
 import fileinput
-
+from re import search
 
 def convert_list(string):
     # Converts a string to a list of floats
@@ -118,5 +118,5 @@ else:
     for config_name in sys.argv[1:]:
         path = create_subconfigs(config_name)
         for sub_entry in os.scandir(path):
-            if sub_entry.name[-4:] == ".ini":
+            if sub_entry.name[-4:] == ".ini" and not search("_\d+.ini", entry.name):
                 send_single_config(path + sub_entry.name)
