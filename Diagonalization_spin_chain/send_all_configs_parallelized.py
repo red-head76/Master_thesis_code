@@ -57,6 +57,8 @@ def create_subconfigs(config_name):
                 with open(f'{path}/{config_name[:-4]}_L{L}_B{strip_float(B)}_A{strip_float(A)}.ini',
                           'w') as conf:
                     config_object.write(conf)
+    # create a 'ToPool' flagfile to sign that pooling needs to be done in this directory
+    os.mknod(f"{path}/ToPool")
     return path
 
 
@@ -120,4 +122,5 @@ else:
         for sub_entry in os.scandir(path):
             if sub_entry.name[-4:] == ".ini":
                 send_single_config(path + sub_entry.name)
+        # Pooling can't be done until every job has run
         # pool_data_files(config_name)
