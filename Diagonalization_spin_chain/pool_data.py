@@ -3,6 +3,7 @@ import numpy as np
 import os
 from configparser import ConfigParser
 from support_functions import prepend_line
+from re import search
 
 if len(sys.argv) > 1:
     path_to_look = sys.argv[1]
@@ -13,7 +14,7 @@ else:
 def pool_data_files(root):
     config_names = []
     for entry in os.scandir(root):
-        if entry.name[-4:] == ".ini":
+        if entry.name[-4:] == ".ini" and not search("_\d.ini", entry.name):
             config_names.append(entry.name)
     for config_name in config_names:
         config_object = ConfigParser()
@@ -38,6 +39,8 @@ def pool_data_files(root):
             else:
                 raise NotImplementedError(
                     f"Error for {config_name}: Pooling of {outputtype} isn't implemented (yet).")
+            for i in range(samples):
+                os.remove(f"{root}/{config_name[:-4]}_{i}.ini")
         else:
             print("Not all npz files are generated yet")
 

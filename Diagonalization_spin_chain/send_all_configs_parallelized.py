@@ -98,7 +98,6 @@ def send_single_config(config_name):
             # os.system(f"python3 main.py {new_config_name}")
         else:
             print(f"{filename}_{i}.npz does already exist")
-        os.remove(new_config_name)
     os.remove(f"{config_name[:-4]}_config.ini")
 
 
