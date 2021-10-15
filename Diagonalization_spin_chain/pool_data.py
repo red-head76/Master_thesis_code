@@ -55,7 +55,7 @@ def pool_eigvals_eigvecs(config_object, filename, samples):
         data = np.load(filename + f"_{i}.npz")
         pooled_eigenvalues[i] = data["arr_0"]
         pooled_eigenvectors[i] = data["arr_1"]
-    np.savez(filename + ".npz", eigenvalues=pooled_eigenvalues, eigenvectors=pooled_eigenvectors)
+    np.savez(filename + ".npz", pooled_eigenvalues, pooled_eigenvectors)
     for i in range(samples):
         os.remove(f"{filename}_{i}.npz")
 
