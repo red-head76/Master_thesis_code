@@ -70,9 +70,8 @@ def pool_occupation_imbalance(config_object, filename, samples):
         if i == 0:
             times = data["arr_0"]
         occupation_imbalances[i] = data["arr_1"]
-    mean = occupation_imbalances.mean(axis=0)
-    std = occupation_imbalances.std(axis=0)
-    np.savez(f"{filename}.npz", times=times, mean=mean, std=std)
+    np.savez(f"{filename}.npz", times,
+             occupation_imbalances.mean(axis=0), occupation_imbalances.mean(axis=0))
     for i in range(samples):
         os.remove(f"{filename}_{i}.npz")
 
