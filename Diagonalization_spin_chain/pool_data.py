@@ -42,7 +42,7 @@ def pool_data_files(root):
             for i in range(samples):
                 os.remove(f"{root}/{config_name[:-4]}_{i}.ini")
         else:
-            print("Not all npz files are generated yet")
+            print(f"Not all npz files are generated in {root}{config_name}")
 
 
 def pool_eigvals_eigvecs(config_object, filename, samples):
@@ -71,7 +71,7 @@ def pool_occupation_imbalance(config_object, filename, samples):
             times = data["arr_0"]
         occupation_imbalances[i] = data["arr_1"]
     np.savez(f"{filename}.npz", times,
-             occupation_imbalances.mean(axis=0), occupation_imbalances.mean(axis=0))
+             occupation_imbalances.mean(axis=0), occupation_imbalances.std(axis=0))
     for i in range(samples):
         os.remove(f"{filename}_{i}.npz")
 
