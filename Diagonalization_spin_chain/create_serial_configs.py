@@ -41,6 +41,10 @@ def create_subconfigs(config_name):
                 config_object["System"]["chain_length"] = str(L)
                 config_object["Constants"]["B0"] = str(B)
                 config_object["Constants"]["A"] = str(A)
+                if A == 0:
+                    config_object["System"]["central_spin"] = False
+                else:
+                    config_object["System"]["central_spin"] = True
                 signature = f"_L{L}_B{strip_float(B)}_A{strip_float(A)}"
                 config_object["Output"]["filename"] = filename + signature
                 if len(Samples) != 1:
