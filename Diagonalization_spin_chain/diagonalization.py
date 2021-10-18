@@ -3,6 +3,25 @@ from scipy.special import binom
 from support_functions import packbits, unpackbits, create_basis_vectors
 
 
+def do_scaling(A, chain_length, scaling):
+    """
+    The scaling function used for calculating the eigenvalues
+    Args:
+        A (float): the coupling between the spins in the chain and the central spin
+        chain_length (int): the length of the spin chain
+        scaling(string): the scaling used
+    """
+    if scaling == "inverse":
+        return A / chain_length
+    elif scaling == "sqrt":
+        return A / np.sqrt(chain_length)
+    elif scaling == "None":
+        return A
+    else:
+        raise ValueError(
+            f"{scaling} is not a viable option for scaling")
+
+
 def eig_values_vectors(chain_length, J, B0, A, periodic_boundaries, central_spin, seed=False,
                        scaling="inverse"):
     """
@@ -34,13 +53,7 @@ def eig_values_vectors(chain_length, J, B0, A, periodic_boundaries, central_spin
     B = np.random.uniform(-1, 1, chain_length)
     if central_spin:
         B = np.append(B, 0)
-    if scaling == "inverse":
-        A = A / chain_length
-    elif scaling == "sqrt":
-        A = A / np.sqrt(chain_length)
-    else:
-        raise ValueError(
-            f"{scaling} is not a viable option for scaling")
+    A = do_scaling(A, chain_length, scaling)
     states = unpackbits(np.arange(dim), total_spins)
     # Ising term in the hamiltonian: J * Sum(S_i^z * S_i+1^z)
     if not periodic_boundaries:
@@ -462,13 +475,7 @@ def eig_values_vectors_spin_const_all_subspaces(chain_length, J, B0, A, periodic
                   state_index] += np.sum(B0 * B * (state - 1/2))
 
         if central_spin:
-            if scaling == "inverse":
-                A = A / chain_length
-            elif scaling == "sqrt":
-                A = A / np.sqrt(chain_length)
-            else:
-                raise ValueError(
-                    f"{scaling} is not a viable option for scaling")
+            A = do_scaling(A, chain_length, scaling)
             # Now treat the last spin as the new central spin
             for state_index in range(dim_sub):
                 state = unpackbits(subspace[state_index], total_spins)
