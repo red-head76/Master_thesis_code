@@ -40,7 +40,8 @@ def pool_data_files(root):
                 raise NotImplementedError(
                     f"Error for {config_name}: Pooling of {outputtype} isn't implemented (yet).")
             for i in range(samples):
-                os.remove(f"{root}/{config_name[:-4]}_{i}.ini")
+                if os.path.isfile(f"{root}/{config_name[:-4]}_{i}.ini"):
+                    os.remove(f"{root}/{config_name[:-4]}_{i}.ini")
         else:
             print(f"Not all npz files are generated in {root}{config_name}")
 
