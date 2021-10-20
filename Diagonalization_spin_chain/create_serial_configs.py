@@ -21,11 +21,12 @@ def strip_float(float_number):
     return str(float_number).rstrip('0').replace('.', '')
 
 
-def create_subconfigs(config_name):
+def create_subconfigs(config_path):
     # Read config_file with a config_object
     # and returns the path it puts it so the main function in this script can run them
+    config_name = config_path.split('/')[-1]
     config_object = ConfigParser(converters={"list": convert_list})
-    config_object.read("config_files/" + config_name)
+    config_object.read(config_path)
     filename = config_object.get("Output", "filename").rstrip('/')
     real_filename = filename.split('/')[-1]
     path = filename[:-len(real_filename)]
@@ -42,9 +43,9 @@ def create_subconfigs(config_name):
                 config_object["Constants"]["B0"] = str(B)
                 config_object["Constants"]["A"] = str(A)
                 if A == 0:
-                    config_object["System"]["central_spin"] = False
+                    config_object["System"]["central_spin"] = "False"
                 else:
-                    config_object["System"]["central_spin"] = True
+                    config_object["System"]["central_spin"] = "True"
                 signature = f"_L{L}_B{strip_float(B)}_A{strip_float(A)}"
                 config_object["Output"]["filename"] = filename + signature
                 if len(Samples) != 1:
@@ -62,8 +63,8 @@ if len(sys.argv) == 1:
         if entry.name[-4:] == ".ini" and not search("\d.ini", entry.name):
             config_files.append(entry.name)
     for config_name in config_files:
-        create_subconfigs(config_name)
+        create_subconfigs("./config_files/" + config_name)
 
 else:
-    for config_name in sys.argv[1:]:
-        create_subconfigs(config_name)
+    for config_path in sys.argv[1:]:
+        create_subconfigs(config_path)
