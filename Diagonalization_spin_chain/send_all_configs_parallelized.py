@@ -30,11 +30,12 @@ def strip_float(float_number):
     return str(float_number).rstrip('0').replace('.', '')
 
 
-def create_subconfigs(config_name):
+def create_subconfigs(config_path):
     # Read config_file with a config_object
     # and returns the path it puts it so the main function in this script can run them
     config_object = ConfigParser(converters={"list": convert_list})
-    config_object.read("config_files/" + config_name)
+    config_object.read(config_path)
+    config_name = config_path.rstrip('/').split('/')[-1]
     filename = config_object.get("Output", "filename").rstrip('/')
     real_filename = filename.split('/')[-1]
     path = filename[:-len(real_filename)]
@@ -110,7 +111,7 @@ if len(sys.argv) == 1:
         if entry.name[-4:] == ".ini":
             config_files.append(entry.name)
     for config_name in config_files:
-        path = create_subconfigs(config_name)
+        path = create_subconfigs("./config_files/" + config_name)
         for sub_entry in os.scandir(path):
             if sub_entry.name[-4:] == ".ini" and not search("_\d+.ini", sub_entry.name):
                 send_single_config(path + sub_entry.name)
