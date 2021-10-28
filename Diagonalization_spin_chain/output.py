@@ -461,9 +461,10 @@ def calc_occupation_imbalance(times, chain_length, J, B0, A, periodic_boundaries
     subspace_mask = np.where(np.logical_not(np.sum(sf.unpackbits(np.arange(dim), total_spins),
                                                    axis=1) - total_spins//2))[0]
     psi_z = np.arange(0, np.int(2**(total_spins)))[subspace_mask]
-    # discard last spin
-    sigma_z = (sf.unpackbits(psi_z, total_spins) - 1/2)[:, :-1]
+    sigma_z = (sf.unpackbits(psi_z, total_spins) - 1/2)
     # discard central spin in exp_sig_z
+    if central_spin:
+        sigma_z = sigma_z[:, :-1]
     exp_sig_z = (np.abs(psi_t)**2 @ sigma_z)
     # occupation imbalance mask: even minus odd sites
     occ_imbalance = np.where(np.arange(chain_length) % 2, exp_sig_z, -exp_sig_z).sum(axis=1)
