@@ -51,6 +51,7 @@ spin_constant = config_object.getboolean("System", "spin_constant")
 # Coupling Constants
 Constants = config_object["Constants"]
 J = float(Constants["J"])
+J_xy = float(Constants["J_xy"])
 B0 = str_to_float(config_object.getlist("Constants", "B0"))
 A = str_to_float(config_object.getlist("Constants", "A"))
 scaling = Constants["scaling"]
@@ -89,56 +90,57 @@ if outputtype in ["plot_half_chain_entropy", "plot_occupation_imbalance",
                     int(Other["timesteps"]) + 1)
 
 if outputtype == "plot_time_evo":
-    data = output.plot_time_evo(t, idx_psi_0, chain_length[0], J, B0[0], A[0], spin_constant,
+    data = output.plot_time_evo(t, idx_psi_0, chain_length[0], J, J_xy, B0[0], A[0], spin_constant,
                                 periodic_boundaries, central_spin, save_path)
 
 elif outputtype == "animate_time_evo":
-    data = output.animate_time_evo(t, idx_psi_0, chain_length[0], J, B0[0], A[0], spin_constant,
+    data = output.animate_time_evo(t, idx_psi_0, chain_length[0], J, J_xy, B0[0], A[0], spin_constant,
                                    periodic_boundaries, central_spin, save_path)
     anim = True
 
 elif outputtype == "plot_r":
-    data = output.plot_r_values(chain_length[0], J, B0[0], A[0], periodic_boundaries, central_spin,
+    data = output.plot_r_values(chain_length[0], J, J_xy, B0[0], A[0], periodic_boundaries, central_spin,
                                 spin_constant, samples[0], save_path)
 
 elif outputtype == "plot_r_fig3":
-    data = output.plot_r_fig3(chain_length, J, B0, periodic_boundaries, samples, save_path)
+    data = output.plot_r_fig3(chain_length, J, J_xy, B0, periodic_boundaries, samples, save_path)
 
 elif outputtype == "plot_half_chain_entropy":
-    data = output.plot_half_chain_entropy(t, chain_length, J, B0, A, periodic_boundaries,
+    data = output.plot_half_chain_entropy(t, chain_length, J, J_xy, B0, A, periodic_boundaries,
                                           central_spin, samples, seed, scaling, save_path)
 
 elif outputtype == "plot_occupation_imbalance":
-    data = output.plot_occupation_imbalance(t, chain_length, J, B0, A, periodic_boundaries,
+    data = output.plot_occupation_imbalance(t, chain_length, J, J_xy, B0, A, periodic_boundaries,
                                             central_spin, samples, seed, scaling, save_path)
 
 elif outputtype == "plot_exp_sig_z_central_spin":
-    data = output.plot_exp_sig_z_central_spin(t, chain_length, J, B0, A, periodic_boundaries,
+    data = output.plot_exp_sig_z_central_spin(t, chain_length, J, J_xy, B0, A, periodic_boundaries,
                                               samples, seed, scaling, save_path)
 
 elif outputtype == "plot_correlation":
-    data = output.plot_correlation(t, chain_length, J, B0, A, periodic_boundaries, samples,
+    data = output.plot_correlation(t, chain_length, J, J_xy, B0, A, periodic_boundaries, samples,
                                    seed, scaling, save_path)
 
 # Old stuff
 elif outputtype == "plot_f_fig2":
-    data = output_trash.plot_f_fig2(chain_length, J, B0, periodic_boundaries, samples, save_path)
+    data = output_trash.plot_f_fig2(chain_length, J, J_xy, B0,
+                                    periodic_boundaries, samples, save_path)
 
 elif outputtype == "plot_g":
-    data = output_trash.plot_g_value(rho0, t, chain_length, J, B0,
+    data = output_trash.plot_g_value(rho0, t, chain_length, J, J_xy, B0,
                                      periodic_boundaries, samples, save_path)
 
 elif outputtype == "plot_fa":
-    data = output_trash.plot_fa_values(chain_length, J, B0, A[0],
+    data = output_trash.plot_fa_values(chain_length, J, J_xy, B0, A[0],
                                        periodic_boundaries, central_spin, samples, save_path)
 
 elif outputtype == "calc_eigvals_eigvecs":
-    data = output.calc_eigvals_eigvecs_biggest_subspace(chain_length, J, B0, A,
+    data = output.calc_eigvals_eigvecs_biggest_subspace(chain_length, J, J_xy, B0, A,
                                                         periodic_boundaries, central_spin, seed,
                                                         scaling)
     anim = None
 elif outputtype == "calc_psi_t":
-    data = output.calc_psi_t(t, chain_length, J, B0, A, periodic_boundaries, central_spin,
+    data = output.calc_psi_t(t, chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin,
                              seed, scaling)
     anim = None
 

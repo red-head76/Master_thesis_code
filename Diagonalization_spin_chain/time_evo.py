@@ -4,7 +4,7 @@ from support_functions import unpackbits, packbits
 from scipy.constants import hbar, e
 
 
-def time_evo_sigma_z(t, psi_0, chain_length, J, B0, A, spin_constant,
+def time_evo_sigma_z(t, psi_0, chain_length, J, J_xy, B0, A, spin_constant,
                      periodic_boundaries, central_spin):
     """
     Computes the time evolution of the spin operator sigma_z for the given state
@@ -13,7 +13,8 @@ def time_evo_sigma_z(t, psi_0, chain_length, J, B0, A, spin_constant,
         t (array [tN]): array with tN timesteps
         psi0 (array [N]): the state at t0
         chain_length (int): the length of the spin chain
-        J (float): the coupling constant
+        J (float): Spin chain coupling in z-direction
+        J_xy (float): Spin chain coupling in xy-direction
         B0 (float): the B-field amplitude. Currently random initialized uniformly
                                 between (-1, 1).
         A (float): the coupling between the central spin and the spins in the chain
@@ -63,7 +64,7 @@ def time_evo_sigma_z(t, psi_0, chain_length, J, B0, A, spin_constant,
 def time_evo_subspace(times, eigenvalues, eigenvectors, total_spins, initial_state="neel",
                       float_precision=64):
     """
-    Computes the time evolution of an inital state
+    Computes the time evolution of an inital state, based on given eigenvalues and vectors
 
     Args:
         times (float [times])

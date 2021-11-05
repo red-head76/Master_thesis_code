@@ -22,7 +22,7 @@ def do_scaling(A, chain_length, scaling):
             f"{scaling} is not a viable option for scaling")
 
 
-def eig_values_vectors(chain_length, J, B0, A, periodic_boundaries, central_spin, seed=False,
+def eig_values_vectors(chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin, seed=False,
                        scaling="inverse"):
     """
     Computes the the Heisenberg Hamiltonian with coupling to a central spin:
@@ -30,7 +30,8 @@ def eig_values_vectors(chain_length, J, B0, A, periodic_boundaries, central_spin
 
     Args:
         chain_length (int): the length of the spin chain
-        J (float): the coupling constant
+        J (float): Spin chain coupling in z-direction
+        J_xy (float): Spin chain coupling in xy-direction
         B0 (float): the B-field amplitude. Currently random initialized uniformly
                                 between (-1, 1).
         A (float): the coupling between the spins in the chain and the central spin
@@ -74,7 +75,7 @@ def eig_values_vectors(chain_length, J, B0, A, periodic_boundaries, central_spin
         rolled_flipmasks = np.append(rolled_flipmasks, np.zeros(chain_length)[:, None], axis=1)
     flipmasks = rolled_flipmasks[where_to_flip[1] - periodic_boundaries]
     flipped_states = np.logical_xor(states_to_flip, flipmasks)
-    H[packbits(states_to_flip), packbits(flipped_states)] = J/2
+    H[packbits(states_to_flip), packbits(flipped_states)] = J_xy/2
     # Central spin term (z-direction): A/N * Sum(S_c^z * S_i^z)
     if central_spin:
         non_equal_z = (np.ones((dim, chain_length), dtype=int) *
@@ -93,7 +94,7 @@ def eig_values_vectors(chain_length, J, B0, A, periodic_boundaries, central_spin
     return np.linalg.eigh(H)
 
 
-def eig_values_vectors_old_way(chain_length, J, B0, A, periodic_boundaries, central_spin,
+def eig_values_vectors_old_way(chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin,
                                seed=False, scaling="inverse"):
     """
     Old way with for loops
@@ -102,7 +103,8 @@ def eig_values_vectors_old_way(chain_length, J, B0, A, periodic_boundaries, cent
 
     Args:
         chain_length (int): the length of the spin chain
-        J (float): the coupling constant
+        J (float): Spin chain coupling in z-direction
+        J_xy (float): Spin chain coupling in xy-direction
         B0 (float): the B-field amplitude. Currently random initialized uniformly
                                 between (-1, 1).
         A (float): the coupling between the spins in the chain and the central spin
@@ -154,7 +156,7 @@ def eig_values_vectors_old_way(chain_length, J, B0, A, periodic_boundaries, cent
                 # Only do this, if S_i^z != S_i+1^z, otherwise the ladder operators give 0.
                 flipmask = np.roll(unpackbits(3, chain_length), i)
                 flipped_state = packbits(np.logical_xor(state, flipmask))
-                H[state_index, flipped_state] = J/2
+                H[state_index, flipped_state] = J_xy/2
 
         # Outer magnetic field term: Sum(B_i S_i^z)
         H[state_index,
@@ -187,7 +189,7 @@ def eig_values_vectors_old_way(chain_length, J, B0, A, periodic_boundaries, cent
     return np.linalg.eigh(H)
 
 
-def eig_values_vectors_spin_const(chain_length, J, B0, A, periodic_boundaries,
+def eig_values_vectors_spin_const(chain_length, J, J_xy, B0, A, periodic_boundaries,
                                   central_spin, n_up, seed=False, scaling="inverse"):
     """
     Computes the the Heisenberg Hamiltonian with coupling to a central spin:
@@ -196,7 +198,8 @@ def eig_values_vectors_spin_const(chain_length, J, B0, A, periodic_boundaries,
 
     Args:
         chain_length (int): the length of the spin chain
-        J (float): the coupling constant
+        J (float): Spin chain coupling in z-direction
+        J_xy (float): Spin chain coupling in xy-direction
         B0 (float): the B-field amplitude. Currently random initialized uniformly
                                 between (-1, 1).
         A (float): the coupling between the spins in the chain and the central spin
@@ -256,7 +259,7 @@ def eig_values_vectors_spin_const(chain_length, J, B0, A, periodic_boundaries,
         rolled_flipmasks = np.append(rolled_flipmasks, np.zeros(chain_length)[:, None], axis=1)
     flipmasks = rolled_flipmasks[where_to_flip[1] - periodic_boundaries]
     flipped_states = np.logical_xor(states_to_flip, flipmasks)
-    H[map_states_to_subspace(states_to_flip), map_states_to_subspace(flipped_states)] = J/2
+    H[map_states_to_subspace(states_to_flip), map_states_to_subspace(flipped_states)] = J_xy/2
     # Central spin term (z-direction): A/N * Sum(S_c^z * S_i^z)
     if central_spin:
         non_equal_z = (np.ones((subspace.size, chain_length), dtype=int) *
@@ -276,7 +279,7 @@ def eig_values_vectors_spin_const(chain_length, J, B0, A, periodic_boundaries,
     return np.linalg.eigh(H)
 
 
-def eig_values_vectors_spin_const_old_way(chain_length, J, B0, A, periodic_boundaries,
+def eig_values_vectors_spin_const_old_way(chain_length, J, J_xy, B0, A, periodic_boundaries,
                                           central_spin, n_up, seed=False, scaling="inverse"):
     """
     Old way with for loops
@@ -286,7 +289,8 @@ def eig_values_vectors_spin_const_old_way(chain_length, J, B0, A, periodic_bound
 
     Args:
         chain_length (int): the length of the spin chain
-        J (float): the coupling constant
+        J (float): Spin chain coupling in z-direction
+        J_xy (float): Spin chain coupling in xy-direction
         B0 (float): the B-field amplitude. Currently random initialized uniformly
                                 between (-1, 1).
         A (float): the coupling between the spins in the chain and the central spin
@@ -366,7 +370,7 @@ def eig_values_vectors_spin_const_old_way(chain_length, J, B0, A, periodic_bound
                     packbits(np.roll(unpackbits(3, chain_length), i)), total_spins)
                 flipped_state = packbits(np.logical_xor(state, flipmask))
                 H_sub[state_index, np.argwhere(
-                    subspace == flipped_state).item()] = J/2
+                    subspace == flipped_state).item()] = J_xy/2
         # Outer magnetic field term: Sum(B_i S_i^z)
         H_sub[state_index, state_index] += np.sum(B0 * B * (state - 1/2))
 
@@ -390,7 +394,7 @@ def eig_values_vectors_spin_const_old_way(chain_length, J, B0, A, periodic_bound
     return np.linalg.eigh(H_sub)
 
 
-def eig_values_vectors_spin_const_all_subspaces(chain_length, J, B0, A, periodic_boundaries,
+def eig_values_vectors_spin_const_all_subspaces(chain_length, J, J_xy, B0, A, periodic_boundaries,
                                                 central_spin, seed=False,
                                                 scaling="inverse"):
     """
@@ -398,7 +402,8 @@ def eig_values_vectors_spin_const_all_subspaces(chain_length, J, B0, A, periodic
     to a central spin: H = Sum_i (J * S_i * S_i+1 + B_i S_i^z).
     Args:
         chain_length (int): the length of the spin chain
-        J (float): the coupling constant
+        J (float): Spin chain coupling in z-direction
+        J_xy (float): Spin chain coupling in xy-direction
         B0 (float): the B-field amplitude. Currently random initialized uniformly
                                 between (-1, 1).
         A (float): the coupling between the spins in the chain and the central spin
@@ -469,7 +474,7 @@ def eig_values_vectors_spin_const_all_subspaces(chain_length, J, B0, A, periodic
                                           total_spins)
                     flipped_state = packbits(np.logical_xor(state, flipmask))
                     H_sub[state_index, np.argwhere(
-                        subspace == flipped_state).item()] = J/2
+                        subspace == flipped_state).item()] = J_xy/2
             # Outer magnetic field term: Sum(B_i S_i^z)
             H_sub[state_index,
                   state_index] += np.sum(B0 * B * (state - 1/2))

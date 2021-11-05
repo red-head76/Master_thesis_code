@@ -23,8 +23,10 @@ def create_config():
     }
 
     config_object["Constants"] = {
-        # Coupling between spins in the chain
+        # Spin chain coupling in z-direction
         "J": "1",
+        # Spin chain coupling in xy-direction.
+        "J_xy": "1",
         # Strength of the external B-field
         "B0": "1",
         # Coupling of the central spin with the spins in the chain

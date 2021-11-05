@@ -7,7 +7,7 @@ import diagonalization as diag
 from time_evo import time_evo_sigma_z, time_evo_subspace
 
 
-def plot_time_evo(t, idx_psi_0, chain_length, J, B0, A, spin_constant,
+def plot_time_evo(t, idx_psi_0, chain_length, J, J_xy, B0, A, spin_constant,
                   periodic_boundaries, central_spin, save):
     """
     Plots the time evolution of the spin chain and the optional central spin
@@ -16,7 +16,8 @@ def plot_time_evo(t, idx_psi_0, chain_length, J, B0, A, spin_constant,
         t (array [tN]): array with tN timesteps
         idx_psi_0 (int): the index of the state at t0
         chain_length (int): the length of the spin chain
-        J (float): the coupling constant
+        J (float): Spin chain coupling in z-direction
+        J_xy (float): Spin chain coupling in xy-direction
         B0 (float): the B-field amplitude. Currently random initialized uniformly
                                 between (-1, 1).
         A (float): the coupling between the central spin and the spins in the chain
@@ -36,7 +37,7 @@ def plot_time_evo(t, idx_psi_0, chain_length, J, B0, A, spin_constant,
     dim = np.array(2**total_spins, dtype=np.int)
     psi_0 = np.zeros(dim)
     psi_0[idx_psi_0] = 1
-    exp_sig_z = time_evo_sigma_z(t, psi_0, chain_length, J, B0, A, spin_constant,
+    exp_sig_z = time_evo_sigma_z(t, psi_0, chain_length, J, J_xy, B0, A, spin_constant,
                                  periodic_boundaries, central_spin)
     total_spins = chain_length + central_spin
     fig, ax = plt.subplots(total_spins, 1, figsize=(
@@ -56,7 +57,7 @@ def plot_time_evo(t, idx_psi_0, chain_length, J, B0, A, spin_constant,
             return [t, exp_sig_z]
 
 
-def animate_time_evo(t, idx_psi_0, chain_length, J, B0, A, spin_constant,
+def animate_time_evo(t, idx_psi_0, chain_length, J, J_xy, B0, A, spin_constant,
                      periodic_boundaries, central_spin, save):
     """
     Animate the time evolution of the spin chain and the optional central spin
@@ -65,7 +66,8 @@ def animate_time_evo(t, idx_psi_0, chain_length, J, B0, A, spin_constant,
         t (array [tN]): array with tN timesteps
         idx_psi_0 (int): the index of the state at t0
         chain_length (int): the length of the spin chain
-        J (float): the coupling constant
+        J (float): Spin chain coupling in z-direction
+        J_xy (float): Spin chain coupling in xy-direction
         B0 (float): the B-field amplitude. Currently random initialized uniformly
                                 between (-1, 1).
         A (float): the coupling between the central spin and the spins in the chain
@@ -86,7 +88,7 @@ def animate_time_evo(t, idx_psi_0, chain_length, J, B0, A, spin_constant,
     dim = np.array(2**total_spins, dtype=np.int)
     psi_0 = np.zeros(dim)
     psi_0[idx_psi_0] = 1
-    exp_sig_z = time_evo_sigma_z(t, psi_0, chain_length, J, B0, A, spin_constant,
+    exp_sig_z = time_evo_sigma_z(t, psi_0, chain_length, J, J_xy, B0, A, spin_constant,
                                  periodic_boundaries, central_spin)
     total_spins = chain_length + central_spin
     fig, ax = plt.subplots(figsize=(10, 8))
@@ -108,14 +110,15 @@ def animate_time_evo(t, idx_psi_0, chain_length, J, B0, A, spin_constant,
         return [t, exp_sig_z]
 
 
-def calc_eigvals_eigvecs_biggest_subspace(chain_length, J, B0, A, periodic_boundaries,
+def calc_eigvals_eigvecs_biggest_subspace(chain_length, J, J_xy, B0, A, periodic_boundaries,
                                           central_spin, seed, scaling):
     """
     Calculates the eigenvalues and vectors of the biggest subspace
 
     Args:
         chain_length (int): the length of the spin chain
-        J (float): the coupling constant
+        J (float): Spin chain coupling in z-direction
+        J_xy (float): Spin chain coupling in xy-direction
         B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
                                 between (-1, 1).
         A (float): coupling between the central spin and the spins in the chain
@@ -129,11 +132,11 @@ def calc_eigvals_eigvecs_biggest_subspace(chain_length, J, B0, A, periodic_bound
         eigenvalues (float [dim]), eigenvectors (float [dim, dim])
     """
     n_up = (chain_length[0] + central_spin) // 2
-    return diag.eig_values_vectors_spin_const(chain_length[0], J, B0[0], A[0], periodic_boundaries,
+    return diag.eig_values_vectors_spin_const(chain_length[0], J, J_xy, B0[0], A[0], periodic_boundaries,
                                               central_spin, n_up, seed, scaling)
 
 
-def calc_psi_t(times, chain_length, J, B0, A, periodic_boundaries, central_spin, seed, scaling,
+def calc_psi_t(times, chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin, seed, scaling,
                inital_state="neel"):
     """
     Calculates the time evolution of an initial state
@@ -141,7 +144,8 @@ def calc_psi_t(times, chain_length, J, B0, A, periodic_boundaries, central_spin,
     Args:
         times (float [times]): time array
         chain_length (int): the length of the spin chain
-        J (float): the coupling constant
+        J (float): Spin chain coupling in z-direction
+        J_xy (float): Spin chain coupling in xy-direction
         B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
                                 between (-1, 1).
         A (float): coupling between the central spin and the spins in the chain
@@ -156,7 +160,7 @@ def calc_psi_t(times, chain_length, J, B0, A, periodic_boundaries, central_spin,
     """
     total_spins = chain_length + central_spin
     n_up = (total_spins) // 2
-    eigvals, eigvecs = diag.eig_values_vectors_spin_const(chain_length, J, B0, A,
+    eigvals, eigvecs = diag.eig_values_vectors_spin_const(chain_length, J, J_xy, B0, A,
                                                           periodic_boundaries, central_spin,
                                                           n_up, seed, scaling)
     return time_evo_subspace(times, eigvals, eigvecs, total_spins, inital_state, 32)
@@ -197,7 +201,7 @@ def sturge_rule(n):
     return np.int(np.ceil(np.log2(n)) + 1)
 
 
-def generate_r_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
+def generate_r_values(chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin,
                       spin_constant, binning_func=sturge_rule):
     """
     Calculates the r value, the fraction of the difference of eigenvalues of the given Hamiltonian:
@@ -205,7 +209,8 @@ def generate_r_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
 
     Args:
         chain_length (int): the length of the spin chain
-        J (float): the coupling constant
+        J (float): Spin chain coupling in z-direction
+        J_xy (float): Spin chain coupling in xy-direction
         B0 (float): the B-field amplitude. Currently random initialized uniformly
                                 between (-1, 1).
         A (float): the coupling between the central spin and the spins in the chain
@@ -223,11 +228,11 @@ def generate_r_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
     total_spins = chain_length + central_spin
     if spin_constant:
         E = diag.eig_values_vectors_spin_const(
-            chain_length, J, B0, A, periodic_boundaries, central_spin, n_up=total_spins//2)[0]
+            chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin, n_up=total_spins//2)[0]
     else:
         raise Warning("r_value with the fullspace H doesn't make sense!")
         E = diag.eig_values_vectors(
-            chain_length, J, B0, A, periodic_boundaries, central_spin)[0]
+            chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin)[0]
 
     E = np.sort(E)
     Delta_E = np.diff(E)
@@ -243,14 +248,15 @@ def generate_r_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
     return Delta_min / Delta_max
 
 
-def plot_r_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
+def plot_r_values(chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin,
                   spin_constant, samples, save):
     """
     Plots the histogram of r_values created by the given parameters.
 
     Args:
         chain_length (int): the length of the spin chain
-        J (float): the coupling constant
+        J (float): Spin chain coupling in z-direction
+        J_xy (float): Spin chain coupling in xy-direction
         B0 (float): the B-field amplitude. Currently random initialized uniformly
                                 between (-1, 1).
         A (float): the coupling between the central spin and the spins in the chain
@@ -268,10 +274,10 @@ def plot_r_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
 
     """
 
-    r_values = generate_r_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
+    r_values = generate_r_values(chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin,
                                  spin_constant)
     for _ in range(samples - 1):
-        r_values += generate_r_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
+        r_values += generate_r_values(chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin,
                                       spin_constant)
     # Average over samples
     r_values /= samples
@@ -286,7 +292,7 @@ def plot_r_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
         return [r_values]
 
 
-def plot_r_fig3(chain_length, J, B0, periodic_boundaries, samples, save):
+def plot_r_fig3(chain_length, J, J_xy, B0, periodic_boundaries, samples, save):
     """
     Plots the r values as done in Figure 3 in https://doi.org/10.1103/PhysRevB.82.174411
 
@@ -310,9 +316,9 @@ def plot_r_fig3(chain_length, J, B0, periodic_boundaries, samples, save):
         samples = np.ones(np.size(chain_length), dtype=np.int) * samples
     for i, N in enumerate(chain_length):
         for j, B in enumerate(B0):
-            r_values = generate_r_values(N, J, B, 0, periodic_boundaries, False, True)
+            r_values = generate_r_values(N, J, J_xy, B, 0, periodic_boundaries, False, True)
             for _ in range(samples[i] - 1):
-                r_values += generate_r_values(N, J, B, 0, periodic_boundaries, False, True)
+                r_values += generate_r_values(N, J, J_xy, B, 0, periodic_boundaries, False, True)
             r_values /= samples[i]
             # Averaging over samples and states at the same time
             mean_r_values[i, j] = np.mean(r_values)
@@ -326,7 +332,7 @@ def plot_r_fig3(chain_length, J, B0, periodic_boundaries, samples, save):
         return [B0, mean_r_values]
 
 
-def calc_half_chain_entropy(times, chain_length, J, B0, A, periodic_boundaries, central_spin,
+def calc_half_chain_entropy(times, chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin,
                             seed, scaling):
     """
     Calculates the half chain entropy -tr(rho_a, ln(rho_a))
@@ -334,7 +340,8 @@ def calc_half_chain_entropy(times, chain_length, J, B0, A, periodic_boundaries, 
     Args:
         times (array (float) [tD]): the time array, where g should be calculated
         chain_length (int): the length of the spin chain
-        J (float): the coupling constant
+        J (float): Spin chain coupling in z-direction
+        J_xy (float): Spin chain coupling in xy-direction
         B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
                                 between (-1, 1).
         A (float): coupling between the central spin and the spins in the chain
@@ -357,7 +364,7 @@ def calc_half_chain_entropy(times, chain_length, J, B0, A, periodic_boundaries, 
                                                    axis=1) - total_spins//2))[0]
 
     eigenvalues, eigenvectors = diag.eig_values_vectors_spin_const(
-        chain_length, J, B0, A, periodic_boundaries,
+        chain_length, J, J_xy, B0, A, periodic_boundaries,
         central_spin, n_up=total_spins//2, seed=seed, scaling=scaling)
     psi_t = time_evo_subspace(times, eigenvalues, eigenvectors, total_spins)
     # This performs an outer product along axis 1
@@ -379,7 +386,7 @@ def calc_half_chain_entropy(times, chain_length, J, B0, A, periodic_boundaries, 
                                     out=np.zeros(eigvals.shape)), axis=1)
 
 
-def plot_half_chain_entropy(times, chain_length, J, B0, As, periodic_boundaries, central_spin,
+def plot_half_chain_entropy(times, chain_length, J, J_xy, B0, As, periodic_boundaries, central_spin,
                             samples, seed, scaling, save):
     """
     Plots the Sa(t) values (see fig2 in http://arxiv.org/abs/1806.08316)
@@ -411,7 +418,7 @@ def plot_half_chain_entropy(times, chain_length, J, B0, As, periodic_boundaries,
             for b, B in enumerate(B0):
                 hce = np.zeros((samples[i], times.size))
                 for sample in range(samples[i]):
-                    hce[sample] = calc_half_chain_entropy(times, N, J, B, A, periodic_boundaries,
+                    hce[sample] = calc_half_chain_entropy(times, N, J, J_xy, B, A, periodic_boundaries,
                                                           central_spin, seed, scaling)
                 hce_mean = np.mean(hce, axis=0)
                 hce_std = np.std(hce, axis=0)
@@ -430,7 +437,7 @@ def plot_half_chain_entropy(times, chain_length, J, B0, As, periodic_boundaries,
         return [times, hce_means, hce_stds]
 
 
-def calc_occupation_imbalance(times, chain_length, J, B0, A, periodic_boundaries, central_spin,
+def calc_occupation_imbalance(times, chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin,
                               seed, scaling):
     """
     Calculates the occupation imbalance sum_odd s_z - sum_even s_z
@@ -438,7 +445,8 @@ def calc_occupation_imbalance(times, chain_length, J, B0, A, periodic_boundaries
     Args:
         times (array (float) [tD]): the time array, where g should be calculated
         chain_length (int): the length of the spin chain
-        J (float): the coupling constant
+        J (float): Spin chain coupling in z-direction
+        J_xy (float): Spin chain coupling in xy-direction
         B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
                                 between (-1, 1).
         A (float): coupling between the central spin and the spins in the chain
@@ -454,7 +462,7 @@ def calc_occupation_imbalance(times, chain_length, J, B0, A, periodic_boundaries
     total_spins = chain_length + central_spin
     dim = int(2**total_spins)
     eigenvalues, eigenvectors = diag.eig_values_vectors_spin_const(
-        chain_length, J, B0, A, periodic_boundaries, central_spin,
+        chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin,
         n_up=total_spins//2, seed=seed, scaling=scaling)
     psi_t = time_evo_subspace(times, eigenvalues, eigenvectors, total_spins)
     # This mask filters out the states of the biggest subspace
@@ -472,7 +480,7 @@ def calc_occupation_imbalance(times, chain_length, J, B0, A, periodic_boundaries
     return occ_imbalance / (chain_length / 2)
 
 
-def plot_occupation_imbalance(times, chain_length, J, B0, As, periodic_boundaries, central_spin,
+def plot_occupation_imbalance(times, chain_length, J, J_xy, B0, As, periodic_boundaries, central_spin,
                               samples, seed, scaling, save):
     """
     Plots the occupation imbalance sum_odd s_z - sum_even s_z
@@ -481,7 +489,8 @@ def plot_occupation_imbalance(times, chain_length, J, B0, As, periodic_boundarie
         rho0 (array (float) [dim, dim]): the initial density matrix, where dim = 2**total_spins
         times (array (float) [tD]): the time array, where g should be calculated
         chain_length (array (int)): the length of the spin chain
-        J (float): the coupling constant
+        J (float): Spin chain coupling in z-direction
+        J_xy (float): Spin chain coupling in xy-direction
         B0 (array (float)): the B-field amplitude. Currently random initialized uniformly
                                 between (-1, 1).
         As (array (float)): the coupling between the central spin and the spins in the chain
@@ -508,7 +517,7 @@ def plot_occupation_imbalance(times, chain_length, J, B0, As, periodic_boundarie
                 occupation_imbalance = np.zeros((samples[i], times.size))
                 for sample in range(samples[i]):
                     occupation_imbalance[sample] = calc_occupation_imbalance(
-                        times, N, J, B, A, periodic_boundaries, central_spin, seed, scaling=scaling)
+                        times, N, J, J_xy, B, A, periodic_boundaries, central_spin, seed, scaling=scaling)
                 occupation_imbalance_mean = occupation_imbalance.mean(axis=0)
                 occupation_imbalance_std = occupation_imbalance.std(axis=0)
                 yerrors = occupation_imbalance.std(axis=0) / np.sqrt(samples[i])
@@ -527,14 +536,15 @@ def plot_occupation_imbalance(times, chain_length, J, B0, As, periodic_boundarie
         return [times, occupation_imbalance_means, occupation_imbalance_stds]
 
 
-def calc_exp_sig_z_central_spin(times, chain_length, J, B0, A, periodic_boundaries, seed, scaling):
+def calc_exp_sig_z_central_spin(times, chain_length, J, J_xy, B0, A, periodic_boundaries, seed, scaling):
     """
     Calculates the expectation value for the central spin.
 
     Args:
         times (array (float) [tD]): the time array, where g should be calculated
         chain_length (int or array (int)): the length of the spin chain
-        J (float): the coupling constant
+        J (float): Spin chain coupling in z-direction
+        J_xy (float): Spin chain coupling in xy-direction
         B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
                                 between (-1, 1).
         A (float): the coupling between the central spin and the spins in the chain
@@ -553,7 +563,7 @@ def calc_exp_sig_z_central_spin(times, chain_length, J, B0, A, periodic_boundari
     subspace_mask = np.where(np.logical_not(np.sum(sf.unpackbits(np.arange(dim), total_spins),
                                                    axis=1) - total_spins//2))
     eigenvalues, eigenvectors = diag.eig_values_vectors_spin_const(
-        chain_length, J, B0, A, periodic_boundaries, central_spin=True,
+        chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin=True,
         n_up=total_spins//2, seed=seed, scaling=scaling)
     psi_t = time_evo_subspace(times, eigenvalues, eigenvectors, total_spins)
     psi_z = np.arange(0, np.int(2**(total_spins)))[subspace_mask]
@@ -563,7 +573,7 @@ def calc_exp_sig_z_central_spin(times, chain_length, J, B0, A, periodic_boundari
     return exp_sig_z
 
 
-def plot_exp_sig_z_central_spin(times, chain_length, J, B0, As, periodic_boundaries,
+def plot_exp_sig_z_central_spin(times, chain_length, J, J_xy, B0, As, periodic_boundaries,
                                 samples, seed, scaling, save):
     """
     Plots the expectation value for the central spin.
@@ -571,7 +581,8 @@ def plot_exp_sig_z_central_spin(times, chain_length, J, B0, As, periodic_boundar
     Args:
         times (array (float) [tD]): the time array, where g should be calculated
         chain_length (int or array (int)): the length of the spin chain
-        J (float): the coupling constant
+        J (float): Spin chain coupling in z-direction
+        J_xy (float): Spin chain coupling in xy-direction
         B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
                                 between (-1, 1).
         As (array (float)): the coupling between the central spin and the spins in the chain
@@ -597,7 +608,7 @@ def plot_exp_sig_z_central_spin(times, chain_length, J, B0, As, periodic_boundar
                 exp_sig_z = np.zeros((samples[i], times.size))
                 for sample in range(samples[i]):
                     exp_sig_z[sample] = calc_exp_sig_z_central_spin(
-                        times, N, J, B, A, periodic_boundaries, seed, scaling)
+                        times, N, J, J_xy, B, A, periodic_boundaries, seed, scaling)
                 exp_sig_z_mean = exp_sig_z.mean(axis=0)
                 yerrors = exp_sig_z.std(axis=0) / np.sqrt(samples[i])
                 if save:
@@ -616,7 +627,7 @@ def plot_exp_sig_z_central_spin(times, chain_length, J, B0, As, periodic_boundar
         return [times, exp_sig_z_means, exp_sig_z_errors]
 
 
-def calc_correlation(times, chain_length, J, B0, A, periodic_boundaries,
+def calc_correlation(times, chain_length, J, J_xy, B0, A, periodic_boundaries,
                      seed, scaling):
     """
     Calculates the correlation function sigma^2(t) from
@@ -628,7 +639,8 @@ def calc_correlation(times, chain_length, J, B0, A, periodic_boundaries,
     Args:
         times (array (float) [tD]): the time array, where g should be calculated
         chain_length (int or array (int)): the length of the spin chain
-        J (float): the coupling constant
+        J (float): Spin chain coupling in z-direction
+        J_xy (float): Spin chain coupling in xy-direction
         B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
                                 between (-1, 1).
         A (float): the coupling between the central spin and the spins in the chain
@@ -648,7 +660,7 @@ def calc_correlation(times, chain_length, J, B0, A, periodic_boundaries,
     subspace_mask = np.where(np.logical_not(np.sum(sf.unpackbits(np.arange(dim), total_spins),
                                                    axis=1) - total_spins//2))[0]
     eigenvalues, eigenvectors = diag.eig_values_vectors_spin_const(
-        chain_length, J, B0, A, periodic_boundaries, central_spin=True,
+        chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin=True,
         n_up=total_spins//2, seed=seed, scaling=scaling)
     psi_z = np.arange(0, np.int(2**(total_spins)))[subspace_mask]
     # discard the central spin from sigma_z
@@ -677,7 +689,7 @@ def calc_correlation(times, chain_length, J, B0, A, periodic_boundaries,
     return (n**2 * (S_t * S_0[0] - S_0 * S_0[0])).mean(axis=1)
 
 
-def plot_correlation(times, chain_length, J, B0, As, periodic_boundaries,
+def plot_correlation(times, chain_length, J, J_xy, B0, As, periodic_boundaries,
                      samples, seed, scaling, save):
     """
     Plots the correlation function sigma_squared(t) from page 7 of
@@ -687,7 +699,8 @@ def plot_correlation(times, chain_length, J, B0, As, periodic_boundaries,
     Args:
         times (array (float) [tD]): the time array, where g should be calculated
         chain_length (int or array (int)): the length of the spin chain
-        J (float): the coupling constant
+        J (float): Spin chain coupling in z-direction
+        J_xy (float): Spin chain coupling in xy-direction
         B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
                                 between (-1, 1).
         As (float or array (float)): the coupling between the central spin and the spins in the chain
@@ -713,7 +726,7 @@ def plot_correlation(times, chain_length, J, B0, As, periodic_boundaries,
                 sigma_squareds = np.zeros((samples[i], times.size))
                 for sample in range(samples[i]):
                     sigma_squareds[sample] = calc_correlation(
-                        times, N, J, B, A, periodic_boundaries, seed, scaling)
+                        times, N, J, J_xy, B, A, periodic_boundaries, seed, scaling)
                 sigma_squared_mean = sigma_squareds.mean(axis=0)
                 sigma_squared_std = sigma_squareds.std(axis=0)
                 if save:
