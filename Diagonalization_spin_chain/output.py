@@ -35,9 +35,7 @@ def plot_time_evo(t, idx_psi_0, chain_length, J, J_xy, B0, A, spin_constant,
     """
     total_spins = central_spin + chain_length
     dim = np.array(2**total_spins, dtype=np.int)
-    psi_0 = np.zeros(dim)
-    psi_0[idx_psi_0] = 1
-    exp_sig_z = time_evo_sigma_z(t, psi_0, chain_length, J, J_xy, B0, A, spin_constant,
+    exp_sig_z = time_evo_sigma_z(t, idx_psi_0, chain_length, J, J_xy, B0, A, spin_constant,
                                  periodic_boundaries, central_spin)
     total_spins = chain_length + central_spin
     fig, ax = plt.subplots(total_spins, 1, figsize=(
@@ -58,7 +56,7 @@ def plot_time_evo(t, idx_psi_0, chain_length, J, J_xy, B0, A, spin_constant,
 
 
 def animate_time_evo(t, idx_psi_0, chain_length, J, J_xy, B0, A, spin_constant,
-                     periodic_boundaries, central_spin, save):
+                     periodic_boundaries, central_spin, seed, save):
     """
     Animate the time evolution of the spin chain and the optional central spin
 
@@ -86,23 +84,29 @@ def animate_time_evo(t, idx_psi_0, chain_length, J, J_xy, B0, A, spin_constant,
     """
     total_spins = central_spin + chain_length
     dim = np.array(2**total_spins, dtype=np.int)
-    psi_0 = np.zeros(dim)
-    psi_0[idx_psi_0] = 1
-    exp_sig_z = time_evo_sigma_z(t, psi_0, chain_length, J, J_xy, B0, A, spin_constant,
-                                 periodic_boundaries, central_spin)
+    exp_sig_z = time_evo_sigma_z(t, idx_psi_0, chain_length, J, J_xy, B0, A, spin_constant,
+                                 periodic_boundaries, central_spin, seed)
     total_spins = chain_length + central_spin
+    np.random.seed(seed)
+    # B = np.random.uniform(-1, 1, chain_length)
+    B = np.where(np.arange(total_spins) % 2 == 0, -1, 1) * B0
     fig, ax = plt.subplots(figsize=(10, 8))
-    bars = plt.bar(np.arange(total_spins), exp_sig_z[0])
-    ax.set_ylim(-0.6, 0.7)
+    # Stem container containing markerline, stemlines, baseline
+    stem_container = ax.stem(
+        np.arange(total_spins), exp_sig_z[0], use_line_collection=True)
+    ax.step(np.arange(total_spins), B, color="C2", where="mid")
+    # ax.set_ylim(-0.6, 0.7)
     if central_spin:
-        bars.patches[-1].set_color("C1")
+        # stem_container[1][-1].set_color("C1")
         ax.axvline(total_spins - 1.5, color="black", linewidth=8)
         ax.annotate("central spin", (total_spins - 1.2, 0.65))
 
     def run(i):
-        for j, bar in enumerate(bars):
-            bar.set_height(exp_sig_z[i, j])
-        return bars
+        # Markers
+        stem_container[0].set_ydata(exp_sig_z[i])
+        stem_container[1].set_paths([np.array([[x, 0], [x, y]])
+                                     for (x, y) in zip(np.arange(total_spins), exp_sig_z[i])])
+        return stem_container
 
     anim = animation.FuncAnimation(
         fig, run, frames=t.size, blit=True, interval=100)

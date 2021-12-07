@@ -4,8 +4,8 @@ from support_functions import unpackbits, packbits
 from scipy.constants import hbar, e
 
 
-def time_evo_sigma_z(t, psi_0, chain_length, J, J_xy, B0, A, spin_constant,
-                     periodic_boundaries, central_spin):
+def time_evo_sigma_z(t, idx_psi_0, chain_length, J, J_xy, B0, A, spin_constant,
+                     periodic_boundaries, central_spin, seed=False, scaling="inverse"):
     """
     Computes the time evolution of the spin operator sigma_z for the given state
 
@@ -33,15 +33,20 @@ def time_evo_sigma_z(t, psi_0, chain_length, J, J_xy, B0, A, spin_constant,
 
     total_spins = chain_length + central_spin
     dim = np.int(2**total_spins)
+    n_up = unpackbits(idx_psi_0, total_spins).sum()
+    subspace_mask = np.where(np.logical_not(np.sum(unpackbits(np.arange(dim), total_spins),
+                                                   axis=1) - n_up))[0]
+    psi_0 = np.zeros(dim)
+    psi_0[idx_psi_0] = 1
+    psi_0 = psi_0[subspace_mask]
     if spin_constant:
-        eigenvalues, eigenvectors = diagonalization.eig_values_vectors_spin_const_all_subspaces(
-            chain_length, J, B0, A, periodic_boundaries, central_spin)
+        eigenvalues, eigenvectors = diagonalization.eig_values_vectors_spin_const(
+            chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin, n_up, seed, scaling)
     else:
         eigenvalues, eigenvectors = diagonalization.eig_values_vectors(
-            chain_length, J, B0, A, periodic_boundaries, central_spin)
+            chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin, seed, scaling)
     psi_z = np.arange(0, dim)
-    sigma_z = unpackbits(psi_z, total_spins) - 1/2
-
+    sigma_z = (unpackbits(psi_z, total_spins) - 1/2)[subspace_mask]
     # # non vectorized version. I just keep it for the sake of clarity
     # exp_sig_z = np.empty((len(t), total_spins))
     # # for time step in t
