@@ -5,6 +5,9 @@ import matplotlib.pyplot as plt
 import support_functions as sf
 import diagonalization as diag
 from time_evo import time_evo_sigma_z, time_evo_subspace
+import seaborn as sns
+
+sns.set_theme(context="paper")
 
 
 def plot_time_evo(t, idx_psi_0, chain_length, J, J_xy, B0, A, spin_constant,
@@ -484,8 +487,8 @@ def calc_occupation_imbalance(times, chain_length, J, J_xy, B0, A, periodic_boun
     return occ_imbalance / (chain_length / 2)
 
 
-def plot_occupation_imbalance(times, chain_length, J, J_xy, B0, As, periodic_boundaries, central_spin,
-                              samples, seed, scaling, save):
+def plot_occupation_imbalance(times, chain_length, J, J_xy, B0, As, periodic_boundaries,
+                              central_spin, samples, seed, scaling, save):
     """
     Plots the occupation imbalance sum_odd s_z - sum_even s_z
 
@@ -521,7 +524,7 @@ def plot_occupation_imbalance(times, chain_length, J, J_xy, B0, As, periodic_bou
                 occupation_imbalance = np.zeros((samples[i], times.size))
                 for sample in range(samples[i]):
                     occupation_imbalance[sample] = calc_occupation_imbalance(
-                        times, N, J, J_xy, B, A, periodic_boundaries, central_spin, seed, scaling=scaling)
+                        times, N, J, J_xy, B, A, periodic_boundaries, central_spin, seed=sample+1, scaling=scaling)
                 occupation_imbalance_mean = occupation_imbalance.mean(axis=0)
                 occupation_imbalance_std = occupation_imbalance.std(axis=0)
                 yerrors = occupation_imbalance.std(axis=0) / np.sqrt(samples[i])
@@ -531,10 +534,70 @@ def plot_occupation_imbalance(times, chain_length, J, J_xy, B0, As, periodic_bou
                 plt.plot(times, occupation_imbalance_mean, label=f"N={N}")
                 plt.fill_between(times, occupation_imbalance_mean + yerrors,
                                  occupation_imbalance_mean - yerrors, alpha=0.2)
-    plt.title(f"Occupation imbalance for \nJ={J}, B={B}, A={A}, scaling={scaling}")
+    # plt.title(f"Occupation imbalance for \nJ={J}, B={B}, A={A}, scaling={scaling}")
     plt.xlabel("Time in fs")
     plt.semilogx()
-    plt.ylabel("occupation imbalance")
+    plt.ylabel("OI")
+    plt.legend(loc=1)
+    if save:
+        return [times, occupation_imbalance_means, occupation_imbalance_stds]
+
+
+def plot_single_shot_occupation_imbalance(times, chain_length, J, J_xy, B0, As,
+                                          periodic_boundaries, central_spin, samples, seed,
+                                          scaling, save):
+    """
+    Plots the occupation imbalance sum_odd s_z - sum_even s_z
+
+    Args:
+        rho0 (array (float) [dim, dim]): the initial density matrix, where dim = 2**total_spins
+        times (array (float) [tD]): the time array, where g should be calculated
+        chain_length (array (int)): the length of the spin chain
+        J (float): Spin chain coupling in z-direction
+        J_xy (float): Spin chain coupling in xy-direction
+        B0 (array (float)): the B-field amplitude. Currently random initialized uniformly
+                                between (-1, 1).
+        As (array (float)): the coupling between the central spin and the spins in the chain
+        periodic_boundaries (bool): determines whether or not periodic boundary
+                                                  conditions are used in the chain.
+        central_spin (bool): determines whether or not a central spin is present
+        samples (array (int)[1]): Number of times data points should be generated
+        seed (int): use a seed to produce comparable outcomes if False, then it is initialized
+                    randomly
+
+    Returns:
+        If save: data (list [time, occupation_imbalance_means, occupation_imbalance_stds]),
+                 None otherwise
+
+    """
+    if save:
+        occupation_imbalance_means = np.empty((len(chain_length), len(As), len(B0), len(times)))
+        occupation_imbalance_stds = np.empty((len(chain_length), len(As), len(B0), len(times)))
+    if len(samples) == 1:
+        samples = samples * len(chain_length)
+    for i, N in enumerate(chain_length):
+        for a, A in enumerate(As):
+            for b, B in enumerate(B0):
+                occupation_imbalance = np.zeros((samples[i], times.size))
+                for sample in range(samples[i]):
+                    occupation_imbalance[sample] = calc_occupation_imbalance(
+                        times, N, J, J_xy, B, A, periodic_boundaries, central_spin, seed=sample+1,
+                        scaling=scaling)
+                occupation_imbalance_mean = occupation_imbalance.mean(axis=0)
+                occupation_imbalance_std = occupation_imbalance.std(axis=0)
+                yerrors = occupation_imbalance.std(axis=0) / np.sqrt(samples[i])
+                if save:
+                    occupation_imbalance_means[i, a, b] = occupation_imbalance_mean
+                    occupation_imbalance_stds[i, a, b] = occupation_imbalance_std
+                for sample in range(samples[i]):
+                    plt.plot(times, occupation_imbalance[sample], label=f"Seed={sample}")
+                # plt.plot(times, occupation_imbalance_mean, label=f"N={N}")
+                # plt.fill_between(times, occupation_imbalance_mean + yerrors,
+                #                  occupation_imbalance_mean - yerrors, alpha=0.2)
+    # plt.title(f"Occupation imbalance for \nJ={J}, B={B}, A={A}, scaling={scaling}")
+    plt.xlabel("Time in fs")
+    plt.semilogx()
+    plt.ylabel("OI")
     plt.legend(loc=1)
     if save:
         return [times, occupation_imbalance_means, occupation_imbalance_stds]

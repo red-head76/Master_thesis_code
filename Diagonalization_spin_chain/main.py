@@ -84,10 +84,12 @@ if outputtype in ["plot_g"]:
     # Time array
     t = np.linspace(0, float(Other["timeend"]), int(Other["timesteps"]) + 1)
 
+
 if outputtype in ["plot_half_chain_entropy", "plot_occupation_imbalance",
-                  "plot_exp_sig_z_central_spin", "plot_correlation", "calc_psi_t"]:
-    t = np.logspace(np.log10(float(Other["timestart"])), np.log10(float(Other["timeend"])),
-                    int(Other["timesteps"]) + 1)
+                  "plot_single_shot_occupation_imbalance", "plot_exp_sig_z_central_spin",
+                  "plot_correlation", "calc_psi_t"]:
+    t = np.logspace(np.log10(float(Other["timestart"])), np.log10(
+        float(Other["timeend"])), int(Other["timesteps"]) + 1)
 
 if outputtype == "plot_time_evo":
     data = output.plot_time_evo(t, idx_psi_0, chain_length[0], J, J_xy, B0[0], A[0], spin_constant,
@@ -113,6 +115,11 @@ elif outputtype == "plot_half_chain_entropy":
 elif outputtype == "plot_occupation_imbalance":
     data = output.plot_occupation_imbalance(t, chain_length, J, J_xy, B0, A, periodic_boundaries,
                                             central_spin, samples, seed, scaling, save_path)
+
+elif outputtype == "plot_single_shot_occupation_imbalance":
+    data = output.plot_single_shot_occupation_imbalance(
+        t, chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin, samples, seed,
+        scaling, save_path)
 
 elif outputtype == "plot_exp_sig_z_central_spin":
     data = output.plot_exp_sig_z_central_spin(t, chain_length, J, J_xy, B0, A, periodic_boundaries,
