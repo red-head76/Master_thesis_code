@@ -130,13 +130,7 @@ def eig_values_vectors_old_way(chain_length, J, J_xy, B0, A, periodic_boundaries
     if seed:
         np.random.seed(seed)
     B = np.random.uniform(-1, 1, chain_length)
-    if scaling == "inverse":
-        A = A / chain_length
-    elif scaling == "sqrt":
-        A = A / np.sqrt(chain_length)
-    else:
-        raise ValueError(
-            f"{scaling} is not a viable option for scaling")
+    A = do_scaling(A, chain_length, scaling)
     # For every state
     for state_index in range(dim):
         state = unpackbits(psi_z[state_index], chain_length)
@@ -225,13 +219,7 @@ def eig_values_vectors_spin_const(chain_length, J, J_xy, B0, A, periodic_boundar
     B = np.random.uniform(-1, 1, chain_length)
     if central_spin:
         B = np.append(B, 0)
-    if scaling == "inverse":
-        A = A / chain_length
-    elif scaling == "sqrt":
-        A = A / np.sqrt(chain_length)
-    else:
-        raise ValueError(
-            f"{scaling} is not a viable option for scaling")
+    A = do_scaling(A, chain_length, scaling)
     # Creates each state, sums up all spins, subtracts n_up and filters out the zeros
     subspace = np.where(np.logical_not(np.sum(unpackbits(np.arange(dim), total_spins),
                                               axis=1) - n_up))[0]
@@ -317,13 +305,7 @@ def eig_values_vectors_spin_const_old_way(chain_length, J, J_xy, B0, A, periodic
     B = np.random.uniform(-1, 1, chain_length)
     if central_spin:
         B = np.append(B, 0)
-    if scaling == "inverse":
-        A = A / chain_length
-    elif scaling == "sqrt":
-        A = A / np.sqrt(chain_length)
-    else:
-        raise ValueError(
-            f"{scaling} is not a viable option for scaling")
+    A = do_scaling(A, chain_length, scaling)
 
     # Create subspace
     # Creates each state, sums up all spins, subtracts n_up and filters out the zeros
@@ -427,7 +409,7 @@ def eig_values_vectors_spin_const_all_subspaces(chain_length, J, J_xy, B0, A, pe
     B = np.random.uniform(-1, 1, chain_length)
     if central_spin:
         B = np.append(B, 0)
-
+    B = np.where(np.arange(total_spins) % 2 == 0, -1, 1) * B0
     eigenvalues = np.zeros(dim)
     eigenvectors = np.zeros((dim, dim))
 
