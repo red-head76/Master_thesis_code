@@ -49,8 +49,10 @@ def create_config():
         "show": "True",
         # Whether or not the plot should be saved
         "save_plot": "True",
+        # Output format of the picture
+        "picture_format": "png",
         # If True, the the configs won't be copied twice in save_data in support_functions
-        "parallelized": "False"
+        "parallelized": "False",
     }
 
     config_object["Other"] = {

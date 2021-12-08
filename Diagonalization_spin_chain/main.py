@@ -64,6 +64,7 @@ samples = str_to_int(config_object.getlist("Output", "samples"))
 show = config_object.getboolean("Output", "show")
 save_plot = config_object.getboolean("Output", "save_plot")
 parallelized = config_object.getboolean("Output", "parallelized")
+picture_format = config_object.get("Output", "picture_format")
 
 # Other setup
 Other = config_object["Other"]
@@ -157,7 +158,8 @@ else:
 
 if save_path:
     time_passed = time.time() - time0
-    save_data(save_path, data, config_file, time_passed, save_plot, parallelized, anim)
+    save_data(save_path, data, config_file, time_passed, save_plot, picture_format,
+              parallelized, anim)
 
 if show:
     show_plot()

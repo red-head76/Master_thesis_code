@@ -186,8 +186,8 @@ def prepend_line(file_name, line):
     os.rename(dummy_file, file_name)
 
 
-def save_data(save_path, data, config_file, time_passed, save_plot=True, parallelized=False,
-              anim=False, fps=10):
+def save_data(save_path, data, config_file, time_passed, save_plot=True, picture_format="png",
+              parallelized=False, anim=False, fps=10):
     """
     Saves the data to a given plot with a given filename. There is one file for the plot, the data
     of the plot and the parameters used.
@@ -210,7 +210,7 @@ def save_data(save_path, data, config_file, time_passed, save_plot=True, paralle
         os.mkdir(dir_path)
     if save_plot:
         if anim == False:
-            savefig(save_path)
+            savefig(save_path + '.' + picture_format)
         elif anim:
             writervideo = animation.FFMpegWriter(fps=fps)
             anim.save(save_path, writer=writervideo)
