@@ -425,8 +425,8 @@ def plot_half_chain_entropy(times, chain_length, J, J_xy, B0, As, periodic_bound
             for b, B in enumerate(B0):
                 hce = np.zeros((samples[i], times.size))
                 for sample in range(samples[i]):
-                    hce[sample] = calc_half_chain_entropy(times, N, J, J_xy, B, A, periodic_boundaries,
-                                                          central_spin, seed, scaling)
+                    hce[sample] = calc_half_chain_entropy(
+                        times, N, J, J_xy, B, A, periodic_boundaries, central_spin, seed, scaling)
                 hce_mean = np.mean(hce, axis=0)
                 hce_std = np.std(hce, axis=0)
                 yerrors = hce_std / np.sqrt(samples[i])
@@ -437,11 +437,47 @@ def plot_half_chain_entropy(times, chain_length, J, J_xy, B0, As, periodic_bound
                 plt.fill_between(times, hce_mean + yerrors, hce_mean - yerrors, alpha=0.2)
     plt.xlabel("Time in fs")
     plt.ylabel("Half chain entropy")
-    plt.title(f"Entanglement entropy")
+    plt.semilogx()
+    if save:
+        return [times, hce_means, hce_stds]
+
+
+def plot_single_shot_half_chain_entropy(times, chain_length, J, J_xy, B0, As, periodic_boundaries,
+                                        central_spin, samples, seed, scaling, save):
+    """
+    Plots the Sa(t) values (see fig2 in http://arxiv.org/abs/1806.08316)
+
+    Args:
+        times (array (float) [tD]): the time array, where g should be calculated
+        chain_length (array (int)): the length of the spin chain
+        J (float): the coupling constant
+        B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
+                                between (-1, 1).
+        As (array (float)): the coupling between the central spin and the spins in the chain
+        periodic_boundaries (bool): determines whether or not periodic boundary
+                                                  conditions are used in the chain.
+        central_spin (bool): Whether or not a central spin is present
+        samples (int or array (int)): Number of times data points should be generated
+        seed (int): random seed for reducible results
+        scaling (string): scaling of coupling constant A by chain length
+        save (string): filename, if data needs to be saved
+
+    Returns:
+        If save: data (list [time, hce_mean, yerrors]), None otherwise
+
+    """
+    hces = np.empty((samples[0], len(times)))
+    for sample in range(samples[0]):
+        hces[sample] = calc_half_chain_entropy(
+            times, chain_length[0], J, J_xy, B0[0], As[0], periodic_boundaries, central_spin,
+            sample+1, scaling)
+        plt.plot(times, hces[sample], label=f"seed={sample+1}")
+    plt.xlabel("Time in fs")
+    plt.ylabel("Half chain entropy")
     plt.semilogx()
     plt.legend()
     if save:
-        return [times, hce_means, hce_stds]
+        return [times, hces]
 
 
 def calc_occupation_imbalance(times, chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin,
@@ -524,7 +560,8 @@ def plot_occupation_imbalance(times, chain_length, J, J_xy, B0, As, periodic_bou
                 occupation_imbalance = np.zeros((samples[i], times.size))
                 for sample in range(samples[i]):
                     occupation_imbalance[sample] = calc_occupation_imbalance(
-                        times, N, J, J_xy, B, A, periodic_boundaries, central_spin, seed=sample+1, scaling=scaling)
+                        times, N, J, J_xy, B, A, periodic_boundaries, central_spin,
+                        seed=sample+1, scaling=scaling)
                 occupation_imbalance_mean = occupation_imbalance.mean(axis=0)
                 occupation_imbalance_std = occupation_imbalance.std(axis=0)
                 yerrors = occupation_imbalance.std(axis=0) / np.sqrt(samples[i])
@@ -570,37 +607,20 @@ def plot_single_shot_occupation_imbalance(times, chain_length, J, J_xy, B0, As,
                  None otherwise
 
     """
-    if save:
-        occupation_imbalance_means = np.empty((len(chain_length), len(As), len(B0), len(times)))
-        occupation_imbalance_stds = np.empty((len(chain_length), len(As), len(B0), len(times)))
+    occupation_imbalances = np.empty((samples[0], len(times)))
     if len(samples) == 1:
         samples = samples * len(chain_length)
-    for i, N in enumerate(chain_length):
-        for a, A in enumerate(As):
-            for b, B in enumerate(B0):
-                occupation_imbalance = np.zeros((samples[i], times.size))
-                for sample in range(samples[i]):
-                    occupation_imbalance[sample] = calc_occupation_imbalance(
-                        times, N, J, J_xy, B, A, periodic_boundaries, central_spin, seed=sample+1,
-                        scaling=scaling)
-                occupation_imbalance_mean = occupation_imbalance.mean(axis=0)
-                occupation_imbalance_std = occupation_imbalance.std(axis=0)
-                yerrors = occupation_imbalance.std(axis=0) / np.sqrt(samples[i])
-                if save:
-                    occupation_imbalance_means[i, a, b] = occupation_imbalance_mean
-                    occupation_imbalance_stds[i, a, b] = occupation_imbalance_std
-                for sample in range(samples[i]):
-                    plt.plot(times, occupation_imbalance[sample], label=f"Seed={sample}")
-                # plt.plot(times, occupation_imbalance_mean, label=f"N={N}")
-                # plt.fill_between(times, occupation_imbalance_mean + yerrors,
-                #                  occupation_imbalance_mean - yerrors, alpha=0.2)
-    # plt.title(f"Occupation imbalance for \nJ={J}, B={B}, A={A}, scaling={scaling}")
+    for sample in range(samples[0]):
+        occupation_imbalances[sample] = calc_occupation_imbalance(
+            times, chain_length[0], J, J_xy, B0[0], As[0], periodic_boundaries, central_spin,
+            seed=sample+1, scaling=scaling)
+        plt.plot(times, occupation_imbalances[sample], label=f"Seed={sample+1}")
     plt.xlabel("Time in fs")
     plt.semilogx()
     plt.ylabel("OI")
     plt.legend(loc=1)
     if save:
-        return [times, occupation_imbalance_means, occupation_imbalance_stds]
+        return [times, occupation_imbalances]
 
 
 def calc_exp_sig_z_central_spin(times, chain_length, J, J_xy, B0, A, periodic_boundaries, seed, scaling):
