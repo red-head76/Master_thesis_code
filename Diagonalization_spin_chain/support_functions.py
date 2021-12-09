@@ -99,29 +99,28 @@ def partial_trace_subspace(rho_sub, subspace_mask, spins_a, calc_rho_a=True):
     if np.max(subspace_mask) == 0:
         max_spins = 1
     else:
-        max_spins = np.int(np.floor(np.log2(np.max(subspace_mask))) + 1)
+        max_spins = int(np.floor(np.log2(np.max(subspace_mask))) + 1)
     if calc_rho_a:
         spins_subspace = spins_a
     else:
         spins_subspace = int(max_spins - spins_a)
     # Split the entries of the mask into entries of the subspaces a and b (unpacked)
-    splitted_idx = np.split(unpackbits(subspace_mask, max_spins), [spins_subspace], axis=1)
+    splitted_idx = np.split(unpackbits(subspace_mask, max_spins), [spins_a], axis=1)
     # pack bits back in the individual subspaces a and b
     # 0 and 1 are reversed here because of implementation of packed_bits
-    packed_idx = np.array((packbits(splitted_idx[1]), packbits(splitted_idx[0])))
+    packed_idx = np.array((packbits(splitted_idx[0]), packbits(splitted_idx[1])))
     # density matrix with only entries from the subspace of const. total spin
     # in terms subspaces a and b (i.e. in form of rho_{(a1, b1), (a2, b2)})
-    rho_idx_sub = np.rollaxis(np.array(
-        (np.meshgrid(packed_idx[0], packed_idx[0]),
-         np.meshgrid(packed_idx[1], packed_idx[1]))), 1)
+    rho_idx_sub = np.rollaxis(np.array((np.meshgrid(packed_idx[0], packed_idx[0], indexing='ij'),
+                                        np.meshgrid(packed_idx[1], packed_idx[1], indexing='ij'))), 1)
     if calc_rho_a:
         # then the second index should be equal (diagonal in b)
         # the entry at pos_idx shows the position of the entry in the partial trace
-        equal_idx = 0
-        pos_idx = 1
-    else:
         equal_idx = 1
         pos_idx = 0
+    else:
+        equal_idx = 0
+        pos_idx = 1
     # indices of the entries that contribute to the partial trace
     trace_mask = np.where(rho_idx_sub[0, equal_idx] == rho_idx_sub[1, equal_idx])
     # indices where the entries should go in the partial trace
