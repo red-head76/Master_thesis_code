@@ -112,7 +112,8 @@ def partial_trace_subspace(rho_sub, subspace_mask, spins_a, calc_rho_a=True):
     # density matrix with only entries from the subspace of const. total spin
     # in terms subspaces a and b (i.e. in form of rho_{(a1, b1), (a2, b2)})
     rho_idx_sub = np.rollaxis(np.array((np.meshgrid(packed_idx[0], packed_idx[0], indexing='ij'),
-                                        np.meshgrid(packed_idx[1], packed_idx[1], indexing='ij'))), 1)
+                                        np.meshgrid(packed_idx[1], packed_idx[1], indexing='ij'))
+                                       ), 1)
     if calc_rho_a:
         # then the second index should be equal (diagonal in b)
         # the entry at pos_idx shows the position of the entry in the partial trace
