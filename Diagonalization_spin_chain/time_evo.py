@@ -77,7 +77,7 @@ def time_evo_subspace(times, eigenvalues, eigenvectors, total_spins, initial_sta
         eigenvectors (float [dim_sub, dim_sub])
         total_spins (int)
         inital (string, default: "neel"): the type of inital state. Possible arguments:
-            "neel"
+            "neel", "domain_wall", "first_up"
         float_precision (int, default: 32): determines the precision of floats. Possible
             arguments: 32, 64
 
@@ -98,14 +98,18 @@ def time_evo_subspace(times, eigenvalues, eigenvectors, total_spins, initial_sta
     # This mask filters out the states of the subspace
     subspace_mask = np.where(np.logical_not(np.sum(unpackbits(np.arange(dim), total_spins),
                                                    axis=1) - total_spins//2))[0]
+    psi_0 = np.zeros(dim).astype(fdtype)
     if initial_state == "neel":
-        psi_0 = np.zeros(dim).astype(fdtype)
         psi_0[packbits(np.arange(total_spins) % 2)] = 1
-        psi_0 = psi_0[subspace_mask]
+    elif "domain_wall":
+        psi_0[packbits(np.arange(total_spins) < total_spins // 2)] = 1
+    elif "first_up":
+        psi_0[1] = 1
     else:
         raise ValueError()
-    eigenvectors = eigenvectors.astype(cdtype)
+    psi_0 = psi_0[subspace_mask]
 
+    eigenvectors = eigenvectors.astype(cdtype)
     propagator = np.exp(-1j * np.outer(times, eigenvalues) / hbar * e * 1e-15).astype(cdtype)
     # Old
     # return (eigenvectors @ (propagator[:, :, np.newaxis] * eigenvectors.T)) @ psi_0

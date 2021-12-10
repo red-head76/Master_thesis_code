@@ -91,8 +91,7 @@ def animate_time_evo(t, idx_psi_0, chain_length, J, J_xy, B0, A, spin_constant,
                                  periodic_boundaries, central_spin, seed)
     total_spins = chain_length + central_spin
     np.random.seed(seed)
-    # B = np.random.uniform(-1, 1, chain_length)
-    B = np.where(np.arange(total_spins) % 2 == 0, -1, 1) * B0
+    B = np.random.uniform(-1, 1, chain_length)
     fig, ax = plt.subplots(figsize=(10, 8))
     # Stem container containing markerline, stemlines, baseline
     stem_container = ax.stem(
