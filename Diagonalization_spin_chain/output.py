@@ -387,8 +387,8 @@ def calc_half_chain_entropy(times, chain_length, J, J_xy, B0, A, periodic_bounda
     rho_a_t = sf.partial_trace_subspace(rho_t, subspace_mask, total_spins//2)
     # hce = -tr(rho_a ln(rho_a))
     #     = -tr(rho ln(rho)) = tr(D ln(D)), where D is the diagonalized matrix
-    # should be real positive anyways (#tested), but this is to ignore complex warnings.
-    D = np.abs(np.diagonal(rho_a_t, 0, -2, -1))
+    # should be real positive anyways, but to prevent complex casting warnings
+    D = np.linalg.eigvalsh(rho_a_t)
     # ugly, but cuts out the the Runtime warning caused by of 0 values in log
     return -np.sum(D * np.log(D, where=D > 0, out=np.zeros(D.shape, dtype=D.dtype)), axis=1)
 
@@ -435,6 +435,8 @@ def plot_half_chain_entropy(times, chain_length, J, J_xy, B0, As, periodic_bound
                     hce_stds[i, a, b] = hce_std
                 plt.plot(times, hce_mean, label=f"A={A}, L={N}, B={B}")
                 plt.fill_between(times, hce_mean + yerrors, hce_mean - yerrors, alpha=0.2)
+    plt.hlines(
+        np.log(2**((chain_length[0] + central_spin)//2)), times[0], times[-1], color='black')
     plt.xlabel("Time in fs")
     plt.ylabel("Half chain entropy")
     plt.semilogx()
@@ -472,7 +474,8 @@ def plot_single_shot_half_chain_entropy(times, chain_length, J, J_xy, B0, As, pe
             times, chain_length[0], J, J_xy, B0[0], As[0], periodic_boundaries, central_spin,
             sample+1, scaling)
         plt.plot(times, hces[sample], label=f"seed={sample+1}")
-    plt.hlines(np.log(chain_length[0]+central_spin), times[0], times[-1], color='black')
+    plt.hlines(
+        np.log(2**((chain_length[0] + central_spin)//2)), times[0], times[-1], color='black')
     plt.xlabel("Time in fs")
     plt.ylabel("Half chain entropy")
     plt.semilogx()
