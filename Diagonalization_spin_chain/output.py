@@ -5,9 +5,10 @@ import matplotlib.pyplot as plt
 import support_functions as sf
 import diagonalization as diag
 from time_evo import time_evo_sigma_z, time_evo_subspace
-import seaborn as sns
 
-sns.set_theme(context="paper")
+# Doesn't work on justus, so commented out
+# import seaborn as sns
+# sns.set_theme(context="paper")
 
 
 def plot_time_evo(t, idx_psi_0, chain_length, J, J_xy, B0, A, spin_constant,
