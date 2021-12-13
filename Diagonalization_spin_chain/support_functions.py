@@ -218,9 +218,9 @@ def save_data(save_path, data, config_file, time_passed, save_plot=True, picture
         close()
     np.savez(save_path, *data)
     if not parallelized:
-        copy(config_file, copy_config_path)
+        copy(config_file, save_path + ".ini")
         t = int(time_passed)
-        prepend_line(copy_config_path,
+        prepend_line(save_path + ".ini",
                      f"# Run time {t//3600}h:{(t%3600)//60}m:{t%60}s\n")
     else:
         t = int(time_passed)
