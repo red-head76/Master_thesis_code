@@ -393,8 +393,8 @@ def calc_half_chain_entropy(times, chain_length, J, J_xy, B0, A, periodic_bounda
     return -np.sum(D * np.log(D, where=D > 0, out=np.zeros(D.shape, dtype=D.dtype)), axis=1)
 
 
-def plot_half_chain_entropy(times, chain_length, J, J_xy, B0, As, periodic_boundaries, central_spin,
-                            samples, seed, scaling, save):
+def plot_half_chain_entropy(times, chain_length, J, J_xy, B0, As, periodic_boundaries,
+                            central_spin, samples, seed, scaling, save):
     """
     Plots the Sa(t) values (see fig2 in http://arxiv.org/abs/1806.08316)
 
@@ -435,8 +435,9 @@ def plot_half_chain_entropy(times, chain_length, J, J_xy, B0, As, periodic_bound
                     hce_stds[i, a, b] = hce_std
                 plt.plot(times, hce_mean, label=f"A={A}, L={N}, B={B}")
                 plt.fill_between(times, hce_mean + yerrors, hce_mean - yerrors, alpha=0.2)
-    plt.hlines(
-        np.log(2**((chain_length[0] + central_spin)//2)), times[0], times[-1], color='black')
+    plt.ylim(0, 3.5)
+    # plt.hlines(
+    #     np.log(2**((chain_length[0] + central_spin)//2)), times[0], times[-1], color='black')
     plt.xlabel("Time in fs")
     plt.ylabel("Half chain entropy")
     plt.semilogx()
@@ -474,8 +475,9 @@ def plot_single_shot_half_chain_entropy(times, chain_length, J, J_xy, B0, As, pe
             times, chain_length[0], J, J_xy, B0[0], As[0], periodic_boundaries, central_spin,
             sample+1, scaling)
         plt.plot(times, hces[sample], label=f"seed={sample+1}")
-    plt.hlines(
-        np.log(2**((chain_length[0] + central_spin)//2)), times[0], times[-1], color='black')
+    # plt.hlines(
+    #     np.log(2**((chain_length[0] + central_spin)//2)), times[0], times[-1], color='black')
+    plt.ylim(0, 3.5)
     plt.xlabel("Time in fs")
     plt.ylabel("Half chain entropy")
     plt.semilogx()
@@ -484,8 +486,8 @@ def plot_single_shot_half_chain_entropy(times, chain_length, J, J_xy, B0, As, pe
         return [times, hces]
 
 
-def calc_occupation_imbalance(times, chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin,
-                              seed, scaling):
+def calc_occupation_imbalance(times, chain_length, J, J_xy, B0, A, periodic_boundaries,
+                              central_spin, seed, scaling):
     """
     Calculates the occupation imbalance sum_odd s_z - sum_even s_z
 
@@ -576,9 +578,10 @@ def plot_occupation_imbalance(times, chain_length, J, J_xy, B0, As, periodic_bou
                 plt.fill_between(times, occupation_imbalance_mean + yerrors,
                                  occupation_imbalance_mean - yerrors, alpha=0.2)
     # plt.title(f"Occupation imbalance for \nJ={J}, B={B}, A={A}, scaling={scaling}")
+    plt.ylim(-0.2, 1.02)
     plt.xlabel("Time in fs")
     plt.semilogx()
-    plt.ylabel("OI")
+    plt.ylabel("Occupation imbalance")
     plt.legend(loc=1)
     if save:
         return [times, occupation_imbalance_means, occupation_imbalance_stds]
@@ -619,6 +622,7 @@ def plot_single_shot_occupation_imbalance(times, chain_length, J, J_xy, B0, As,
             times, chain_length[0], J, J_xy, B0[0], As[0], periodic_boundaries, central_spin,
             seed=sample+1, scaling=scaling)
         plt.plot(times, occupation_imbalances[sample], label=f"Seed={sample+1}")
+    plt.ylim(-0.2, 1.02)
     plt.xlabel("Time in fs")
     plt.semilogx()
     plt.ylabel("OI")
