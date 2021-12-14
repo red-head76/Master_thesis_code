@@ -668,6 +668,47 @@ def calc_exp_sig_z_central_spin(times, chain_length, J, J_xy, B0, A, periodic_bo
     return exp_sig_z
 
 
+def plot_single_shot_exp_sig_z_central_spin(times, chain_length, J, J_xy, B0, As,
+                                            periodic_boundaries, samples, seed, scaling, save):
+    """
+    Plots the expectation value for the central spin.
+
+    Args:
+        times (array (float) [tD]): the time array, where g should be calculated
+        chain_length (int or array (int)): the length of the spin chain
+        J (float): Spin chain coupling in z-direction
+        J_xy (float): Spin chain coupling in xy-direction
+        B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
+                                between (-1, 1).
+        As (array (float)): the coupling between the central spin and the spins in the chain
+        periodic_boundaries (bool): determines whether or not periodic boundary
+                                                  conditions are used in the chain.
+        samples (array (int)[1]): Number of times data points should be generated
+        seed (int): use a seed to produce comparable outcomes if False, then it is initialized
+                    randomly
+
+    Returns:
+        If save: data (list [time, exp_sig_z_means, exp_sig_z_errors]), None otherwise
+
+    """
+    # for saving the data
+
+    exp_sig_zs = np.empty((samples[0], len(times)))
+    if len(samples) == 1:
+        samples = samples * len(chain_length)
+    for sample in range(samples[0]):
+        exp_sig_zs[sample] = calc_exp_sig_z_central_spin(
+            times, chain_length[0], J, J_xy, B0[0], As[0], periodic_boundaries,
+            seed=sample+1, scaling=scaling)
+        plt.plot(times, exp_sig_zs[sample], label=f"Seed={sample+1}")
+    plt.xlabel("Time in fs")
+    plt.ylabel(r"$<S_z>$")
+    plt.semilogx()
+    plt.legend(loc=1)
+    if save:
+        return [times, exp_sig_zs]
+
+
 def plot_exp_sig_z_central_spin(times, chain_length, J, J_xy, B0, As, periodic_boundaries,
                                 samples, seed, scaling, save):
     """
@@ -695,7 +736,7 @@ def plot_exp_sig_z_central_spin(times, chain_length, J, J_xy, B0, As, periodic_b
     if save:
         exp_sig_z_means = np.empty(
             (len(chain_length), len(As), len(B0), len(times)))
-        exp_sig_z_errors = np.empty(
+        exp_sig_z_stds = np.empty(
             (len(chain_length), len(As), len(B0), len(times)))
     for i, N in enumerate(chain_length):
         for a, A in enumerate(As):
@@ -705,10 +746,11 @@ def plot_exp_sig_z_central_spin(times, chain_length, J, J_xy, B0, As, periodic_b
                     exp_sig_z[sample] = calc_exp_sig_z_central_spin(
                         times, N, J, J_xy, B, A, periodic_boundaries, seed, scaling)
                 exp_sig_z_mean = exp_sig_z.mean(axis=0)
-                yerrors = exp_sig_z.std(axis=0) / np.sqrt(samples[i])
+                exp_sig_z_std = exp_sig_z.std(axis=0)
+                yerrors = exp_sig_z_std / np.sqrt(samples[i])
                 if save:
                     exp_sig_z_means[i, a, b] = exp_sig_z_mean
-                    exp_sig_z_errors[i, a, b] = yerrors
+                    exp_sig_z_stds[i, a, b] = exp_sig_z_std
                 plt.plot(times, exp_sig_z_mean, label=f"N={N}")
                 plt.fill_between(times, exp_sig_z_mean + yerrors,
                                  exp_sig_z_mean - yerrors, alpha=0.2)
@@ -719,7 +761,7 @@ def plot_exp_sig_z_central_spin(times, chain_length, J, J_xy, B0, As, periodic_b
     plt.semilogx()
     plt.legend(loc=1)
     if save:
-        return [times, exp_sig_z_means, exp_sig_z_errors]
+        return [times, exp_sig_z_means, exp_sig_z_stds]
 
 
 def calc_correlation(times, chain_length, J, J_xy, B0, A, periodic_boundaries,

@@ -88,7 +88,8 @@ if outputtype in ["plot_g"]:
 
 if outputtype in ["plot_half_chain_entropy", "plot_single_shot_half_chain_entropy",
                   "plot_occupation_imbalance", "plot_single_shot_occupation_imbalance",
-                  "plot_exp_sig_z_central_spin", "plot_correlation", "calc_psi_t"]:
+                  "plot_exp_sig_z_central_spin", "plot_single_shot_exp_sig_z_central_spin",
+                  "plot_correlation", "calc_psi_t"]:
     t = np.logspace(np.log10(float(Other["timestart"])), np.log10(
         float(Other["timeend"])), int(Other["timesteps"]) + 1)
 
@@ -130,6 +131,10 @@ elif outputtype == "plot_single_shot_occupation_imbalance":
 elif outputtype == "plot_exp_sig_z_central_spin":
     data = output.plot_exp_sig_z_central_spin(t, chain_length, J, J_xy, B0, A, periodic_boundaries,
                                               samples, seed, scaling, save_path)
+
+elif outputtype == "plot_single_shot_exp_sig_z_central_spin":
+    data = output.plot_single_shot_exp_sig_z_central_spin(
+        t, chain_length, J, J_xy, B0, A, periodic_boundaries, samples, seed, scaling, save_path)
 
 elif outputtype == "plot_correlation":
     data = output.plot_correlation(t, chain_length, J, J_xy, B0, A, periodic_boundaries, samples,
