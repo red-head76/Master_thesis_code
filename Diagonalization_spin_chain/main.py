@@ -96,7 +96,7 @@ if outputtype in ["plot_half_chain_entropy", "plot_single_shot_half_chain_entrop
 
 if outputtype == "plot_time_evo":
     data = output.plot_time_evo(t, idx_psi_0, chain_length[0], J, J_xy, B0[0], A[0], spin_constant,
-                                periodic_boundaries, central_spin, save_path)
+                                periodic_boundaries, central_spin, seed, save_path)
 
 elif outputtype == "animate_time_evo":
     data = output.animate_time_evo(t, idx_psi_0, chain_length[0], J, J_xy, B0[0], A[0],
