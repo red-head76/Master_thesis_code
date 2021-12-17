@@ -12,7 +12,7 @@ from time_evo import time_evo_sigma_z, time_evo_subspace
 
 
 def plot_time_evo(t, idx_psi_0, chain_length, J, J_xy, B0, A, spin_constant,
-                  periodic_boundaries, central_spin, save):
+                  periodic_boundaries, central_spin, seed=False, save=False):
     """
     Plots the time evolution of the spin chain and the optional central spin
 
@@ -40,7 +40,7 @@ def plot_time_evo(t, idx_psi_0, chain_length, J, J_xy, B0, A, spin_constant,
     total_spins = central_spin + chain_length
     dim = np.array(2**total_spins, dtype=np.int)
     exp_sig_z = time_evo_sigma_z(t, idx_psi_0, chain_length, J, J_xy, B0, A, spin_constant,
-                                 periodic_boundaries, central_spin)
+                                 periodic_boundaries, central_spin, seed)
     total_spins = chain_length + central_spin
     fig, ax = plt.subplots(total_spins, 1, figsize=(
         10, 1 + total_spins), sharex=True)
