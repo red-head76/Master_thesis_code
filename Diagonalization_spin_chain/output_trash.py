@@ -7,6 +7,60 @@ import diagonalization as diag
 from time_evo import time_evo_sigma_z, time_evo_subspace
 
 
+def calc_half_chain_entropy_old(times, chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin,
+                                seed, scaling):
+    """
+    Calculates the half chain entropy -tr(rho_a, ln(rho_a))
+
+    Args:
+        times (array (float) [tD]): the time array, where g should be calculated
+        chain_length (int): the length of the spin chain
+        J (float): Spin chain coupling in z-direction
+        J_xy (float): Spin chain coupling in xy-direction
+        B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
+                                between (-1, 1).
+        A (float): coupling between the central spin and the spins in the chain
+        periodic_boundaries (bool): determines whether or not periodic boundary
+                                                  conditions are used in the chain.
+        central_spin (bool): determines whether or not a central spin is present
+        seed (int): use a seed to produce comparable outcomes if False, then it is initialized
+                    randomly
+        scaling (string): the scaling of the coupling A with the chain length.
+
+    Returns:
+        half_chain_entropy (array (float) [times])
+
+    """
+
+    total_spins = chain_length + central_spin
+    dim = np.int(2**total_spins)
+    # This mask filters out the states of the biggest subspace
+    subspace_mask = np.where(np.logical_not(np.sum(sf.unpackbits(np.arange(dim), total_spins),
+                                                   axis=1) - total_spins//2))[0]
+
+    eigenvalues, eigenvectors = diag.eig_values_vectors_spin_const(
+        chain_length, J, J_xy, B0, A, periodic_boundaries,
+        central_spin, n_up=total_spins//2, seed=seed, scaling=scaling)
+    psi_t = time_evo_subspace(times, eigenvalues, eigenvectors, total_spins)
+    # This performs an outer product along axis 1
+    rho_t = psi_t[:, :, np.newaxis] * psi_t.conj()[:, np.newaxis, :]
+    # # Old way: go back to full space to calculate the partial trace. Even though there must
+    # # be a smarter way to do this...
+    # rho_t_fullspace = np.zeros((times.size, dim, dim), dtype=complex)
+    # subspace_mask2D = np.meshgrid(subspace_mask, subspace_mask)
+    # rho_t_fullspace[:, subspace_mask2D[1], subspace_mask2D[0]] = rho_t
+    # # partial_trace over b -> rho_a(t)
+    # rho_a_t = sf.partial_trace(rho_t_fullspace, total_spins//2)
+    # Smarter way to to it:
+    rho_a_t = sf.partial_trace_subspace(rho_t, subspace_mask, total_spins//2)
+    # hce = -tr(rho_a ln(rho_a))
+    #     = -tr(rho ln(rho)) = tr(D ln(D)), where D is the diagonalized matrix
+    # should be real positive anyways, but to prevent complex casting warnings
+    D = np.linalg.eigvalsh(rho_a_t)
+    # ugly, but cuts out the the Runtime warning caused by of 0 values in log
+    return -np.sum(D * np.log(D, where=D > 0, out=np.zeros(D.shape, dtype=D.dtype)), axis=1)
+
+
 def generate_f_values(chain_length, J, B0, A, periodic_boundaries, central_spin,
                       spin_constant):
     """

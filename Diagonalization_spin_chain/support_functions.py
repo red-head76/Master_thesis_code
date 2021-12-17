@@ -36,16 +36,18 @@ def create_basis_vectors(indices, dimension):
 # uint8. This means it is restricted to a chain_length of 8.
 
 
-def unpackbits(x, num_bits):
+def unpackbits(x, num_bits, order_big_first=False):
     """
     Similar to np.unpackbits, but can also handle longer uints than uint8
     From: https://stackoverflow.com/a/51509307
-    The arrays get zero padded on the right, which means x=3, num_bits=4 returns:
-    (1 1 0 0)
+    The arrays get zero padded according to num_bits
 
     Args:
         x (array [N]): input array with integers
         num_bits (int, default: chain_length): number of bits
+        order_big_first (bool, default: True): ordering of bits.
+          - if True: x=3, num_bits=4 => (0, 0, 1, 1)
+          - if False: x=3, num_bits=4 => (1, 1, 0, 0)
 
     Returns:
         unpacked_bits (array [N, chain_length]): array of unpacked bits
@@ -56,24 +58,33 @@ def unpackbits(x, num_bits):
         raise ValueError("numpy data type needs to be int-like")
     xshape = list(x.shape)
     x = x.reshape([-1, 1])
-    mask = 2**np.arange(num_bits, dtype=x.dtype).reshape([1, num_bits])
+    if order_big_first:
+        mask = 2**np.arange(num_bits - 1, -1, -1, dtype=x.dtype).reshape([1, num_bits])
+    else:
+        mask = 2**np.arange(num_bits, dtype=x.dtype).reshape([1, num_bits])
     return (x & mask).astype(bool).astype(int).reshape(xshape + [num_bits])
 
 
-def packbits(x):
+def packbits(x, order_big_first=False):
     """
     Similar to np.packbits, but can also handle longer uints than uint8
-    Example: packbits([1, 1, 0, 0]) = 1 * 1 + 1 * 2 + 0 * 4 + 0 * 8 = 3
 
     Args:
         x (array [N, chain_length]): input array of unpacked bits
         num_bits (int, default: chain_length): number of bits
+        order_big_first (bool, default: False): order of bits
+          - if True: packbits([1, 1, 0, 0]) = 1 * 8 + 1 * 4 + 0 * 2 + 0 * 1 = 12
+          - if False: packbits([1, 1, 0, 0]) = 1 * 1 + 1 * 2 + 0 * 4 + 0 * 8 = 3
 
     Returns:
         packed_bits (array [x.shape[0]]): an array of integer
 
     """
-    mask = 2**np.arange(x.shape[-1])
+    x = np.array(x)
+    if order_big_first:
+        mask = 2**np.arange(x.shape[-1] - 1, -1, -1)
+    else:
+        mask = 2**np.arange(x.shape[-1])
     return mask @ x.transpose()
 
 
