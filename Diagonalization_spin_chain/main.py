@@ -69,29 +69,30 @@ picture_format = config_object.get("Output", "picture_format")
 # Other setup
 Other = config_object["Other"]
 seed = int(Other["seed"])
+timestart = float(Other["timestart"])
+timeend = float(Other["timeend"])
+timesteps = int(Other["timesteps"]) + 1
+idx_psi_0 = int(Other["idx_psi_0"])
 
 # Set to true in the following, if an animation is called
 anim = False
 
 if outputtype in ["plot_time_evo", "animate_time_evo"]:
     # Initial state
-    idx_psi_0 = int(Other["idx_psi_0"])
     # Time array
-    t = np.linspace(0, float(Other["timeend"]), int(Other["timesteps"]))
+    t = np.linspace(timestart, timeend, timesteps)
 
 if outputtype in ["plot_g"]:
     # Initial state
     rho0 = [np.eye(d) / d for d in dim]
     # Time array
-    t = np.linspace(0, float(Other["timeend"]), int(Other["timesteps"]) + 1)
-
+    t = np.linspace(timestart, timeend, timesteps)
 
 if outputtype in ["plot_half_chain_entropy", "plot_single_shot_half_chain_entropy",
                   "plot_occupation_imbalance", "plot_single_shot_occupation_imbalance",
                   "plot_exp_sig_z_central_spin", "plot_single_shot_exp_sig_z_central_spin",
                   "plot_correlation", "calc_psi_t"]:
-    t = np.logspace(np.log10(float(Other["timestart"])), np.log10(
-        float(Other["timeend"])), int(Other["timesteps"]) + 1)
+    t = np.logspace(np.log10(timestart), np.log10(timeend), timesteps)
 
 if outputtype == "plot_time_evo":
     data = output.plot_time_evo(t, idx_psi_0, chain_length[0], J, J_xy, B0[0], A[0], spin_constant,

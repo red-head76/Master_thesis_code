@@ -65,11 +65,11 @@ def create_config():
         # In certain cases a random seed can be used to produce comparable outcomes. 0 equals None
         "seed": "0"
     }
-
-    # Write the above sections to config.ini file
-    with open('config.ini', 'w') as conf:
-        config_object.write(conf)
+    return config_object
 
 
 if __name__ == "__main__":
-    create_config()
+    config_object = create_config()
+    # Write the above sections to config.ini file
+    with open('config.ini', 'w') as conf:
+        config_object.write(conf)
