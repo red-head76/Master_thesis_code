@@ -12,7 +12,7 @@ from time_evo import time_evo_sigma_z, time_evo_subspace
 
 
 def plot_time_evo(t, idx_psi_0, chain_length, J, J_xy, B0, A, spin_constant,
-                  periodic_boundaries, central_spin, seed=False, save=False):
+                  periodic_boundaries, central_spin, seed=False, scaling="sqrt", save=False):
     """
     Plots the time evolution of the spin chain and the optional central spin
 
@@ -40,7 +40,7 @@ def plot_time_evo(t, idx_psi_0, chain_length, J, J_xy, B0, A, spin_constant,
     total_spins = central_spin + chain_length
     dim = np.array(2**total_spins, dtype=np.int)
     exp_sig_z = time_evo_sigma_z(t, idx_psi_0, chain_length, J, J_xy, B0, A, spin_constant,
-                                 periodic_boundaries, central_spin, seed)
+                                 periodic_boundaries, central_spin, seed, scaling)
     total_spins = chain_length + central_spin
     fig, ax = plt.subplots(total_spins, 1, figsize=(
         10, 1 + total_spins), sharex=True)
@@ -60,7 +60,7 @@ def plot_time_evo(t, idx_psi_0, chain_length, J, J_xy, B0, A, spin_constant,
 
 
 def animate_time_evo(t, idx_psi_0, chain_length, J, J_xy, B0, A, spin_constant,
-                     periodic_boundaries, central_spin, seed, save):
+                     periodic_boundaries, central_spin, seed, scaling="sqrt", save="False"):
     """
     Animate the time evolution of the spin chain and the optional central spin
 
@@ -256,7 +256,7 @@ def generate_r_values(chain_length, J, J_xy, B0, A, periodic_boundaries, central
 
 
 def plot_r_values(chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin,
-                  spin_constant, samples, save):
+                  spin_constant, samples, scaling="sqrt", save=False):
     """
     Plots the histogram of r_values created by the given parameters.
 
@@ -299,7 +299,8 @@ def plot_r_values(chain_length, J, J_xy, B0, A, periodic_boundaries, central_spi
         return [r_values]
 
 
-def plot_r_fig3(chain_length, J, J_xy, B0, periodic_boundaries, samples, save):
+def plot_r_fig3(chain_length, J, J_xy, B0, periodic_boundaries, samples, scaling="sqrt",
+                save=False):
     """
     Plots the r values as done in Figure 3 in https://doi.org/10.1103/PhysRevB.82.174411
 
@@ -340,7 +341,7 @@ def plot_r_fig3(chain_length, J, J_xy, B0, periodic_boundaries, samples, save):
 
 
 def calc_half_chain_entropy(times, chain_length, J, J_xy, B0, A, periodic_boundaries,
-                                 central_spin, seed, scaling):
+                            central_spin, seed, scaling):
     """
     Calculates the half chain entropy -tr_a(rho_a, ln(rho_a))
 

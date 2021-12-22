@@ -225,8 +225,8 @@ def save_data(save_path, data, config_file, time_passed, save_plot=True, picture
         elif anim:
             writervideo = animation.FFMpegWriter(fps=fps)
             anim.save(save_path, writer=writervideo)
-    else:
-        close()
+    # else:
+    #     close()
     np.savez(save_path, *data)
     if not parallelized:
         copy(config_file, save_path + ".ini")

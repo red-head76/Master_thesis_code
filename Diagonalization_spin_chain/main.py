@@ -96,20 +96,21 @@ if outputtype in ["plot_half_chain_entropy", "plot_single_shot_half_chain_entrop
 
 if outputtype == "plot_time_evo":
     data = output.plot_time_evo(t, idx_psi_0, chain_length[0], J, J_xy, B0[0], A[0], spin_constant,
-                                periodic_boundaries, central_spin, seed, save_path)
+                                periodic_boundaries, central_spin, seed, scaling, save_path)
 
 elif outputtype == "animate_time_evo":
     data = output.animate_time_evo(t, idx_psi_0, chain_length[0], J, J_xy, B0[0], A[0],
-                                   spin_constant, periodic_boundaries, central_spin, seed,
+                                   spin_constant, periodic_boundaries, central_spin, seed, scaling,
                                    save_path)
     anim = True
 
 elif outputtype == "plot_r":
     data = output.plot_r_values(chain_length[0], J, J_xy, B0[0], A[0], periodic_boundaries,
-                                central_spin, spin_constant, samples[0], save_path)
+                                central_spin, spin_constant, samples[0], scaling, save_path)
 
 elif outputtype == "plot_r_fig3":
-    data = output.plot_r_fig3(chain_length, J, J_xy, B0, periodic_boundaries, samples, save_path)
+    data = output.plot_r_fig3(chain_length, J, J_xy, B0, periodic_boundaries, samples, scaling,
+                              save_path)
 
 elif outputtype == "plot_half_chain_entropy":
     data = output.plot_half_chain_entropy(t, chain_length, J, J_xy, B0, A, periodic_boundaries,
