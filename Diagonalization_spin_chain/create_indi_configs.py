@@ -2,18 +2,17 @@ from create_config import create_config
 
 config_object = create_config()
 
-Ls = [8, 10, 12]
+Ls = [14]
 Js = [0]
 J_xys = [0]
 Bs = [1]
 As = [1]
 
-outputtypes = ["half_chain_entropy", "occupation_imbalance"]
+outputtypes = ["half_chain_entropy", "occupation_imbalance", "exp_sig_z_central_spin"]
 
 # System setup
 System = config_object["System"]
 System["central_spin"] = "True"
-System["chain_length"] = "14"
 System["periodic_boundaries"] = "True"
 System["spin_constant"] = "True"
 
@@ -23,7 +22,7 @@ Constants["scaling"] = "sqrt"
 
 # Output option
 Output = config_object["Output"]
-Output["samples"] = "2"
+Output["samples"] = "20"
 Output["show"] = "False"
 Output["save_plot"] = "False"
 
@@ -50,7 +49,9 @@ for L in Ls:
                             signature = "hce"
                         elif outputtype == "occupation_imbalance":
                             signature = "oi"
-                        if len(Ls) <= 1:
+                        elif outputtype == "exp_sig_z_central_spin":
+                            signature = "cs"
+                        if len(Ls) > 1:
                             signature += f"_{L}"
                         signature += f"_{J}{J_xy}{B}{A}"
                         Output["filename"] = f"./Plots/individual_mechanisms/{signature}"
