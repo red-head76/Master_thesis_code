@@ -36,9 +36,13 @@ def pool_data_files(root):
                 pool_eigvals_eigvecs(config_object, filename, samples)
             elif outputtype == "plot_occupation_imbalance":
                 pool_occupation_imbalance(config_object, filename, samples)
+            elif outputtype == "plot_exp_sig_z_central_spin":
+                pool_exp_sig_z_central_spin(config_object, filename, samples)
             else:
                 raise NotImplementedError(
                     f"Error for {config_name}: Pooling of {outputtype} isn't implemented (yet).")
+            for i in range(samples):
+                os.remove(f"{filename}_{i}.npz")
             for i in range(samples):
                 if os.path.isfile(f"{root}/{config_name[:-4]}_{i}.ini"):
                     os.remove(f"{root}/{config_name[:-4]}_{i}.ini")
@@ -47,7 +51,7 @@ def pool_data_files(root):
 
 
 def pool_eigvals_eigvecs(config_object, filename, samples):
-    # data : eigenvalues [dim], eigenvectors [dim, dim]
+    # data: eigenvalues [dim], eigenvectors [dim, dim]
     data0 = np.load(filename + "_0.npz")
     dim = data0["arr_0"].size
     pooled_eigenvalues = np.empty((samples, dim))
@@ -57,12 +61,10 @@ def pool_eigvals_eigvecs(config_object, filename, samples):
         pooled_eigenvalues[i] = data["arr_0"]
         pooled_eigenvectors[i] = data["arr_1"]
     np.savez(filename + ".npz", pooled_eigenvalues, pooled_eigenvectors)
-    for i in range(samples):
-        os.remove(f"{filename}_{i}.npz")
 
 
 def pool_occupation_imbalance(config_object, filename, samples):
-    # data : [times, occupation_imbalance_means, occupation_imbalance_stds]
+    # data: [times, occupation_imbalance_means, occupation_imbalance_stds]
     times_size = config_object.getint("Other", "timesteps") + 1
     occupation_imbalances = np.empty([samples, times_size])
     for i in range(samples):
@@ -73,8 +75,19 @@ def pool_occupation_imbalance(config_object, filename, samples):
         occupation_imbalances[i] = data["arr_1"]
     np.savez(f"{filename}.npz", times,
              occupation_imbalances.mean(axis=0), occupation_imbalances.std(axis=0))
+
+
+def pool_exp_sig_z_central_spin(config_object, filename, samples):
+    # data: [times, exp_sig_z_means, exp_sig_z_stds]
+    times_size = config_object.getint("Other", "timesteps") + 1
+    exp_sig_zs = np.empty((samples, times_size))
     for i in range(samples):
-        os.remove(f"{filename}_{i}.npz")
+        data = np.load(f"{filename}_{i}.npz")
+        if i == 0:
+            times = data["arr_0"]
+        exp_sig_zs[i] = data["arr_1"]
+    np.savez(f"{filename}.npz", times,
+             exp_sig_zs.mean(axis=0), exp_sig_zs.std(axis=0))
 
 
 for root, dirs, files in os.walk(path_to_look):
