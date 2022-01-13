@@ -320,24 +320,29 @@ def plot_r_fig3(chain_length, J, J_xy, B0, periodic_boundaries, samples, scaling
     """
 
     mean_r_values = np.empty((np.size(chain_length), np.size(B0)))
+    std_r_values = np.empty((np.size(chain_length), np.size(B0)))
     if np.size(samples) == 1:
         samples = np.ones(np.size(chain_length), dtype=np.int) * samples
     for i, N in enumerate(chain_length):
         for j, B in enumerate(B0):
-            r_values = generate_r_values(N, J, J_xy, B, 0, periodic_boundaries, False, True)
+            r_values = generate_r_values(N, J, J_xy, B, A[0], periodic_boundaries,
+                                         central_spin, True)
             for _ in range(samples[i] - 1):
-                r_values += generate_r_values(N, J, J_xy, B, 0, periodic_boundaries, False, True)
+                r_values += generate_r_values(N, J, J_xy, B, A[0], periodic_boundaries,
+                                              central_spin, True)
+            # Averaging over samples
             r_values /= samples[i]
-            # Averaging over samples and states at the same time
+            # and states
             mean_r_values[i, j] = np.mean(r_values)
-        yerrors = 1 / np.sqrt(samples[i])
-        plt.errorbar(B0, mean_r_values[i], yerr=yerrors, marker="o", capsize=5,
-                     linestyle="--", label=f"N={N}")
+            std_r_values[i, j] = np.std(r_values)
+        plt.errorbar(B0, mean_r_values[i], yerr=std_r_values[i]/np.sqrt(samples[i]), marker="o",
+                     capsize=5, linestyle="--", label=f"N={N}")
     plt.xlabel("Magnetic field amplitude B0")
     plt.ylabel("r-value")
+    # plt.ylim(0.36, 0.54)
     plt.legend()
     if save:
-        return [B0, mean_r_values]
+        return [B0, mean_r_values, std_r_values]
 
 
 def calc_half_chain_entropy(times, chain_length, J, J_xy, B0, A, periodic_boundaries,
