@@ -284,8 +284,8 @@ def plot_r_values(chain_length, J, J_xy, B0, A, periodic_boundaries, central_spi
     r_values = generate_r_values(chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin,
                                  spin_constant)
     for _ in range(samples - 1):
-        r_values += generate_r_values(chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin,
-                                      spin_constant)
+        r_values += generate_r_values(chain_length, J, J_xy, B0, A,
+                                      periodic_boundaries, central_spin, spin_constant)
     # Average over samples
     r_values /= samples
     plt.hist(r_values, bins=sturge_rule(r_values.size), density=True)
@@ -299,8 +299,8 @@ def plot_r_values(chain_length, J, J_xy, B0, A, periodic_boundaries, central_spi
         return [r_values]
 
 
-def plot_r_fig3(chain_length, J, J_xy, B0, periodic_boundaries, samples, scaling="sqrt",
-                save=False):
+def plot_r_fig3(chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin, samples,
+                scaling="sqrt", save=False):
     """
     Plots the r values as done in Figure 3 in https://doi.org/10.1103/PhysRevB.82.174411
 
