@@ -170,7 +170,7 @@ def calc_psi_t(times, chain_length, J, J_xy, B0, A, periodic_boundaries, central
     eigvals, eigvecs = diag.eig_values_vectors_spin_const(chain_length, J, J_xy, B0, A,
                                                           periodic_boundaries, central_spin,
                                                           n_up, seed, scaling)
-    return time_evo_subspace(times, eigvals, eigvecs, total_spins, inital_state, 32)
+    return time_evo_subspace(times, eigvals, eigvecs, total_spins, inital_state)
 
 
 # Histogram functions for r_value
