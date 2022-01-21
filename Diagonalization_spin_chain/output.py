@@ -222,7 +222,7 @@ def sturge_rule(n):
 
 
 def generate_r_values(chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin,
-                      spin_constant, binning_func=sturge_rule):
+                      spin_constant):
     """
     Calculates the r value, the fraction of the difference of eigenvalues of the given Hamiltonian:
     r = min (ΔE_n, ΔE_n+1) / max (ΔE_n, ΔE_n+1)
