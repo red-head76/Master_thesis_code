@@ -98,11 +98,17 @@ if outputtype == "plot_time_evo":
     data = output.plot_time_evo(t, idx_psi_0, chain_length[0], J, J_xy, B0[0], A[0], spin_constant,
                                 periodic_boundaries, central_spin, seed, scaling, save_path)
 
+elif outputtype == "plot_light_cone":
+    data = output.plot_light_cone(t, idx_psi_0, chain_length[0], J, J_xy, B0[0], A[0],
+                                  spin_constant, periodic_boundaries, central_spin, seed, scaling,
+                                  save_path)
+
 elif outputtype == "animate_time_evo":
     data = output.animate_time_evo(t, idx_psi_0, chain_length[0], J, J_xy, B0[0], A[0],
                                    spin_constant, periodic_boundaries, central_spin, seed, scaling,
                                    save_path)
-    anim = True
+    anim = data[-1]
+    data = data[:-1]
 
 elif outputtype == "plot_r":
     data = output.plot_r_values(chain_length[0], J, J_xy, B0[0], A[0], periodic_boundaries,

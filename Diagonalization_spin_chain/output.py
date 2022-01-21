@@ -42,8 +42,8 @@ def plot_time_evo(t, idx_psi_0, chain_length, J, J_xy, B0, A, spin_constant,
     exp_sig_z = time_evo_sigma_z(t, idx_psi_0, chain_length, J, J_xy, B0, A, spin_constant,
                                  periodic_boundaries, central_spin, seed, scaling)
     total_spins = chain_length + central_spin
-    fig, ax = plt.subplots(total_spins, 1, figsize=(
-        10, 1 + total_spins), sharex=True)
+    fig, ax = plt.subplots(total_spins, 1, figsize=(5, (1 + total_spins)),
+                           sharex=True, tight_layout=True)
     plt.subplots_adjust(hspace=0.5)
     for i in range(total_spins):
         if i != (total_spins - 1) or not central_spin:
@@ -53,10 +53,11 @@ def plot_time_evo(t, idx_psi_0, chain_length, J, J_xy, B0, A, spin_constant,
             ax[i].set_title("central spin")
         ax[i].axhline(0, color="black")
         ax[i].set_ylim(-0.55, 0.55)
-
         ax[-1].set_xlabel("Time in fs")
-        if save:
-            return [t, exp_sig_z]
+    if save:
+        return [t, exp_sig_z]
+
+
 def plot_light_cone(t, idx_psi_0, chain_length, J, J_xy, B0, A, spin_constant,
                     periodic_boundaries, central_spin, seed=False, scaling="sqrt", save=False):
     total_spins = central_spin + chain_length
