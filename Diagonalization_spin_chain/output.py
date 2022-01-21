@@ -104,12 +104,12 @@ def animate_time_evo(t, idx_psi_0, chain_length, J, J_xy, B0, A, spin_constant,
                                  periodic_boundaries, central_spin, seed)
     total_spins = chain_length + central_spin
     np.random.seed(seed)
-    B = np.random.uniform(-1, 1, chain_length)
+    B = np.random.uniform(-1, 1, chain_length) * min(B0, 1)
     fig, ax = plt.subplots(figsize=(10, 8))
     # Stem container containing markerline, stemlines, baseline
     stem_container = ax.stem(
         np.arange(total_spins), exp_sig_z[0], use_line_collection=True)
-    ax.step(np.arange(total_spins), B, color="C2", where="mid")
+    ax.step(np.arange(chain_length), B, color="C2", where="mid")
     # ax.set_ylim(-0.6, 0.7)
     if central_spin:
         # stem_container[1][-1].set_color("C1")
@@ -123,10 +123,11 @@ def animate_time_evo(t, idx_psi_0, chain_length, J, J_xy, B0, A, spin_constant,
                                      for (x, y) in zip(np.arange(total_spins), exp_sig_z[i])])
         return stem_container
 
-    anim = animation.FuncAnimation(
-        fig, run, frames=t.size, blit=True, interval=100)
+    anim = animation.FuncAnimation(fig, run, frames=t.size, blit=True, interval=100)
     if save:
-        return [t, exp_sig_z]
+        return [t, exp_sig_z, anim]
+    else:
+        return [anim]
 
 
 def calc_eigvals_eigvecs_biggest_subspace(chain_length, J, J_xy, B0, A, periodic_boundaries,
