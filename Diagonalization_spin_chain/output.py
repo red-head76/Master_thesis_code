@@ -57,6 +57,17 @@ def plot_time_evo(t, idx_psi_0, chain_length, J, J_xy, B0, A, spin_constant,
         ax[-1].set_xlabel("Time in fs")
         if save:
             return [t, exp_sig_z]
+def plot_light_cone(t, idx_psi_0, chain_length, J, J_xy, B0, A, spin_constant,
+                    periodic_boundaries, central_spin, seed=False, scaling="sqrt", save=False):
+    total_spins = central_spin + chain_length
+    dim = np.array(2**total_spins, dtype=np.int)
+    exp_sig_z = time_evo_sigma_z(t, idx_psi_0, chain_length, J, J_xy, B0, A, spin_constant,
+                                 periodic_boundaries, central_spin, seed, scaling)
+    total_spins = chain_length + central_spin
+
+    plt.imshow(exp_sig_z, aspect="auto")
+    if save:
+        return [t, exp_sig_z]
 
 
 def animate_time_evo(t, idx_psi_0, chain_length, J, J_xy, B0, A, spin_constant,

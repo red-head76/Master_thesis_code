@@ -77,7 +77,7 @@ idx_psi_0 = int(Other["idx_psi_0"])
 # Set to true in the following, if an animation is called
 anim = False
 
-if outputtype in ["plot_time_evo", "animate_time_evo"]:
+if outputtype in ["plot_time_evo", "animate_time_evo", "plot_light_cone"]:
     # Initial state
     # Time array
     t = np.linspace(timestart, timeend, timesteps)
