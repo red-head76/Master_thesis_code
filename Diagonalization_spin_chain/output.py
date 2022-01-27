@@ -41,7 +41,6 @@ def plot_time_evo(t, idx_psi_0, chain_length, J, J_xy, B0, A, spin_constant,
     dim = np.array(2**total_spins, dtype=np.int)
     exp_sig_z = time_evo_sigma_z(t, idx_psi_0, chain_length, J, J_xy, B0, A, spin_constant,
                                  periodic_boundaries, central_spin, seed, scaling)
-    total_spins = chain_length + central_spin
     fig, ax = plt.subplots(total_spins, 1, figsize=(5, (1 + total_spins)),
                            sharex=True, tight_layout=True)
     plt.subplots_adjust(hspace=0.5)
@@ -103,7 +102,8 @@ def animate_time_evo(t, idx_psi_0, chain_length, J, J_xy, B0, A, spin_constant,
     exp_sig_z = time_evo_sigma_z(t, idx_psi_0, chain_length, J, J_xy, B0, A, spin_constant,
                                  periodic_boundaries, central_spin, seed)
     total_spins = chain_length + central_spin
-    np.random.seed(seed)
+    if seed:
+        np.random.seed(seed)
     B = np.random.uniform(-1, 1, chain_length) * min(B0, 1)
     fig, ax = plt.subplots(figsize=(10, 8))
     # Stem container containing markerline, stemlines, baseline

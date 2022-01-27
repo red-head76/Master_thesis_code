@@ -91,7 +91,7 @@ if outputtype in ["plot_g"]:
 if outputtype in ["plot_half_chain_entropy", "plot_single_shot_half_chain_entropy",
                   "plot_occupation_imbalance", "plot_single_shot_occupation_imbalance",
                   "plot_exp_sig_z_central_spin", "plot_single_shot_exp_sig_z_central_spin",
-                  "plot_correlation", "calc_psi_t"]:
+                  "plot_correlation", "calc_psi_t", "plot_2_spin_up"]:
     t = np.logspace(np.log10(timestart), np.log10(timeend), timesteps)
 
 if outputtype == "plot_time_evo":
@@ -150,16 +150,16 @@ elif outputtype == "plot_correlation":
 
 # Old stuff
 elif outputtype == "plot_f_fig2":
-    data = output_trash.plot_f_fig2(chain_length, J, J_xy, B0,
-                                    periodic_boundaries, samples, save_path)
+    data = output_trash.plot_f_fig2(chain_length, J, J_xy, B0, periodic_boundaries, samples,
+                                    save_path)
 
 elif outputtype == "plot_g":
-    data = output_trash.plot_g_value(rho0, t, chain_length, J, J_xy, B0,
-                                     periodic_boundaries, samples, save_path)
+    data = output_trash.plot_g_value(rho0, t, chain_length, J, J_xy, B0, periodic_boundaries,
+                                     samples, save_path)
 
 elif outputtype == "plot_fa":
-    data = output_trash.plot_fa_values(chain_length, J, J_xy, B0, A[0],
-                                       periodic_boundaries, central_spin, samples, save_path)
+    data = output_trash.plot_fa_values(chain_length, J, J_xy, B0, A[0], periodic_boundaries,
+                                       central_spin, samples, save_path)
 
 elif outputtype == "calc_eigvals_eigvecs":
     data = output.calc_eigvals_eigvecs_biggest_subspace(chain_length, J, J_xy, B0, A,

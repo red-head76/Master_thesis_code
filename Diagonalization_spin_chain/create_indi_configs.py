@@ -53,7 +53,7 @@ for L in Ls:
                             signature = "cs"
                         if len(Ls) > 1:
                             signature += f"_{L}"
-                        signature += f"_{J}{J_xy}{B}{A}"
+                        signature += f"_{J}{J_xy}{B}{str(A).replace('.','')}"
                         Output["filename"] = f"./Plots/individual_mechanisms/{signature}"
                         with open(f"./config_files/{signature}.ini", 'w') as conf:
                             config_object.write(conf)
