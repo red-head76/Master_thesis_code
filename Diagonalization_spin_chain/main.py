@@ -171,6 +171,11 @@ elif outputtype == "calc_psi_t":
                              seed, scaling)
     anim = None
 
+elif outputtype == "plot_2_spin_up":
+    data = output.plot_2_spin_up(t, chain_length[0], J, J_xy, B0[0], A[0], spin_constant,
+                                 periodic_boundaries, central_spin, seed=False, scaling="sqrt",
+                                 save=False)
+
 else:
     raise ValueError(f"Option '{outputtype}' unknown")
 

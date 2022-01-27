@@ -877,3 +877,30 @@ def plot_correlation(times, chain_length, J, J_xy, B0, As, periodic_boundaries,
     plt.legend(loc=1)
     if save:
         return [times, sigma_squared_means, sigma_squared_stds]
+
+
+def plot_2_spin_up(t, chain_length, J, J_xy, B0, A, spin_constant,
+                   periodic_boundaries, central_spin, seed=False, scaling="sqrt", save=False):
+    """
+    Initializes two spins up at pos_up1 and pos_up2, the rest spin down.
+    Then the expectation value of Sz at these positions is added and plotted over time.
+    """
+    total_spins = central_spin + chain_length
+    dim = np.array(2**total_spins, dtype=np.int)
+    pos_up1 = chain_length//2
+    pos_up2 = chain_length//2 + 1
+    idx_psi_0 = int(2**(pos_up1) + 2**pos_up2)
+    exp_sig_z = time_evo_sigma_z(t, idx_psi_0, chain_length, J, J_xy, B0, A, spin_constant,
+                                 periodic_boundaries, central_spin, seed, scaling)
+    # Expectation values of Sz at the initial positions added
+    if pos_up2 < pos_up1:
+        pos_up1, pos_up2 = pos_up2, pos_up2
+    exp_sig_z_at_init = exp_sig_z[:, pos_up1-1:pos_up2+2].sum(axis=1)
+    fig, ax = plt.subplots(tight_layout=True)
+    ax.plot(t, exp_sig_z_at_init)
+    ax.set_xlabel("Time in fs")
+    ax.set_ylabel("Sum $S_z$ at inital positions")
+    ax.semilogx()
+    plt.show()
+    if save:
+        return [t, exp_sig_z_at_init]
