@@ -52,7 +52,16 @@ def plot_time_evo(t, idx_psi_0, chain_length, J, J_xy, B0, A, spin_constant,
             ax[i].set_title("central spin")
         ax[i].axhline(0, color="black")
         ax[i].set_ylim(-0.55, 0.55)
-        ax[-1].set_xlabel("Time in fs")
+    ax[-1].set_xlabel("Time in fs")
+
+    # fig, ax = plt.subplots(figsize=(8, 6), sharex=True, tight_layout=True)
+    # for i in range(1):
+    #     if i == total_spins and central_spin:
+    #         ax.plot(t, exp_sig_z.T[i], color="black", label="central_spin")
+    #         ax.legend()
+    #     else:
+    #         ax.plot(t, exp_sig_z.T[i])
+
     if save:
         return [t, exp_sig_z]
 
@@ -65,7 +74,9 @@ def plot_light_cone(t, idx_psi_0, chain_length, J, J_xy, B0, A, spin_constant,
                                  periodic_boundaries, central_spin, seed, scaling)
     total_spins = chain_length + central_spin
 
-    plt.imshow(exp_sig_z, aspect="auto")
+    plt.imshow(exp_sig_z, aspect="auto", interpolation="none")
+    plt.yticks(np.arange(0, t.size, t.size//10),
+               t[np.where(np.arange(t.size) % (t.size//10) == 0)].astype(int))
     if save:
         return [t, exp_sig_z]
 
@@ -156,8 +167,8 @@ def calc_eigvals_eigvecs_biggest_subspace(chain_length, J, J_xy, B0, A, periodic
                                               central_spin, n_up, seed, scaling)
 
 
-def calc_psi_t(times, chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin, seed, scaling,
-               inital_state="neel"):
+def calc_psi_t(times, idx_psi_0, chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin,
+               seed, scaling):
     """
     Calculates the time evolution of an initial state
 
@@ -179,11 +190,12 @@ def calc_psi_t(times, chain_length, J, J_xy, B0, A, periodic_boundaries, central
         eigenvalues (float [dim]), eigenvectors (float [dim, dim])
     """
     total_spins = chain_length + central_spin
-    n_up = (total_spins) // 2
+    dim = int(2**total_spins)
+    n_up = sf.unpackbits(idx_psi_0, dim).sum()
     eigvals, eigvecs = diag.eig_values_vectors_spin_const(chain_length, J, J_xy, B0, A,
                                                           periodic_boundaries, central_spin,
                                                           n_up, seed, scaling)
-    return time_evo_subspace(times, eigvals, eigvecs, total_spins, inital_state)
+    return time_evo_subspace(times, eigvals, eigvecs, total_spins, idx_psi_0)
 
 
 # Histogram functions for r_value
@@ -890,6 +902,8 @@ def plot_2_spin_up(t, chain_length, J, J_xy, B0, A, spin_constant,
     pos_up1 = chain_length//2
     pos_up2 = chain_length//2 + 1
     idx_psi_0 = int(2**(pos_up1) + 2**pos_up2)
+    # psi_t = calc_psi_t(t, idx_psi_0, chain_length, J, J_xy, B0, A, periodic_boundaries,
+    #                    central_spin, seed, scaling)
     exp_sig_z = time_evo_sigma_z(t, idx_psi_0, chain_length, J, J_xy, B0, A, spin_constant,
                                  periodic_boundaries, central_spin, seed, scaling)
     # Expectation values of Sz at the initial positions added

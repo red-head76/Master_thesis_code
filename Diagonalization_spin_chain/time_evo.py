@@ -105,6 +105,8 @@ def time_evo_subspace(times, eigenvalues, eigenvectors, total_spins, initial_sta
         psi_0[packbits(np.arange(total_spins) < total_spins // 2)] = 1
     elif "first_up":
         psi_0[1] = 1
+    elif type(initial_state) == int:
+        psi_0[initial_state] = 1
     else:
         raise ValueError()
     psi_0 = psi_0[subspace_mask]
