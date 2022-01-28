@@ -42,7 +42,8 @@ periodic_boundaries = config_object.getboolean("System", "periodic_boundaries")
 
 # Coupling Constants
 Constants = config_object["Constants"]
-J = float(Constants["J"])
+J = config_object.getfloat("Constants", "J")
+J_xy = config_object.getfloat("Constants", "J_xy")
 B = config_object.getfloat("Constants", "B")
 A = config_object.getfloat("Constants", "A")
 scaling = Constants["scaling"]
@@ -50,6 +51,8 @@ if scaling == "inverse":
     A = A / chain_length
 elif scaling == "inverse_sqrt":
     A = A / np.sqrt(chain_length)
+elif scaling == "none":
+    pass
 else:
     raise ValueError(f"'{scaling}' is not a possible scaling argument.")
 
@@ -88,7 +91,7 @@ def parameter_section(realization):
         h_i = np.random.uniform(-1, 1)
         ps += (f"h{i} = {h_i}, eV\n")
     ps += f"B = {B}\n"
-    ps += f"coupx = {J}, eV\n"
+    ps += f"coupx = {J_xy}, eV\n"
     # coupling x = coupling y
     ps += f"coupz = {J}, eV\n"
     if central_spin:
