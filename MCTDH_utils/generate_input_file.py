@@ -260,28 +260,28 @@ def write_everything():
                 answer = input(f"Type 'y' or 'n'")
             if answer == 'n':
                 continue
-            # Try, because there might be wrong inputs
-            try:
-                write_inp_file("./input_files/" + job_name, job_name)
-            except ValueError:
-                os.remove("./input_files/" + job_name + ".inp")
-                print(f"No files for {job_name} were produced.")
+        # Try, because there might be wrong inputs
+        try:
+            write_inp_file("./input_files/" + job_name, job_name)
+        except ValueError:
+            os.remove("./input_files/" + job_name + ".inp")
+            print(f"No files for {job_name} were produced.")
+        else:
+            write_op_file("./input_files/" + job_name, realization)
+            if samples == 1:
+                job_dir = title
             else:
-                write_op_file("./input_files/" + job_name, realization)
-                if samples == 1:
-                    job_dir = title
-                else:
-                    job_dir = title + "_" + str(realization)
-                if os.path.isdir("input_files/" + job_dir):
-                    answer = input(
-                        f"Directory \"input_files/\"{title} does already exist. Overwrite content (y/n)?\n")
-                    while answer not in ['y', 'n']:
-                        answer = input(f"Type 'y' or 'n'")
-                    if answer == 'y':
-                        write_info_file("input_files/" + job_dir + "/")
-                else:
-                    os.mkdir("input_files/" + job_dir)
+                job_dir = title + "_" + str(realization)
+            if os.path.isdir("input_files/" + job_dir):
+                answer = input(
+                    f"Directory \"input_files/\"{title} does already exist. Overwrite content (y/n)?\n")
+                while answer not in ['y', 'n']:
+                    answer = input(f"Type 'y' or 'n'")
+                if answer == 'y':
                     write_info_file("input_files/" + job_dir + "/")
+            else:
+                os.mkdir("input_files/" + job_dir)
+                write_info_file("input_files/" + job_dir + "/")
 
 
 write_everything()
