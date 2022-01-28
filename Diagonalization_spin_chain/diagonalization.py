@@ -15,7 +15,7 @@ def do_scaling(A, chain_length, scaling):
         return A / chain_length
     elif scaling == "sqrt":
         return A / np.sqrt(chain_length)
-    elif scaling == "None":
+    elif scaling == "none":
         return A
     else:
         raise ValueError(
