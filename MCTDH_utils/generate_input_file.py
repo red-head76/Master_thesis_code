@@ -254,9 +254,12 @@ def write_everything():
         if not os.path.isdir("input_files"):
             os.mkdir("input_files")
         if os.path.isfile("input_files/" + job_name + ".inp"):
-            raise Warning(
-                f"file input_files/{job_name}.inp does already exist. Choose another job_name in {config_file}")
-        else:
+            answer = input(
+                f"file input_files/{job_name}.inp does already exist. Overwrite (y/n)?\n")
+            while answer not in ['y', 'n']:
+                answer = input(f"Type 'y' or 'n'")
+            if answer == 'n':
+                continue
             # Try, because there might be wrong inputs
             try:
                 write_inp_file("./input_files/" + job_name, job_name)
@@ -269,12 +272,16 @@ def write_everything():
                     job_dir = title
                 else:
                     job_dir = title + "_" + str(realization)
-                if not os.path.isdir("input_files/" + job_dir):
+                if os.path.isdir("input_files/" + job_dir):
+                    answer = input(
+                        f"Directory \"input_files/\"{title} does already exist. Overwrite content (y/n)?\n")
+                    while answer not in ['y', 'n']:
+                        answer = input(f"Type 'y' or 'n'")
+                    if answer == 'y':
+                        write_info_file("input_files/" + job_dir + "/")
+                else:
                     os.mkdir("input_files/" + job_dir)
                     write_info_file("input_files/" + job_dir + "/")
-                else:
-                    raise Warning(
-                        f"Directory \"input_files/\"{title} does already exist. Choose another title in {config_file}")
 
 
 write_everything()
