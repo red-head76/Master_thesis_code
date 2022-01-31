@@ -18,8 +18,9 @@ def create_config():
         "chain_length": "3",
         # Periodic boundary conditions
         "periodic_boundaries": "True",
-        # Whether the total spin of the system is constant or not
-        "spin_constant": "False"
+        # This is depracted, everything is calculated with spin constant on default
+        # # Whether the total spin of the system is constant or not
+        # "spin_constant": "True"
     }
 
     config_object["Constants"] = {
@@ -57,8 +58,10 @@ def create_config():
     }
 
     config_object["Other"] = {
-        # Index where psi 0 is nonzero
-        "idx_psi_0": "1",
+        # String ('neel', 'neel_inverse', 'domain_wall') or integer. In the latter case, the
+        # state corresponding to unpackbits(initial_state, total_spins) will be used
+        # For example: initial_state = 3, total_spins = 4 -> [1, 1, 0, 0] is used
+        "initial_state": "1",
         # Time parameters (in fs)
         "timestart": "0",
         "timeend": "10",

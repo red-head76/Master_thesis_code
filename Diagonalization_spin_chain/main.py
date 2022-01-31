@@ -46,7 +46,6 @@ chain_length = str_to_int(config_object.getlist("System", "chain_length"))
 total_spins = central_spin + np.array(chain_length)
 dim = np.array(2**total_spins, dtype=int)
 periodic_boundaries = config_object.getboolean("System", "periodic_boundaries")
-spin_constant = config_object.getboolean("System", "spin_constant")
 
 # Coupling Constants
 Constants = config_object["Constants"]
@@ -72,13 +71,12 @@ seed = int(Other["seed"])
 timestart = float(Other["timestart"])
 timeend = float(Other["timeend"])
 timesteps = int(Other["timesteps"]) + 1
-idx_psi_0 = int(Other["idx_psi_0"])
+initial_state = Other["initial_state"]
 
 # Set to true in the following, if an animation is called
 anim = False
 
 if outputtype in ["plot_time_evo", "animate_time_evo", "plot_light_cone"]:
-    # Initial state
     # Time array
     t = np.linspace(timestart, timeend, timesteps)
 
@@ -95,58 +93,64 @@ if outputtype in ["plot_half_chain_entropy", "plot_single_shot_half_chain_entrop
     t = np.logspace(np.log10(timestart), np.log10(timeend), timesteps)
 
 if outputtype == "plot_time_evo":
-    data = output.plot_time_evo(t, idx_psi_0, chain_length[0], J, J_xy, B0[0], A[0], spin_constant,
-                                periodic_boundaries, central_spin, seed, scaling, save_path)
+    data = output.plot_time_evo(t, chain_length[0], J, J_xy, B0[0], A[0],
+                                periodic_boundaries, central_spin, seed, scaling,
+                                save_path, initial_state)
 
 elif outputtype == "plot_light_cone":
-    data = output.plot_light_cone(t, idx_psi_0, chain_length[0], J, J_xy, B0[0], A[0],
-                                  spin_constant, periodic_boundaries, central_spin, seed, scaling,
-                                  save_path)
+    data = output.plot_light_cone(t, chain_length[0], J, J_xy, B0[0], A[0],
+                                  periodic_boundaries, central_spin, seed, scaling,
+                                  save_path, initial_state)
 
 elif outputtype == "animate_time_evo":
-    data = output.animate_time_evo(t, idx_psi_0, chain_length[0], J, J_xy, B0[0], A[0],
-                                   spin_constant, periodic_boundaries, central_spin, seed, scaling,
-                                   save_path)
+    data = output.animate_time_evo(t, chain_length[0], J, J_xy, B0[0], A[0],
+                                   periodic_boundaries, central_spin, seed, scaling,
+                                   save_path, initial_state)
     anim = data[-1]
     data = data[:-1]
 
 elif outputtype == "plot_r":
     data = output.plot_r_values(chain_length[0], J, J_xy, B0[0], A[0], periodic_boundaries,
-                                central_spin, spin_constant, samples[0], scaling, save_path)
+                                central_spin, samples[0], scaling, save_path)
 
 elif outputtype == "plot_r_fig3":
     data = output.plot_r_fig3(chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin,
                               samples, scaling, save_path)
 
 elif outputtype == "plot_half_chain_entropy":
-    data = output.plot_half_chain_entropy(t, chain_length, J, J_xy, B0, A, periodic_boundaries,
-                                          central_spin, samples, seed, scaling, save_path)
+    data = output.plot_half_chain_entropy(
+        t, chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin, samples, seed,
+        scaling, save_path, initial_state)
 
 elif outputtype == "plot_single_shot_half_chain_entropy":
     data = output.plot_single_shot_half_chain_entropy(
-        t, chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin, samples, seed,
-        scaling, save_path)
+        t, chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin, samples,
+        scaling, save_path, initial_state)
 
 elif outputtype == "plot_occupation_imbalance":
-    data = output.plot_occupation_imbalance(t, chain_length, J, J_xy, B0, A, periodic_boundaries,
-                                            central_spin, samples, seed, scaling, save_path)
+    data = output.plot_occupation_imbalance(
+        t, chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin, samples, seed,
+        scaling, save_path, initial_state)
 
 elif outputtype == "plot_single_shot_occupation_imbalance":
     data = output.plot_single_shot_occupation_imbalance(
         t, chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin, samples, seed,
-        scaling, save_path)
+        scaling, save_path, initial_state)
 
 elif outputtype == "plot_exp_sig_z_central_spin":
-    data = output.plot_exp_sig_z_central_spin(t, chain_length, J, J_xy, B0, A, periodic_boundaries,
-                                              samples, seed, scaling, save_path)
+    data = output.plot_exp_sig_z_central_spin(
+        t, chain_length, J, J_xy, B0, A, periodic_boundaries, samples, seed,
+        scaling, save_path, initial_state)
 
 elif outputtype == "plot_single_shot_exp_sig_z_central_spin":
     data = output.plot_single_shot_exp_sig_z_central_spin(
-        t, chain_length, J, J_xy, B0, A, periodic_boundaries, samples, seed, scaling, save_path)
+        t, chain_length, J, J_xy, B0, A, periodic_boundaries, samples, seed, scaling,
+        save_path, initial_state)
 
 elif outputtype == "plot_correlation":
-    data = output.plot_correlation(t, chain_length, J, J_xy, B0, A, periodic_boundaries, samples,
-                                   seed, scaling, save_path)
+    data = output.plot_correlation(
+        t, chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin, samples, seed,
+        scaling, save_path, initial_state)
 
 # Old stuff
 elif outputtype == "plot_f_fig2":
@@ -172,7 +176,7 @@ elif outputtype == "calc_psi_t":
     anim = None
 
 elif outputtype == "plot_2_spin_up":
-    data = output.plot_2_spin_up(t, chain_length[0], J, J_xy, B0[0], A[0], spin_constant,
+    data = output.plot_2_spin_up(t, chain_length[0], J, J_xy, B0[0], A[0],
                                  periodic_boundaries, central_spin, seed=False, scaling="sqrt",
                                  save=False)
 

@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import support_functions as sf
 import diagonalization as diag
-from time_evo import time_evo_sigma_z, time_evo_subspace
+from time_evo import time_evo_sigma_z, time_evo
 
 
 def calc_half_chain_entropy_old(times, chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin,
@@ -41,7 +41,7 @@ def calc_half_chain_entropy_old(times, chain_length, J, J_xy, B0, A, periodic_bo
     eigenvalues, eigenvectors = diag.eig_values_vectors_spin_const(
         chain_length, J, J_xy, B0, A, periodic_boundaries,
         central_spin, n_up=total_spins//2, seed=seed, scaling=scaling)
-    psi_t = time_evo_subspace(times, eigenvalues, eigenvectors, total_spins)
+    psi_t = time_evo(times, eigenvalues, eigenvectors, total_spins)
     # This performs an outer product along axis 1
     rho_t = psi_t[:, :, np.newaxis] * psi_t.conj()[:, np.newaxis, :]
     # # Old way: go back to full space to calculate the partial trace. Even though there must

@@ -88,6 +88,24 @@ def packbits(x, order_big_first=False):
     return mask @ x.transpose()
 
 
+def calc_idx_psi_0(initial_state, total_spins):
+    if initial_state.isdigit() and len(initial_state) == total_spins:
+        idx_psi_0 = packbits([int(digit) for digit in initial_state])
+    elif initial_state.isdigit() and int(initial_state) < int(2**total_spins):
+        idx_psi_0 = int(initial_state)
+    elif initial_state == "neel":
+        idx_psi_0 = packbits(np.arange(total_spins) % 2)
+    elif initial_state == "neel_inverse":
+        # starting with spin up instead of spin down
+        idx_psi_0 = packbits((np.arange(total_spins) + 1) % 2)
+    elif initial_state == "domain_wall":
+        idx_psi_0 = packbits(np.arange(total_spins) < total_spins // 2)
+    else:
+        raise ValueError(
+            f"{initial_state} is not a valid option as initial_state (for {total_spins} spins)")
+    return idx_psi_0
+
+
 def partial_trace_subspace(rho_sub, subspace_mask, spins_a, calc_rho_a=True):
     """
     Calculates the partial trace for the given rho given in a subpace with constant spin and
