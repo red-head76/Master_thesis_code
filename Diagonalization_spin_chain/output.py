@@ -344,7 +344,7 @@ def plot_half_chain_entropy(times, chain_length, J, J_xy, B0, As, periodic_bound
                         times, N, J, J_xy, B, A, periodic_boundaries, central_spin, seed, scaling)
                 hce_mean = np.mean(hce, axis=0)
                 hce_std = np.std(hce, axis=0)
-                yerrors = hce_std / np.sqrt(samples[i])
+                yerrors = hce_std  # / np.sqrt(samples[i])
                 if save:
                     hce_means[i, a, b] = hce_mean
                     hce_stds[i, a, b] = hce_std
@@ -440,15 +440,13 @@ def plot_occupation_imbalance(times, chain_length, J, J_xy, B0, As, periodic_bou
                         seed=sample+1, scaling=scaling)
                 occupation_imbalance_mean = occupation_imbalance.mean(axis=0)
                 occupation_imbalance_std = occupation_imbalance.std(axis=0)
-                yerrors = occupation_imbalance.std(axis=0) / np.sqrt(samples[i])
+                yerrors = occupation_imbalance.std(axis=0)  # / np.sqrt(samples[i])
                 if save:
                     occupation_imbalance_means[i, a, b] = occupation_imbalance_mean
                     occupation_imbalance_stds[i, a, b] = occupation_imbalance_std
                 plt.plot(times, occupation_imbalance_mean, label=f"N={N}")
                 plt.fill_between(times, occupation_imbalance_mean + yerrors,
                                  occupation_imbalance_mean - yerrors, alpha=0.2)
-    # plt.title(f"Occupation imbalance for \nJ={J}, B={B}, A={A}, scaling={scaling}")
-    plt.ylim(-0.2, 1.02)
     plt.xlabel("Time in fs")
     plt.semilogx()
     plt.ylabel("Occupation imbalance")
@@ -476,7 +474,6 @@ def plot_single_shot_occupation_imbalance(times, chain_length, J, J_xy, B0, As,
             times, chain_length[0], J, J_xy, B0[0], As[0], periodic_boundaries, central_spin,
             seed=sample+1, scaling=scaling)
         plt.plot(times, occupation_imbalances[sample], label=f"Seed={sample+1}")
-    plt.ylim(-0.2, 1.02)
     plt.xlabel("Time in fs")
     plt.semilogx()
     plt.ylabel("OI")
@@ -561,7 +558,7 @@ def plot_exp_sig_z_central_spin(times, chain_length, J, J_xy, B0, As, periodic_b
                         times, N, J, J_xy, B, A, periodic_boundaries, seed, scaling)
                 exp_sig_z_mean = exp_sig_z.mean(axis=0)
                 exp_sig_z_std = exp_sig_z.std(axis=0)
-                yerrors = exp_sig_z_std / np.sqrt(samples[i])
+                yerrors = exp_sig_z_std  # / np.sqrt(samples[i])
                 if save:
                     exp_sig_z_means[i, a, b] = exp_sig_z_mean
                     exp_sig_z_stds[i, a, b] = exp_sig_z_std
