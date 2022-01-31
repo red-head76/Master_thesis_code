@@ -10,28 +10,32 @@ from time_evo import time_evo_sigma_z, time_evo_subspace
 # import seaborn as sns
 # sns.set_theme(context="paper")
 
+"""
+Common arguments for plot functions:
+* t (array (float)): array with tN timesteps
+* idx_psi_0 (int): the index of the state at t0
+* chain_length (int or list(int)): the length of the spin chain
+* J (float): Spin chain coupling in z-direction
+* J_xy (float): Spin chain coupling in xy-direction
+* B0 (float or list(float)): the B-field amplitude. Currently random initialized uniformly
+                             between (-1, 1).
+* A (float or list(float)): the coupling between the central spin and the spins in the chain
+* spin_constant (bool): If true, than the function eig_values_vectors_spin_const is used,
+                        eig_values_vectors otherwise.
+* periodic_boundaries (bool): determines whether or not periodic boundary
+                              conditions are used in the chain.
+* central_spin (bool): determines whether or not a central spin, coupling
+                                  to all other spins is used or not
+* seed (int): If nonzero, the given integer is used as seed
+* scaling (string): scaling of A_0 ('sqrt', 'inverse' or 'none')
+* save (string): If not False, the output is saved with the given filename.
+"""
+
 
 def plot_time_evo(t, idx_psi_0, chain_length, J, J_xy, B0, A, spin_constant,
                   periodic_boundaries, central_spin, seed=False, scaling="sqrt", save=False):
     """
     Plots the time evolution of the spin chain and the optional central spin
-
-    Args:
-        t (array [tN]): array with tN timesteps
-        idx_psi_0 (int): the index of the state at t0
-        chain_length (int): the length of the spin chain
-        J (float): Spin chain coupling in z-direction
-        J_xy (float): Spin chain coupling in xy-direction
-        B0 (float): the B-field amplitude. Currently random initialized uniformly
-                                between (-1, 1).
-        A (float): the coupling between the central spin and the spins in the chain
-        spin_constant (bool): If true, than the function eig_values_vectors_spin_const is used,
-                              eig_values_vectors otherwise.
-        periodic_boundaries (bool): determines whether or not periodic boundary
-                                                  conditions are used in the chain.
-        central_spin (bool): determines whether or not a central spin, coupling
-                                           to all other spins is used or not
-        save (string): If not False, the output is saved with the given filename.
 
     Returns:
         If save: data (list [time, exp_sig_z]), None otherwise
@@ -86,24 +90,6 @@ def animate_time_evo(t, idx_psi_0, chain_length, J, J_xy, B0, A, spin_constant,
     """
     Animate the time evolution of the spin chain and the optional central spin
 
-    Args:
-        t (array [tN]): array with tN timesteps
-        idx_psi_0 (int): the index of the state at t0
-        chain_length (int): the length of the spin chain
-        J (float): Spin chain coupling in z-direction
-        J_xy (float): Spin chain coupling in xy-direction
-        B0 (float): the B-field amplitude. Currently random initialized uniformly
-                                between (-1, 1).
-        A (float): the coupling between the central spin and the spins in the chain
-        spin_constant (bool): If true, than the function eig_values_vectors_spin_const is used,
-                              eig_values_vectors otherwise.
-        periodic_boundaries (bool): determines whether or not periodic boundary
-                                                  conditions are used in the chain.
-        central_spin (bool): determines whether or not a central spin, coupling
-                                           to all other spins is used or not
-        save (string): If not False, the output is saved with the given filename.
-
-
     Returns:
         If save: data (list [time, exp_sig_z]), None otherwise
 
@@ -146,45 +132,19 @@ def calc_eigvals_eigvecs_biggest_subspace(chain_length, J, J_xy, B0, A, periodic
     """
     Calculates the eigenvalues and vectors of the biggest subspace
 
-    Args:
-        chain_length (int): the length of the spin chain
-        J (float): Spin chain coupling in z-direction
-        J_xy (float): Spin chain coupling in xy-direction
-        B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
-                                between (-1, 1).
-        A (float): coupling between the central spin and the spins in the chain
-        periodic_boundaries (bool): determines whether or not periodic boundary
-                                                  conditions are used in the chain.
-        central_spin (bool): determines whether or not a central spin is present
-        seed (int): use a seed to produce comparable outcomes if False, then it is initialized
-                    randomly
-
     Returns:
         eigenvalues (float [dim]), eigenvectors (float [dim, dim])
     """
     n_up = (chain_length[0] + central_spin) // 2
-    return diag.eig_values_vectors_spin_const(chain_length[0], J, J_xy, B0[0], A[0], periodic_boundaries,
-                                              central_spin, n_up, seed, scaling)
+    return diag.eig_values_vectors_spin_const(chain_length[0], J, J_xy, B0[0], A[0],
+                                              periodic_boundaries, central_spin, n_up, seed,
+                                              scaling)
 
 
 def calc_psi_t(times, idx_psi_0, chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin,
                seed, scaling):
     """
     Calculates the time evolution of an initial state
-
-    Args:
-        times (float [times]): time array
-        chain_length (int): the length of the spin chain
-        J (float): Spin chain coupling in z-direction
-        J_xy (float): Spin chain coupling in xy-direction
-        B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
-                                between (-1, 1).
-        A (float): coupling between the central spin and the spins in the chain
-        periodic_boundaries (bool): determines whether or not periodic boundary
-                                                  conditions are used in the chain.
-        central_spin (bool): determines whether or not a central spin is present
-        seed (int): use a seed to produce comparable outcomes if False, then it is initialized
-                    randomly
 
     Returns:
         eigenvalues (float [dim]), eigenvectors (float [dim, dim])
@@ -239,19 +199,6 @@ def generate_r_values(chain_length, J, J_xy, B0, A, periodic_boundaries, central
     Calculates the r value, the fraction of the difference of eigenvalues of the given Hamiltonian:
     r = min (ΔE_n, ΔE_n+1) / max (ΔE_n, ΔE_n+1)
 
-    Args:
-        chain_length (int): the length of the spin chain
-        J (float): Spin chain coupling in z-direction
-        J_xy (float): Spin chain coupling in xy-direction
-        B0 (float): the B-field amplitude. Currently random initialized uniformly
-                                between (-1, 1).
-        A (float): the coupling between the central spin and the spins in the chain
-        periodic_boundaries (bool): determines whether or not periodic boundary
-                                                  conditions are used in the chain.
-        central_spin (bool): determines whether or not a central spin is present
-        spin_const (bool): If true, the conservation of total spin is used
-                        to construct respective subspaces. If False, full Hamiltonian is used.
-
     Returns:
         r_values (array (float) [2**total_spins - 2])
 
@@ -285,22 +232,6 @@ def plot_r_values(chain_length, J, J_xy, B0, A, periodic_boundaries, central_spi
     """
     Plots the histogram of r_values created by the given parameters.
 
-    Args:
-        chain_length (int): the length of the spin chain
-        J (float): Spin chain coupling in z-direction
-        J_xy (float): Spin chain coupling in xy-direction
-        B0 (float): the B-field amplitude. Currently random initialized uniformly
-                                between (-1, 1).
-        A (float): the coupling between the central spin and the spins in the chain
-        periodic_boundaries (bool): determines whether or not periodic boundary
-                                                  conditions are used in the chain.
-        central_spin (bool): determines whether or not a central spin is present
-        spin_constant (bool): If true, the conservation of total spin is used to construct
-                           respective subspaces. If False, full Hamiltonian is used.
-        samples (int): Number of times data points should be generated for each number
-                                    of samples there are (chain_length x chain_length - 2) data
-                                    points
-
     Returns:
         If save: data (list [r_values]), None otherwise
 
@@ -328,16 +259,6 @@ def plot_r_fig3(chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin,
                 scaling="sqrt", save=False):
     """
     Plots the r values as done in Figure 3 in https://doi.org/10.1103/PhysRevB.82.174411
-
-    Args:
-        chain_length (int or array (int)): the length of the spin chain
-        J (float): the coupling constant
-        B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
-                                between (-1, 1).
-        periodic_boundaries (bool): determines whether or not periodic boundary
-                                                  conditions are used in the chain.
-        samples (int or array (int)): Number of times data points should be generated
-            for each number of samples there are (chain_length x chain_length - 2) data points
 
     Returns:
         If save: data (list [B0, mean_r_values]), None otherwise
@@ -407,21 +328,6 @@ def plot_half_chain_entropy(times, chain_length, J, J_xy, B0, As, periodic_bound
     """
     Plots the Sa(t) values (see fig2 in http://arxiv.org/abs/1806.08316)
 
-    Args:
-        times (array (float) [tD]): the time array, where g should be calculated
-        chain_length (array (int)): the length of the spin chain
-        J (float): the coupling constant
-        B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
-                                between (-1, 1).
-        As (array (float)): the coupling between the central spin and the spins in the chain
-        periodic_boundaries (bool): determines whether or not periodic boundary
-                                                  conditions are used in the chain.
-        central_spin (bool): Whether or not a central spin is present
-        samples (int or array (int)): Number of times data points should be generated
-        seed (int): random seed for reducible results
-        scaling (string): scaling of coupling constant A by chain length
-        save (string): filename, if data needs to be saved
-
     Returns:
         If save: data (list [time, hce_mean, yerrors]), None otherwise
 
@@ -459,21 +365,6 @@ def plot_single_shot_half_chain_entropy(times, chain_length, J, J_xy, B0, As, pe
     """
     Plots the Sa(t) values (see fig2 in http://arxiv.org/abs/1806.08316)
 
-    Args:
-        times (array (float) [tD]): the time array, where g should be calculated
-        chain_length (array (int)): the length of the spin chain
-        J (float): the coupling constant
-        B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
-                                between (-1, 1).
-        As (array (float)): the coupling between the central spin and the spins in the chain
-        periodic_boundaries (bool): determines whether or not periodic boundary
-                                                  conditions are used in the chain.
-        central_spin (bool): Whether or not a central spin is present
-        samples (int or array (int)): Number of times data points should be generated
-        seed (int): random seed for reducible results
-        scaling (string): scaling of coupling constant A by chain length
-        save (string): filename, if data needs to be saved
-
     Returns:
         If save: data (list [time, hce_mean, yerrors]), None otherwise
 
@@ -499,20 +390,6 @@ def calc_occupation_imbalance(times, chain_length, J, J_xy, B0, A, periodic_boun
                               central_spin, seed, scaling):
     """
     Calculates the occupation imbalance sum_odd s_z - sum_even s_z
-
-    Args:
-        times (array (float) [tD]): the time array, where g should be calculated
-        chain_length (int): the length of the spin chain
-        J (float): Spin chain coupling in z-direction
-        J_xy (float): Spin chain coupling in xy-direction
-        B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
-                                between (-1, 1).
-        A (float): coupling between the central spin and the spins in the chain
-        periodic_boundaries (bool): determines whether or not periodic boundary
-                                                  conditions are used in the chain.
-        central_spin (bool): determines whether or not a central spin is present
-        seed (int): use a seed to produce comparable outcomes if False, then it is initialized
-                    randomly
 
     Returns:
         occupation_imbalance (array (float) [times])
@@ -542,22 +419,6 @@ def plot_occupation_imbalance(times, chain_length, J, J_xy, B0, As, periodic_bou
                               central_spin, samples, seed, scaling, save):
     """
     Plots the occupation imbalance sum_odd s_z - sum_even s_z
-
-    Args:
-        rho0 (array (float) [dim, dim]): the initial density matrix, where dim = 2**total_spins
-        times (array (float) [tD]): the time array, where g should be calculated
-        chain_length (array (int)): the length of the spin chain
-        J (float): Spin chain coupling in z-direction
-        J_xy (float): Spin chain coupling in xy-direction
-        B0 (array (float)): the B-field amplitude. Currently random initialized uniformly
-                                between (-1, 1).
-        As (array (float)): the coupling between the central spin and the spins in the chain
-        periodic_boundaries (bool): determines whether or not periodic boundary
-                                                  conditions are used in the chain.
-        central_spin (bool): determines whether or not a central spin is present
-        samples (array (int)[1]): Number of times data points should be generated
-        seed (int): use a seed to produce comparable outcomes if False, then it is initialized
-                    randomly
 
     Returns:
         If save: data (list [time, occupation_imbalance_means, occupation_imbalance_stds]),
@@ -602,22 +463,6 @@ def plot_single_shot_occupation_imbalance(times, chain_length, J, J_xy, B0, As,
     """
     Plots the occupation imbalance sum_odd s_z - sum_even s_z
 
-    Args:
-        rho0 (array (float) [dim, dim]): the initial density matrix, where dim = 2**total_spins
-        times (array (float) [tD]): the time array, where g should be calculated
-        chain_length (array (int)): the length of the spin chain
-        J (float): Spin chain coupling in z-direction
-        J_xy (float): Spin chain coupling in xy-direction
-        B0 (array (float)): the B-field amplitude. Currently random initialized uniformly
-                                between (-1, 1).
-        As (array (float)): the coupling between the central spin and the spins in the chain
-        periodic_boundaries (bool): determines whether or not periodic boundary
-                                                  conditions are used in the chain.
-        central_spin (bool): determines whether or not a central spin is present
-        samples (array (int)[1]): Number of times data points should be generated
-        seed (int): use a seed to produce comparable outcomes if False, then it is initialized
-                    randomly
-
     Returns:
         If save: data (list [time, occupation_imbalance_means, occupation_imbalance_stds]),
                  None otherwise
@@ -640,22 +485,10 @@ def plot_single_shot_occupation_imbalance(times, chain_length, J, J_xy, B0, As,
         return [times, occupation_imbalances]
 
 
-def calc_exp_sig_z_central_spin(times, chain_length, J, J_xy, B0, A, periodic_boundaries, seed, scaling):
+def calc_exp_sig_z_central_spin(times, chain_length, J, J_xy, B0, A, periodic_boundaries, seed,
+                                scaling):
     """
     Calculates the expectation value for the central spin.
-
-    Args:
-        times (array (float) [tD]): the time array, where g should be calculated
-        chain_length (int or array (int)): the length of the spin chain
-        J (float): Spin chain coupling in z-direction
-        J_xy (float): Spin chain coupling in xy-direction
-        B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
-                                between (-1, 1).
-        A (float): the coupling between the central spin and the spins in the chain
-        periodic_boundaries (bool): determines whether or not periodic boundary
-                                                  conditions are used in the chain.
-        seed (int): use a seed to produce comparable outcomes if False, then it is initialized
-                    randomly
 
     Returns:
         exp_sig_z (array (float) [times]): the expectation value for the central spin
@@ -681,20 +514,6 @@ def plot_single_shot_exp_sig_z_central_spin(times, chain_length, J, J_xy, B0, As
                                             periodic_boundaries, samples, seed, scaling, save):
     """
     Plots the expectation value for the central spin.
-
-    Args:
-        times (array (float) [tD]): the time array, where g should be calculated
-        chain_length (int or array (int)): the length of the spin chain
-        J (float): Spin chain coupling in z-direction
-        J_xy (float): Spin chain coupling in xy-direction
-        B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
-                                between (-1, 1).
-        As (array (float)): the coupling between the central spin and the spins in the chain
-        periodic_boundaries (bool): determines whether or not periodic boundary
-                                                  conditions are used in the chain.
-        samples (array (int)[1]): Number of times data points should be generated
-        seed (int): use a seed to produce comparable outcomes if False, then it is initialized
-                    randomly
 
     Returns:
         If save: data (list [time, exp_sig_z_means, exp_sig_z_errors]), None otherwise
@@ -722,20 +541,6 @@ def plot_exp_sig_z_central_spin(times, chain_length, J, J_xy, B0, As, periodic_b
                                 samples, seed, scaling, save):
     """
     Plots the expectation value for the central spin.
-
-    Args:
-        times (array (float) [tD]): the time array, where g should be calculated
-        chain_length (int or array (int)): the length of the spin chain
-        J (float): Spin chain coupling in z-direction
-        J_xy (float): Spin chain coupling in xy-direction
-        B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
-                                between (-1, 1).
-        As (array (float)): the coupling between the central spin and the spins in the chain
-        periodic_boundaries (bool): determines whether or not periodic boundary
-                                                  conditions are used in the chain.
-        samples (array (int)[1]): Number of times data points should be generated
-        seed (int): use a seed to produce comparable outcomes if False, then it is initialized
-                    randomly
 
     Returns:
         If save: data (list [time, exp_sig_z_means, exp_sig_z_errors]), None otherwise
@@ -781,20 +586,6 @@ def calc_correlation(times, chain_length, J, J_xy, B0, A, periodic_boundaries,
     (in comments, G_r(t) from page 7 of http://arxiv.org/abs/1610.08993)
 
     For more details on the implementation see Notes/Correlation_function.xopp
-
-    Args:
-        times (array (float) [tD]): the time array, where g should be calculated
-        chain_length (int or array (int)): the length of the spin chain
-        J (float): Spin chain coupling in z-direction
-        J_xy (float): Spin chain coupling in xy-direction
-        B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
-                                between (-1, 1).
-        A (float): the coupling between the central spin and the spins in the chain
-        periodic_boundaries (bool): determines whether or not periodic boundary
-                                                  conditions are used in the chain.
-        seed (int): use a seed to produce comparable outcomes if False, then it is initialized
-                    randomly
-
     Returns:
         Correlation sigma^2(t) (array (float) [chain_length, times])
     # Before: G_r(t) (array (float) [chain_length, times])
@@ -841,24 +632,8 @@ def plot_correlation(times, chain_length, J, J_xy, B0, As, periodic_boundaries,
     Plots the correlation function sigma_squared(t) from page 7 of
     http://arxiv.org/abs/1610.08993
 
-
-    Args:
-        times (array (float) [tD]): the time array, where g should be calculated
-        chain_length (int or array (int)): the length of the spin chain
-        J (float): Spin chain coupling in z-direction
-        J_xy (float): Spin chain coupling in xy-direction
-        B0 (float or array (float)): the B-field amplitude. Currently random initialized uniformly
-                                between (-1, 1).
-        As (float or array (float)): the coupling between the central spin and the spins in the chain
-        periodic_boundaries (bool): determines whether or not periodic boundary
-                                                  conditions are used in the chain.
-        samples (array (int)): Number of times data points should be generated
-        seed (int): use a seed to produce comparable outcomes if False, then it is initialized
-                    randomly
-
     Returns:
         If save: data (list [time, sigma_squared_means, sigma_squared_errors]), None otherwise
-
     """
     # for saving the data
     if save:
@@ -896,6 +671,9 @@ def plot_2_spin_up(t, chain_length, J, J_xy, B0, A, spin_constant,
     """
     Initializes two spins up at pos_up1 and pos_up2, the rest spin down.
     Then the expectation value of Sz at these positions is added and plotted over time.
+
+    Returns:
+        If save: data (list [time, exp_sig_z_at_init]), None otherwise
     """
     total_spins = central_spin + chain_length
     dim = np.array(2**total_spins, dtype=np.int)
