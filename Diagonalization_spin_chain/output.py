@@ -559,16 +559,16 @@ def calc_correlation(times, chain_length, J, J_xy, B0, A, periodic_boundaries, c
     total_spins = chain_length + 1
     dim = np.int(2**total_spins)
     idx_psi_0 = sf.calc_idx_psi_0(initial_state, total_spins)
+    psi_0 = np.zeros(dim)
+    psi_0[idx_psi_0] = 1
     n_up = sf.unpackbits(idx_psi_0, total_spins).sum()
     subspace_mask = np.where(np.logical_not(np.sum(sf.unpackbits(np.arange(dim), total_spins),
                                                    axis=1) - n_up))[0]
-    idx_psi_0 = sf.calc_idx_psi_0(initial_state, total_spins)
-    psi_0 = np.zeros(dim)
-    psi_0[idx_psi_0] = 1
-    exp_sig_z = time_evo_sigma_z(times, chain_length, J, J_xy, B0, A, periodic_boundaries,
-                                 central_spin, seed, scaling, initial_state)
+    psi_0 = psi_0[subspace_mask]
+    psi_t = time_evo(times, chain_length, J, J_xy, B0, A, periodic_boundaries,
+                     central_spin, seed, scaling, initial_state)
     psi_z = np.arange(0, np.int(2**(total_spins)))[subspace_mask]
-    sigma_z = (sf.unpackbits(psi_z, total_spins) - 1/2)[subspace_mask]
+    sigma_z = (sf.unpackbits(psi_z, total_spins) - 1/2)[:, :chain_length]
     S_0 = psi_0 @ sigma_z
     S_t = np.abs(psi_t)**2 @ sigma_z
     # Previously: G_r(t)
