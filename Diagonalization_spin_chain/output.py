@@ -122,20 +122,6 @@ def animate_time_evo(t, chain_length, J, J_xy, B0, A, periodic_boundaries,
         return [anim]
 
 
-def calc_eigvals_eigvecs_biggest_subspace(chain_length, J, J_xy, B0, A, periodic_boundaries,
-                                          central_spin, seed, scaling):
-    """
-    Calculates the eigenvalues and vectors of the biggest subspace
-
-    Returns:
-        eigenvalues (float [dim]), eigenvectors (float [dim, dim])
-    """
-    n_up = (chain_length[0] + central_spin) // 2
-    return diag.eig_values_vectors_spin_const(chain_length[0], J, J_xy, B0[0], A[0],
-                                              periodic_boundaries, central_spin, n_up, seed,
-                                              scaling)
-
-
 # Histogram functions for r_value
 def rice_rule(n):
     """
@@ -171,7 +157,7 @@ def sturge_rule(n):
     return np.int(np.ceil(np.log2(n)) + 1)
 
 
-def generate_r_values(chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin):
+def generate_r_values(chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin, initial_state):
     """
     Calculates the r value, the fraction of the difference of eigenvalues of the given Hamiltonian:
     r = min (ΔE_n, ΔE_n+1) / max (ΔE_n, ΔE_n+1)
@@ -182,8 +168,10 @@ def generate_r_values(chain_length, J, J_xy, B0, A, periodic_boundaries, central
     """
     # Get the energy eigenvalues
     total_spins = chain_length + central_spin
+    idx_psi_0 = sf.calc_idx_psi_0(initial_state, total_spins)
+    n_up = sf.unpackbits(idx_psi_0, total_spins).sum()
     E = diag.eig_values_vectors_spin_const(
-        chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin, n_up=total_spins//2)[0]
+        chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin, n_up)[0]
 
     E = np.sort(E)
     Delta_E = np.diff(E)
@@ -209,10 +197,11 @@ def plot_r_values(chain_length, J, J_xy, B0, A, periodic_boundaries, central_spi
 
     """
 
-    r_values = generate_r_values(chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin)
+    r_values = generate_r_values(chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin,
+                                 initial_state)
     for _ in range(samples - 1):
         r_values += generate_r_values(chain_length, J, J_xy, B0, A, periodic_boundaries,
-                                      central_spin)
+                                      central_spin, initial_state)
     # Average over samples
     r_values /= samples
     plt.hist(r_values, bins=sturge_rule(r_values.size), density=True)
@@ -243,10 +232,10 @@ def plot_r_fig3(chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin,
     for i, N in enumerate(chain_length):
         for j, B in enumerate(B0):
             r_values = generate_r_values(N, J, J_xy, B, A[0], periodic_boundaries,
-                                         central_spin)
+                                         central_spin, initial_state)
             for _ in range(samples[i] - 1):
                 r_values += generate_r_values(N, J, J_xy, B, A[0], periodic_boundaries,
-                                              central_spin)
+                                              central_spin, initial_state)
             # Averaging over samples
             r_values /= samples[i]
             # and states
@@ -649,3 +638,29 @@ def plot_2_spin_up(t, chain_length, J, J_xy, B0, A, periodic_boundaries, central
     plt.show()
     if save:
         return [t, exp_sig_z_at_init]
+
+
+def sigma_E(chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin, samples,
+            seed, scaling, save, initial_state):
+    total_spins = central_spin + chain_length
+    dim = np.array(2**total_spins, dtype=np.int)
+    idx_psi_0 = sf.calc_idx_psi_0(initial_state, total_spins)
+    n_up = sf.unpackbits(idx_psi_0, total_spins).sum()
+    psi_0 = np.zeros(dim)
+    psi_0[idx_psi_0] = 1
+    subspace_mask = np.where(np.logical_not(np.sum(sf.unpackbits(np.arange(dim), total_spins),
+                                            axis=1) - n_up))[0]
+    psi_0 = psi_0[subspace_mask]
+    eigenvalues = np.empty((samples, subspace_mask.size))
+    eigenvectors = np.empty((samples, subspace_mask.size, subspace_mask.size))
+    for i in range(samples):
+        eigenvalues[i], eigenvectors[i] = diag.eig_values_vectors_spin_const(
+            chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin, n_up)
+    E_distr = np.abs(eigenvectors.transpose(0, 2, 1) @ psi_0)**2
+    sort = eigenvalues.ravel().argsort()
+    eigenvalues = eigenvalues.ravel()[sort]
+    E_distr = E_distr.ravel()[sort]
+    plt.hist(eigenvalues, weights=E_distr, bins=sturge_rule(eigenvalues.size), density=True)
+    # plt.plot(eigenvalues, E_distr)
+    if save:
+        return [eigenvalues, E_distr]

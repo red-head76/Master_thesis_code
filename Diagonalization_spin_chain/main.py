@@ -177,8 +177,11 @@ elif outputtype == "calc_psi_t":
 
 elif outputtype == "plot_2_spin_up":
     data = output.plot_2_spin_up(t, chain_length[0], J, J_xy, B0[0], A[0],
-                                 periodic_boundaries, central_spin, seed=False, scaling="sqrt",
-                                 save=False)
+                                 periodic_boundaries, central_spin, seed, scaling, save_path)
+
+elif outputtype == "plot_sigma_E":
+    data = output.sigma_E(chain_length[0], J, J_xy, B0[0], A[0], periodic_boundaries,
+                          central_spin, samples[0], seed, scaling, save_path, initial_state)
 
 else:
     raise ValueError(f"Option '{outputtype}' unknown")
