@@ -33,6 +33,7 @@ Output["save_plot"] = "False"
 
 # Other setup
 Other = config_object["Other"]
+Other["initial_state"] = "neel"
 Other["timestart"] = "0.1"
 Other["timeend"] = "1000"
 Other["timesteps"] = "300"
