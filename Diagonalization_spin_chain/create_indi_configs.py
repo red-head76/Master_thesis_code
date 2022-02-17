@@ -47,7 +47,8 @@ for L in Ls:
                         Constants["B0"] = str(B)
                         Constants["A"] = str(A)
                         Output["outputtype"] = f"plot_{outputtype}"
-                        signature = filename + "_"
+                        if filename != "":
+                            signature = filename + "_"
                         if outputtype == "half_chain_entropy":
                             signature += "hce"
                         elif outputtype == "occupation_imbalance":
