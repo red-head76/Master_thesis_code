@@ -2,6 +2,8 @@ from create_config import create_config
 
 config_object = create_config()
 
+filename = "filename"
+
 Ls = [14]
 Js = [0]
 J_xys = [0]
@@ -45,12 +47,13 @@ for L in Ls:
                         Constants["B0"] = str(B)
                         Constants["A"] = str(A)
                         Output["outputtype"] = f"plot_{outputtype}"
+                        signature = filename + "_"
                         if outputtype == "half_chain_entropy":
-                            signature = "hce"
+                            signature += "hce"
                         elif outputtype == "occupation_imbalance":
-                            signature = "oi"
+                            signature += "oi"
                         elif outputtype == "exp_sig_z_central_spin":
-                            signature = "cs"
+                            signature += "cs"
                         if len(Ls) > 1:
                             signature += f"_{L}"
                         signature += f"_{J}{J_xy}{B}{str(A).replace('.','')}"
