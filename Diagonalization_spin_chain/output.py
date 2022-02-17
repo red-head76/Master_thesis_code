@@ -115,7 +115,40 @@ def animate_time_evo(t, chain_length, J, J_xy, B0, A, periodic_boundaries,
                                      for (x, y) in zip(np.arange(total_spins), exp_sig_z[i])])
         return stem_container
 
-    anim = animation.FuncAnimation(fig, run, frames=t.size, blit=True, interval=100)
+    anim = animation.FuncAnimation(fig, run, frames=t.size, blit=True, interval=20)
+    if save:
+        return [t, exp_sig_z, anim]
+    else:
+        return [anim]
+
+
+def animate_barplot(t, chain_length, J, J_xy, B0, A, periodic_boundaries,
+                    central_spin, seed, scaling, save, initial_state):
+    """
+    Animate the time evolution of the spin chain and the optional central spin
+
+    Returns:
+        If save: data (list [time, exp_sig_z]), None otherwise
+    """
+    total_spins = central_spin + chain_length
+    dim = np.array(2**total_spins, dtype=np.int)
+    exp_sig_z = time_evo_sigma_z(t, chain_length, J, J_xy, B0, A, periodic_boundaries,
+                                 central_spin, seed, scaling, initial_state)
+    total_spins = chain_length + central_spin
+    if seed:
+        np.random.seed(seed)
+    B = np.random.uniform(-1, 1, chain_length) * min(B0, 1)
+    fig, ax = plt.subplots(figsize=(10, 8))
+    ax.set_xlim(-0.5, total_spins + 0.5)
+    ax.axis("off")
+    barcol = ax.bar(np.arange(total_spins), np.sqrt(exp_sig_z[0] + 0.5))
+
+    def run(i):
+        for j, b in enumerate(barcol):
+            # sqrt just for optical scaling
+            b.set_height(np.sqrt(exp_sig_z[i, j] + 0.5))
+        return barcol
+    anim = animation.FuncAnimation(fig, run, frames=t.size, blit=True, interval=20)
     if save:
         return [t, exp_sig_z, anim]
     else:
@@ -649,7 +682,7 @@ def sigma_E(chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin, sam
     psi_0 = np.zeros(dim)
     psi_0[idx_psi_0] = 1
     subspace_mask = np.where(np.logical_not(np.sum(sf.unpackbits(np.arange(dim), total_spins),
-                                            axis=1) - n_up))[0]
+                                                   axis=1) - n_up))[0]
     psi_0 = psi_0[subspace_mask]
     eigenvalues = np.empty((samples, subspace_mask.size))
     eigenvectors = np.empty((samples, subspace_mask.size, subspace_mask.size))

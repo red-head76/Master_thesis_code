@@ -76,7 +76,7 @@ initial_state = Other["initial_state"]
 # Set to true in the following, if an animation is called
 anim = False
 
-if outputtype in ["plot_time_evo", "animate_time_evo", "plot_light_cone"]:
+if outputtype in ["plot_time_evo", "animate_time_evo", "animate_barplot", "plot_light_cone"]:
     # Time array
     t = np.linspace(timestart, timeend, timesteps)
 
@@ -106,6 +106,13 @@ elif outputtype == "animate_time_evo":
     data = output.animate_time_evo(t, chain_length[0], J, J_xy, B0[0], A[0],
                                    periodic_boundaries, central_spin, seed, scaling,
                                    save_path, initial_state)
+    anim = data[-1]
+    data = data[:-1]
+
+elif outputtype == "animate_barplot":
+    data = output.animate_barplot(t, chain_length[0], J, J_xy, B0[0], A[0],
+                                  periodic_boundaries, central_spin, seed, scaling,
+                                  save_path, initial_state)
     anim = data[-1]
     data = data[:-1]
 
