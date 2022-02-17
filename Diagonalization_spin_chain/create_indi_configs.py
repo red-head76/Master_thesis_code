@@ -2,7 +2,9 @@ from create_config import create_config
 
 config_object = create_config()
 
-filename = "filename"
+# If you want path to be a directory end it with an "/"!!
+# Instead it could also be a directory + a file prefix like "test/nix"
+path = "test/"
 
 Ls = [14]
 Js = [0]
@@ -47,8 +49,6 @@ for L in Ls:
                         Constants["B0"] = str(B)
                         Constants["A"] = str(A)
                         Output["outputtype"] = f"plot_{outputtype}"
-                        if filename != "":
-                            signature = filename + "_"
                         if outputtype == "half_chain_entropy":
                             signature += "hce"
                         elif outputtype == "occupation_imbalance":
@@ -58,6 +58,6 @@ for L in Ls:
                         if len(Ls) > 1:
                             signature += f"_{L}"
                         signature += f"_{J}{J_xy}{B}{str(A).replace('.','')}"
-                        Output["filename"] = f"./Plots/individual_mechanisms/{signature}"
+                        Output["filename"] = f"./Plots/{path}{signature}"
                         with open(f"./config_files/{signature}.ini", 'w') as conf:
                             config_object.write(conf)
