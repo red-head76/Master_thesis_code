@@ -330,7 +330,7 @@ def plot_half_chain_entropy(times, chain_length, J, J_xy, B0, As, periodic_bound
     for i, N in enumerate(chain_length):
         for a, A in enumerate(As):
             for b, B in enumerate(B0):
-                hce = np.zeros((samples[i], times.size))
+                hce = np.empty((samples[i], times.size))
                 for sample in range(samples[i]):
                     hce[sample] = calc_half_chain_entropy(
                         times, N, J, J_xy, B, A, periodic_boundaries, central_spin, seed, scaling,
@@ -423,7 +423,7 @@ def plot_occupation_imbalance(times, chain_length, J, J_xy, B0, As, periodic_bou
     for i, N in enumerate(chain_length):
         for a, A in enumerate(As):
             for b, B in enumerate(B0):
-                occupation_imbalance = np.zeros((samples[i], times.size))
+                occupation_imbalance = np.empty((samples[i], times.size))
                 for sample in range(samples[i]):
                     occupation_imbalance[sample] = calc_occupation_imbalance(
                         times, N, J, J_xy, B, A, periodic_boundaries, central_spin,
@@ -580,7 +580,7 @@ def plot_exp_sig_z_central_spin(times, chain_length, J, J_xy, B0, As, periodic_b
     for i, N in enumerate(chain_length):
         for a, A in enumerate(As):
             for b, B in enumerate(B0):
-                exp_sig_z = np.zeros((samples[i], times.size))
+                exp_sig_z = np.empty((samples[i], times.size))
                 for sample in range(samples[i]):
                     exp_sig_z[sample] = calc_exp_sig_z_central_spin(
                         times, N, J, J_xy, B, A, periodic_boundaries, seed, scaling, initial_state)
@@ -658,7 +658,7 @@ def plot_correlation(times, chain_length, J, J_xy, B0, As, periodic_boundaries, 
     for i, N in enumerate(chain_length):
         for a, A in enumerate(As):
             for b, B in enumerate(B0):
-                sigma_squareds = np.zeros((samples[i], times.size))
+                sigma_squareds = np.empty((samples[i], times.size))
                 for sample in range(samples[i]):
                     sigma_squareds[sample] = calc_correlation(
                         times, N, J, J_xy, B, A, periodic_boundaries, central_spin, seed,
