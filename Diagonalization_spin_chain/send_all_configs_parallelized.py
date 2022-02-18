@@ -106,14 +106,20 @@ def send_single_config(config_name):
 if len(sys.argv) == 1:
     print("Submitting all files...")
     entries = os.scandir("./config_files")
+    # Get all the main config files
     config_files = []
     for entry in entries:
         if entry.name[-4:] == ".ini":
             config_files.append(entry.name)
     for config_name in config_files:
+        # For each main config, there might be several sub_configs depending on if there are
+        # multiple parameters set, e.g. L = [10, 12, 14]
         path = create_subconfigs("./config_files/" + config_name)
         for sub_entry in os.scandir(path):
-            if sub_entry.name[-4:] == ".ini" and not search("_\d+.ini", sub_entry.name):
+            # Check 1. If it is a .ini, 2. if it is a sub_config (not a subsub_config with _digit)
+            # 3. if its one of the subconfigs corresponding to config_name
+            if (sub_entry.name[-4:] == ".ini" and not search("_\d+.ini", sub_entry.name)
+                and (config_name[:-4] + '_') in sub_entry.name):
                 send_single_config(path + sub_entry.name)
 
 else:
