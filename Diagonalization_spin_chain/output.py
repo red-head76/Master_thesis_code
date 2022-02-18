@@ -445,6 +445,44 @@ def plot_occupation_imbalance(times, chain_length, J, J_xy, B0, As, periodic_bou
         return [times, occupation_imbalance_means, occupation_imbalance_stds]
 
 
+def plot_occupation_imbalance_plateau(times, chain_length, J, J_xy, B0, As, periodic_boundaries,
+                                      central_spin, samples, seed, scaling, save, initial_state):
+    """
+    Plots the plateau values for given As
+
+    Returns:
+        If save: data (list [As, plateau_means, plateau_stds]), None otherwise
+    """
+    if save:
+        occupation_imbalance_means = np.empty((len(chain_length), len(As), len(B0), len(times)))
+        occupation_imbalance_stds = np.empty((len(chain_length), len(As), len(B0), len(times)))
+    if len(samples) == 1:
+        samples = samples * len(chain_length)
+    for i, N in enumerate(chain_length):
+        for b, B in enumerate(B0):
+            occupation_imbalance = np.empty((samples[i], times.size))
+            occupation_imbalance_mean = np.empty((len(As)))
+            occupation_imbalance_std = np.empty((len(As)))
+            for a, A in enumerate(As):
+                for sample in range(samples[i]):
+                    occupation_imbalance[sample] = calc_occupation_imbalance(
+                        times, N, J, J_xy, B, A, periodic_boundaries, central_spin,
+                        seed, scaling, initial_state)
+                # Mean and std over time and samples
+                occupation_imbalance_mean[a] = occupation_imbalance.mean()
+                occupation_imbalance_std[a] = occupation_imbalance.std()
+                if save:
+                    occupation_imbalance_means[i, a, b] = occupation_imbalance_mean
+                    occupation_imbalance_stds[i, a, b] = occupation_imbalance_std
+            plt.errorbar(As, occupation_imbalance_mean, occupation_imbalance_std,
+                         capsize=2, label=f"L={N}, W={B}")
+    plt.xlabel("Time in fs")
+    plt.ylabel("Plateau value of occupation imbalance")
+    plt.legend(loc=1)
+    if save:
+        return [As, occupation_imbalance_mean, occupation_imbalance_stds]
+
+
 def plot_single_shot_occupation_imbalance(times, chain_length, J, J_xy, B0, As,
                                           periodic_boundaries, central_spin, samples, seed,
                                           scaling, save, initial_state):

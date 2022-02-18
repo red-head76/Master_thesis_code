@@ -40,7 +40,8 @@ def create_config():
         # Available options: plot_time_evo, plot_light_cone, animate_time_evo, plot_r,
         #                    plot_r_fig3, plot_f_fig2,
         #                    plot_fa, plot_half_chain_entropy, plot_occupation_imbalance,
-        #                    plot_exp_sig_z_central_spin, calc_eigvals_eigvecs, calc_psi_t
+        #                    plot_exp_sig_z_central_spin, calc_eigvals_eigvecs, calc_psi_t,
+        #                    plot_occupation_imbalance_plateau
         "outputtype": "plot",
         # If empty, then the output is not saved, otherwise it is stored to ./Plots/filename
         "filename": "",
