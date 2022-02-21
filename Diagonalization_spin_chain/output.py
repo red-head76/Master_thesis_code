@@ -454,8 +454,8 @@ def plot_occupation_imbalance_plateau(times, chain_length, J, J_xy, B0, As, peri
         If save: data (list [As, plateau_means, plateau_stds]), None otherwise
     """
     if save:
-        occupation_imbalance_means = np.empty((len(chain_length), len(As), len(B0), len(times)))
-        occupation_imbalance_stds = np.empty((len(chain_length), len(As), len(B0), len(times)))
+        occupation_imbalance_means = np.empty((len(chain_length), len(As), len(B0)))
+        occupation_imbalance_stds = np.empty((len(chain_length), len(As), len(B0)))
     if len(samples) == 1:
         samples = samples * len(chain_length)
     for i, N in enumerate(chain_length):
@@ -471,16 +471,16 @@ def plot_occupation_imbalance_plateau(times, chain_length, J, J_xy, B0, As, peri
                 # Mean and std over time and samples
                 occupation_imbalance_mean[a] = occupation_imbalance.mean()
                 occupation_imbalance_std[a] = occupation_imbalance.std()
-                if save:
-                    occupation_imbalance_means[i, a, b] = occupation_imbalance_mean
-                    occupation_imbalance_stds[i, a, b] = occupation_imbalance_std
+            if save:
+                occupation_imbalance_means[i, :, b] = occupation_imbalance_mean
+                occupation_imbalance_stds[i, :, b] = occupation_imbalance_std
             plt.errorbar(As, occupation_imbalance_mean, occupation_imbalance_std,
                          capsize=2, label=f"L={N}, W={B}")
     plt.xlabel("Time in fs")
     plt.ylabel("Plateau value of occupation imbalance")
     plt.legend(loc=1)
     if save:
-        return [occupation_imbalance_mean, occupation_imbalance_stds]
+        return [occupation_imbalance_means, occupation_imbalance_stds]
 
 
 def plot_single_shot_occupation_imbalance(times, chain_length, J, J_xy, B0, As,
