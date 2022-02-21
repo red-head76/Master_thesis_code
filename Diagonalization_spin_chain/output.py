@@ -480,7 +480,7 @@ def plot_occupation_imbalance_plateau(times, chain_length, J, J_xy, B0, As, peri
     plt.ylabel("Plateau value of occupation imbalance")
     plt.legend(loc=1)
     if save:
-        return [As, occupation_imbalance_mean, occupation_imbalance_stds]
+        return [occupation_imbalance_mean, occupation_imbalance_stds]
 
 
 def plot_single_shot_occupation_imbalance(times, chain_length, J, J_xy, B0, As,
