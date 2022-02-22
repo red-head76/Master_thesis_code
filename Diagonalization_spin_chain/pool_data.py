@@ -14,7 +14,7 @@ else:
 def pool_data_files(root):
     config_names = []
     for entry in os.scandir(root):
-        if entry.name[-4:] == ".ini" and not search("_\d+.ini", entry.name):
+        if entry.name[-4:] == ".ini" and not search("_\d{0,3}.ini", entry.name):
             config_names.append(entry.name)
     for config_name in config_names:
         config_object = ConfigParser()
@@ -75,6 +75,19 @@ def pool_occupation_imbalance(config_object, filename, samples):
         occupation_imbalances[i] = data["arr_1"]
     np.savez(f"{filename}.npz", times,
              occupation_imbalances.mean(axis=0), occupation_imbalances.std(axis=0))
+
+
+def pool_half_chain_entropy(config_object, filename, samples):
+    # data: [times, hce_means, hce_stds]
+    time_size = config_object.getint("Other", "timesteps") + 1
+    hces = np.empty((samples, time_size))
+    for i in range(samples):
+        data = np.load(f"{filename}_{i}.npz")
+        # this is only needed once
+        if i == 0:
+            times = data["arr_0"]
+        hces[i] = data["arr_1"]
+    np.savez(f"{filename}.npz", times, hces.mean(axis=0), hces.std(axis=0))
 
 
 def pool_exp_sig_z_central_spin(config_object, filename, samples):
