@@ -14,6 +14,7 @@ else:
 def pool_data_files(root):
     config_names = []
     for entry in os.scandir(root):
+        # only applicable for < 1000 samples
         if entry.name[-4:] == ".ini" and not search("_\d{0,3}.ini", entry.name):
             config_names.append(entry.name)
     for config_name in config_names:
@@ -36,6 +37,8 @@ def pool_data_files(root):
                 pool_eigvals_eigvecs(config_object, filename, samples)
             elif outputtype == "plot_occupation_imbalance":
                 pool_occupation_imbalance(config_object, filename, samples)
+            elif outputtype == "plot_half_chain_entropy":
+                pool_half_chain_entropy(config_object, filename, samples)
             elif outputtype == "plot_exp_sig_z_central_spin":
                 pool_exp_sig_z_central_spin(config_object, filename, samples)
             else:
