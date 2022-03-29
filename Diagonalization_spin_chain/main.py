@@ -123,7 +123,7 @@ elif outputtype == "plot_r":
 
 elif outputtype == "plot_r_fig3":
     data = output.plot_r_fig3(chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin,
-                              samples, scaling, save_path)
+                              initial_state, samples, scaling, save_path)
 
 elif outputtype == "plot_half_chain_entropy":
     data = output.plot_half_chain_entropy(

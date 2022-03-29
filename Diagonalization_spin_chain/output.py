@@ -248,11 +248,11 @@ def plot_r_values(chain_length, J, J_xy, B0, A, periodic_boundaries, central_spi
         return [r_values]
 
 
-def plot_r_fig3(chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin, samples,
-                scaling="sqrt", save=False):
+def plot_r_fig3(chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin, initial_state,
+                samples, scaling="sqrt", save=False):
     """
     Plots the r values as done in Figure 3 in https://doi.org/10.1103/PhysRevB.82.174411
-
+    initial_state is only used to calculate the right subspace.
     Returns:
         If save: data (list [B0, mean_r_values]), None otherwise
 
@@ -713,6 +713,9 @@ def plot_2_spin_up(t, chain_length, J, J_xy, B0, A, periodic_boundaries, central
 
 def sigma_E(chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin, samples,
             seed, scaling, save, initial_state):
+    """
+    Energy distribution of a given initial state
+    """
     total_spins = central_spin + chain_length
     dim = np.array(2**total_spins, dtype=np.int)
     idx_psi_0 = sf.calc_idx_psi_0(initial_state, total_spins)
