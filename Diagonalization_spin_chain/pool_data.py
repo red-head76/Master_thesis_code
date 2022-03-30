@@ -41,6 +41,8 @@ def pool_data_files(root):
                 pool_half_chain_entropy(config_object, filename, samples)
             elif outputtype == "plot_exp_sig_z_central_spin":
                 pool_exp_sig_z_central_spin(config_object, filename, samples)
+            elif outputtype == "plot_r_fig3":
+                pool_r_fig3(config_object, filename, samples)
             else:
                 raise NotImplementedError(
                     f"Error for {config_name}: Pooling of {outputtype} isn't implemented (yet).")
@@ -102,8 +104,17 @@ def pool_exp_sig_z_central_spin(config_object, filename, samples):
         if i == 0:
             times = data["arr_0"]
         exp_sig_zs[i] = data["arr_1"]
-    np.savez(f"{filename}.npz", times,
-             exp_sig_zs.mean(axis=0), exp_sig_zs.std(axis=0))
+    np.savez(f"{filename}.npz", times, exp_sig_zs.mean(axis=0), exp_sig_zs.std(axis=0))
+
+
+def pool_r_fig3(config_object, filename, samples):
+    # data: [B0, mean_r_values, std_r_values]
+    B0 = config_object.getfloat("Constants", "b0")
+    r_values = np.empty(samples)
+    for i in range(samples):
+        data = np.load(f"{filename}_{i}.npz")
+        r_values[i] = data["arr_1"]
+    np.savez(f"{filename}.npz", B0, r_values.mean(), r_values.std())
 
 
 for root, dirs, files in os.walk(path_to_look):
