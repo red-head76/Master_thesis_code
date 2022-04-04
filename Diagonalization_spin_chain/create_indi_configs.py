@@ -19,7 +19,6 @@ outputtypes = ["half_chain_entropy", "occupation_imbalance", "exp_sig_z_central_
 System = config_object["System"]
 System["central_spin"] = "True"
 System["periodic_boundaries"] = "True"
-System["spin_constant"] = "True"
 
 # Coupling Constants
 Constants = config_object["Constants"]
@@ -27,7 +26,7 @@ Constants["scaling"] = "sqrt"
 
 # Output option
 Output = config_object["Output"]
-Output["samples"] = "20"
+Output["samples"] = "100"
 Output["show"] = "False"
 Output["save_plot"] = "False"
 
@@ -57,6 +56,10 @@ for L in Ls:
                             signature = "oi"
                         elif outputtype == "exp_sig_z_central_spin":
                             signature = "cs"
+                        elif outputtype == "occupation_imbalance_plateau":
+                            signature = "oip"
+                        elif outputtype == "occupation_imbalance_plateau_linfit":
+                            signature = "oipl"
                         if len(Ls) > 1:
                             signature += f"_{L}"
                         signature += f"_{J}{J_xy}{B}{str(A).replace('.','')}"
