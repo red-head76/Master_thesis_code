@@ -90,7 +90,7 @@ if outputtype in ["plot_half_chain_entropy", "plot_single_shot_half_chain_entrop
                   "plot_occupation_imbalance", "plot_single_shot_occupation_imbalance",
                   "plot_exp_sig_z_central_spin", "plot_single_shot_exp_sig_z_central_spin",
                   "plot_correlation", "calc_psi_t", "plot_2_spin_up",
-                  "plot_occupation_imbalance_plateau"]:
+                  "plot_occupation_imbalance_plateau", "plot_occupation_imbalance_plateau_linfit"]:
     t = np.logspace(np.log10(timestart), np.log10(timeend), timesteps)
 
 if outputtype == "plot_time_evo":
@@ -147,6 +147,11 @@ elif outputtype == "plot_single_shot_occupation_imbalance":
 
 elif outputtype == "plot_occupation_imbalance_plateau":
     data = output.plot_occupation_imbalance_plateau(
+        t, chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin, samples, seed,
+        scaling, save_path, initial_state)
+
+elif outputtype == "plot_occupation_imbalance_plateau_linfit":
+    data = output.plot_occupation_imbalance_plateau_linfit(
         t, chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin, samples, seed,
         scaling, save_path, initial_state)
 

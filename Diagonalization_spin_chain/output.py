@@ -1,5 +1,6 @@
 from matplotlib import animation
 from scipy.constants import hbar, e
+from scipy.stats import linregress
 import numpy as np
 import matplotlib.pyplot as plt
 import support_functions as sf
@@ -481,6 +482,48 @@ def plot_occupation_imbalance_plateau(times, chain_length, J, J_xy, B0, As, peri
     plt.legend(loc=1)
     if save:
         return [occupation_imbalance_means, occupation_imbalance_stds]
+
+
+def plot_occupation_imbalance_plateau_linfit(times, chain_length, J, J_xy, B0, As,
+                                             periodic_boundaries, central_spin, samples, seed,
+                                             scaling, save, initial_state):
+    """
+    Plots the plateau values for given As
+
+    Returns:
+        If save: data (list [As, plateau_means, plateau_stds]), None otherwise
+    """
+    if save:
+        slopes_means = np.empty((len(chain_length), len(As), len(B0)))
+        slope_errors = np.empty((len(chain_length), len(As), len(B0)))
+    if len(samples) == 1:
+        samples = samples * len(chain_length)
+    for i, N in enumerate(chain_length):
+        for b, B in enumerate(B0):
+            slopes = np.empty((samples[i]))
+            slope_errors = np.empty((samples[i]))
+            slopes_mean = np.empty((len(As)))
+            slope_errors_mean = np.empty((len(As)))
+            for a, A in enumerate(As):
+                for sample in range(samples[i]):
+                    occupation_imbalance = calc_occupation_imbalance(
+                        times, N, J, J_xy, B, A, periodic_boundaries, central_spin,
+                        seed, scaling, initial_state)
+                    # Make linfit check
+                    result = linregress(times, occupation_imbalance)
+                    slopes[sample] = result.slope
+                    slope_errors[sample] = result.slope
+                slopes_mean[a] = slopes.mean()
+                slope_errors_mean[a] = slope_errors.mean()
+            if save:
+                slopes[i, :, b] = slopes_mean
+                slope_errors[i, :, b] = slope_errors_mean
+            plt.errorbar(As, slopes_mean, slope_errors_mean, capsize=2, label=f"L={N}, W={B}")
+    plt.xlabel("Time in fs")
+    plt.ylabel("Slope of occupation imbalance plateau values")
+    plt.legend(loc=1)
+    if save:
+        return [slopes, slope_errors]
 
 
 def plot_single_shot_occupation_imbalance(times, chain_length, J, J_xy, B0, As,
