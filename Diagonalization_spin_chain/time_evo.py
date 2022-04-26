@@ -1,6 +1,6 @@
 import numpy as np
 import diagonalization
-from support_functions import unpackbits, packbits, calc_idx_psi_0
+from support_functions import unpackbits, packbits, calc_idx_psi_0, calc_subspace
 from scipy.constants import hbar, e
 
 # Arguments explained in output.py
@@ -16,18 +16,14 @@ def time_evo_sigma_z(t, chain_length, J, J_xy, B0, A, periodic_boundaries, centr
                                    timesteps
     """
     total_spins = chain_length + central_spin
-    dim = int(2**total_spins)
     idx_psi_0 = calc_idx_psi_0(initial_state, total_spins)
-    psi_0 = np.zeros(dim)
-    psi_0[idx_psi_0] = 1
     n_up = np.sum(unpackbits(idx_psi_0, total_spins))
-    subspace_mask = np.where(np.logical_not(np.sum(unpackbits(np.arange(dim), total_spins),
-                                                   axis=1) - n_up))[0]
-    psi_0 = psi_0[subspace_mask]
+    subspace_mask = calc_subspace(total_spins, n_up)
+    psi_0 = np.zeros(subspace_mask.size)
+    psi_0[np.where(subspace_mask == idx_psi_0)] = 1
     eigenvalues, eigenvectors = diagonalization.eig_values_vectors_spin_const(
         chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin, n_up, seed, scaling)
-    psi_z = np.arange(0, dim)
-    sigma_z = (unpackbits(psi_z, total_spins) - 1/2)[subspace_mask]
+    sigma_z = (unpackbits(subspace_mask, total_spins) - 1/2)
     propagator = np.exp(-1j * np.outer(t, eigenvalues) / hbar * e * 1e-15)
     psi_t = (eigenvectors @ (propagator * (eigenvectors.T @ psi_0)).T).T
 
@@ -43,14 +39,11 @@ def time_evo(t, chain_length, J, J_xy, B0, A, periodic_boundaries,
         psi_t (complex [tN, dim_sub]): the state vector at each timestep
     """
     total_spins = chain_length + central_spin
-    dim = int(2**total_spins)
     idx_psi_0 = calc_idx_psi_0(initial_state, total_spins)
-    psi_0 = np.zeros(dim)
-    psi_0[idx_psi_0] = 1
     n_up = np.sum(unpackbits(idx_psi_0, total_spins))
-    subspace_mask = np.where(np.logical_not(np.sum(unpackbits(np.arange(dim), total_spins),
-                                                   axis=1) - n_up))[0]
-    psi_0 = psi_0[subspace_mask]
+    subspace_mask = calc_subspace(total_spins, n_up)
+    psi_0 = np.zeros(subspace_mask.size)
+    psi_0[np.where(subspace_mask == idx_psi_0)] = 1
     eigenvalues, eigenvectors = diagonalization.eig_values_vectors_spin_const(
         chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin, n_up, seed, scaling)
 

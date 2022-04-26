@@ -32,8 +32,22 @@ def create_basis_vectors(indices, dimension):
         basis_vectors[row, index] = 1
     return basis_vectors
 
-# New definitions of packbits and unpackbits are required because np.unpackbits can only handle
-# uint8. This means it is restricted to a chain_length of 8.
+
+def calc_subspace(total_spins, n_up):
+    """
+    Calculates the subspace for given system size and spin up's
+    """
+    dim = int(2**total_spins)
+    if n_up == 0:
+        subspace = np.array([0])
+    elif n_up == 1:
+        subspace = 2**np.arange(total_spins)
+    else:
+        # Creates each state, sums up all spins, subtracts n_up and filters out the zeros
+        subspace = np.where(np.logical_not(np.sum(unpackbits(np.arange(dim), total_spins),
+                                                  axis=1) - n_up))[0]
+
+    return subspace
 
 
 def unpackbits(x, num_bits, order_big_first=False):

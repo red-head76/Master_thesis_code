@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.special import binom
-from support_functions import packbits, unpackbits, create_basis_vectors
+from support_functions import packbits, unpackbits, create_basis_vectors, calc_subspace
 
 
 def do_scaling(A, chain_length, scaling):
@@ -132,9 +132,7 @@ def eig_values_vectors_spin_const(chain_length, J, J_xy, B0, A, periodic_boundar
     if central_spin:
         B = np.append(B, 0)
     A = do_scaling(A, chain_length, scaling)
-    # Creates each state, sums up all spins, subtracts n_up and filters out the zeros
-    subspace = np.where(np.logical_not(np.sum(unpackbits(np.arange(dim), total_spins),
-                                              axis=1) - n_up))[0]
+    subspace = calc_subspace(total_spins, n_up)
     # Generate Hamiltonian for subspace
     states = unpackbits(subspace, total_spins)
     # Ising term in the hamiltonian: J * Sum(S_i^z * S_i+1^z)
@@ -309,10 +307,7 @@ def eig_values_vectors_spin_const_old_way(chain_length, J, J_xy, B0, A, periodic
         B = np.append(B, 0)
     A = do_scaling(A, chain_length, scaling)
 
-    # Create subspace
-    # Creates each state, sums up all spins, subtracts n_up and filters out the zeros
-    subspace = np.where(np.logical_not(np.sum(unpackbits(np.arange(dim), total_spins),
-                                              axis=1) - n_up))[0]
+    subspace = calc_subspace(total_spins, n_up)
     # Generate Hamiltonian for subspace
     states = unpackbits(subspace, total_spins)
     # Ising term in the hamiltonian: J * Sum(S_i^z * S_i+1^z)

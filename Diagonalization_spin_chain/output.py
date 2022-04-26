@@ -297,8 +297,7 @@ def calc_half_chain_entropy(times, chain_length, J, J_xy, B0, A, periodic_bounda
     dim = np.int(2**total_spins)
     idx_psi_0 = sf.calc_idx_psi_0(initial_state, total_spins)
     n_up = sf.unpackbits(idx_psi_0, total_spins).sum()
-    subspace_mask = np.where(np.logical_not(np.sum(sf.unpackbits(np.arange(dim), total_spins),
-                                                   axis=1) - n_up))[0]
+    subspace_mask = sf.calc_subspace(total_spins, n_up)
     psi_t = time_evo(times, chain_length, J, J_xy, B0, A, periodic_boundaries,
                      central_spin, seed, scaling, initial_state)
     splitted_subspace_mask = np.split(sf.unpackbits(subspace_mask, total_spins), [total_spins//2],
@@ -392,8 +391,7 @@ def calc_occupation_imbalance(times, chain_length, J, J_xy, B0, A, periodic_boun
                      central_spin, seed, scaling, initial_state)
     idx_psi_0 = sf.calc_idx_psi_0(initial_state, total_spins)
     n_up = sf.unpackbits(idx_psi_0, total_spins).sum()
-    subspace_mask = np.where(np.logical_not(np.sum(sf.unpackbits(np.arange(dim), total_spins),
-                                                   axis=1) - n_up))[0]
+    subspace_mask = sf.calc_subspace(total_spins, n_up)
     psi_z = np.arange(0, np.int(2**(total_spins)))[subspace_mask]
     sigma_z = (sf.unpackbits(psi_z, total_spins) - 1/2)
     # discard central spin in exp_sig_z
@@ -566,8 +564,7 @@ def calc_exp_sig_z_central_spin(times, chain_length, J, J_xy, B0, A, periodic_bo
     dim = np.int(2**total_spins)
     idx_psi_0 = sf.calc_idx_psi_0(initial_state, total_spins)
     n_up = sf.unpackbits(idx_psi_0, total_spins).sum()
-    subspace_mask = np.where(np.logical_not(np.sum(sf.unpackbits(np.arange(dim), total_spins),
-                                                   axis=1) - n_up))[0]
+    subspace_mask = sf.calc_subspace(total_spins, n_up)
     psi_t = time_evo(times, chain_length, J, J_xy, B0, A, periodic_boundaries,
                      True, seed, scaling, initial_state)
     psi_z = np.arange(0, np.int(2**(total_spins)))[subspace_mask]
@@ -665,8 +662,7 @@ def calc_correlation(times, chain_length, J, J_xy, B0, A, periodic_boundaries, c
     psi_0 = np.zeros(dim)
     psi_0[idx_psi_0] = 1
     n_up = sf.unpackbits(idx_psi_0, total_spins).sum()
-    subspace_mask = np.where(np.logical_not(np.sum(sf.unpackbits(np.arange(dim), total_spins),
-                                                   axis=1) - n_up))[0]
+    subspace_mask = sf.calc_subspace(total_spins, n_up)
     psi_0 = psi_0[subspace_mask]
     psi_t = time_evo(times, chain_length, J, J_xy, B0, A, periodic_boundaries,
                      central_spin, seed, scaling, initial_state)
@@ -765,8 +761,7 @@ def sigma_E(chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin, sam
     n_up = sf.unpackbits(idx_psi_0, total_spins).sum()
     psi_0 = np.zeros(dim)
     psi_0[idx_psi_0] = 1
-    subspace_mask = np.where(np.logical_not(np.sum(sf.unpackbits(np.arange(dim), total_spins),
-                                                   axis=1) - n_up))[0]
+    subspace_mask = sf.calc_subspace(total_spins, n_up)
     psi_0 = psi_0[subspace_mask]
     eigenvalues = np.empty((samples, subspace_mask.size))
     eigenvectors = np.empty((samples, subspace_mask.size, subspace_mask.size))
