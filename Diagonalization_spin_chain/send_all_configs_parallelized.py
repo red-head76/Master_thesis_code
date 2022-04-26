@@ -119,7 +119,7 @@ if len(sys.argv) == 1:
             # Check 1. If it is a .ini, 2. if it is a sub_config (not a subsub_config with _digit)
             # 3. if its one of the subconfigs corresponding to config_name
             if (sub_entry.name[-4:] == ".ini" and not search("_\d+.ini", sub_entry.name)
-                and (config_name[:-4] + '_') in sub_entry.name):
+                    and (config_name[:-4] + '_') in sub_entry.name):
                 send_single_config(path + sub_entry.name)
 
 else:

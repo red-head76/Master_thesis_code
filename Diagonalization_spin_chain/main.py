@@ -76,7 +76,8 @@ initial_state = Other["initial_state"]
 # Set to true in the following, if an animation is called
 anim = False
 
-if outputtype in ["plot_time_evo", "animate_time_evo", "animate_barplot", "plot_light_cone"]:
+if outputtype in ["plot_time_evo", "animate_time_evo", "animate_barplot", "plot_light_cone",
+                  "plot_deff"]:
     # Time array
     t = np.linspace(timestart, timeend, timesteps)
 
@@ -90,7 +91,8 @@ if outputtype in ["plot_half_chain_entropy", "plot_single_shot_half_chain_entrop
                   "plot_occupation_imbalance", "plot_single_shot_occupation_imbalance",
                   "plot_exp_sig_z_central_spin", "plot_single_shot_exp_sig_z_central_spin",
                   "plot_correlation", "calc_psi_t", "plot_2_spin_up",
-                  "plot_occupation_imbalance_plateau", "plot_occupation_imbalance_plateau_linfit"]:
+                  "plot_occupation_imbalance_plateau", "plot_occupation_imbalance_plateau_linfit",
+                  "plot_exp_sig_z_single_spin", "plot_single_spin_entropy"]:
     t = np.logspace(np.log10(timestart), np.log10(timeend), timesteps)
 
 if outputtype == "plot_time_evo":
@@ -99,6 +101,7 @@ if outputtype == "plot_time_evo":
                                 save_path, initial_state)
 
 elif outputtype == "plot_light_cone":
+    t = np.logspace(np.log10(timestart), np.log10(timeend), timesteps)
     data = output.plot_light_cone(t, chain_length[0], J, J_xy, B0[0], A[0],
                                   periodic_boundaries, central_spin, seed, scaling,
                                   save_path, initial_state)
@@ -119,7 +122,7 @@ elif outputtype == "animate_barplot":
 
 elif outputtype == "plot_r":
     data = output.plot_r_values(chain_length[0], J, J_xy, B0[0], A[0], periodic_boundaries,
-                                central_spin, samples[0], scaling, save_path)
+                                central_spin, samples[0], initial_state, scaling, save_path)
 
 elif outputtype == "plot_r_fig3":
     data = output.plot_r_fig3(chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin,
@@ -165,6 +168,16 @@ elif outputtype == "plot_single_shot_exp_sig_z_central_spin":
         t, chain_length, J, J_xy, B0, A, periodic_boundaries, samples, seed, scaling,
         save_path, initial_state)
 
+elif outputtype == "plot_exp_sig_z_single_spin":
+    data = output.plot_exp_sig_z_single_spin(
+        t, chain_length, J, J_xy, B0, A, periodic_boundaries, samples, seed,
+        scaling, save_path, initial_state)
+
+elif outputtype == "plot_single_spin_entropy":
+    data = output.plot_single_spin_entropy(
+        t, chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin, samples, seed,
+        scaling, save_path, initial_state)
+
 elif outputtype == "plot_correlation":
     data = output.plot_correlation(
         t, chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin, samples, seed,
@@ -197,9 +210,13 @@ elif outputtype == "plot_2_spin_up":
     data = output.plot_2_spin_up(t, chain_length[0], J, J_xy, B0[0], A[0],
                                  periodic_boundaries, central_spin, seed, scaling, save_path)
 
-elif outputtype == "plot_sigma_E":
-    data = output.sigma_E(chain_length[0], J, J_xy, B0[0], A[0], periodic_boundaries,
-                          central_spin, samples[0], seed, scaling, save_path, initial_state)
+elif outputtype == "plot_deff":
+    data = output.plot_deff(chain_length[0], J, J_xy, B0, A[0], periodic_boundaries,
+                            central_spin, samples[0], scaling, save_path, initial_state)
+
+elif outputtype == "plot_eigenstates":
+    data = output.plot_eigenstates(chain_length[0], J, J_xy, B0[0], A[0], periodic_boundaries,
+                                   central_spin, seed, scaling, save_path, initial_state)
 
 else:
     raise ValueError(f"Option '{outputtype}' unknown")

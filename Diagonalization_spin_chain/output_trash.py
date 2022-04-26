@@ -370,3 +370,135 @@ def plot_fa_values(chain_length, J, B0, A, periodic_boundaries, central_spin, sa
     plt.legend(loc=4)
     if save:
         return [np.arange(chain_length), mean_fa_values]
+
+
+def sigma_E(chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin, samples,
+            seed, scaling, save, initial_state):
+    """
+    Energy distribution of a given initial state
+
+    Returns:
+        If save: data (list [eigenvalues_save, E_distr_save]), None otherwise
+    """
+    total_spins = central_spin + chain_length
+    dim = np.array(2**total_spins, dtype=np.int)
+    idx_psi_0 = sf.calc_idx_psi_0(initial_state, total_spins)
+    n_up = sf.unpackbits(idx_psi_0, total_spins).sum()
+    psi_0 = np.zeros(dim)
+    psi_0[idx_psi_0] = 1
+    subspace_mask = sf.calc_subspace(total_spins, n_up)
+    psi_0 = psi_0[subspace_mask]
+    if save:
+        eigenvalues_save = np.empty((len(B0), (samples * subspace_mask.size)))
+        E_distr_save = np.empty((len(B0), (samples * subspace_mask.size)))
+    for j, B in enumerate(B0):
+        eigenvalues = np.empty((samples, subspace_mask.size))
+        eigenvectors = np.empty((samples, subspace_mask.size, subspace_mask.size))
+        for i in range(samples):
+            eigenvalues[i], eigenvectors[i] = diag.eig_values_vectors_spin_const(
+                chain_length, J, J_xy, B, A, periodic_boundaries, central_spin, n_up)
+        E_distr = np.abs(eigenvectors.transpose(0, 2, 1) @ psi_0)**2
+        sort = eigenvalues.ravel().argsort()
+        eigenvalues = eigenvalues.ravel()[sort]
+        E_distr = E_distr.ravel()[sort]
+        line, = plt.plot([], [])        # color dummy
+        plt.hist(eigenvalues, weights=E_distr, bins=sturge_rule(eigenvalues.size), density=True,
+                 histtype="step", label=f"W={B}", color=line.get_c())
+        plt.vlines([eigenvalues[0], eigenvalues[-1]], 0, plt.axis()[3],
+                   color=line.get_c(), ls=':')
+        if save:
+            eigenvalues_save[j] = eigenvalues
+            E_distr_save[j] = E_distr
+    plt.legend()
+    if save:
+        return [eigenvalues_save, E_distr_save]
+
+
+def width_sigma_E(chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin, samples,
+                  seed, scaling, save, initial_state):
+    """
+    Width of the energy distribution per sample of a given initial state
+
+    Returns:
+        If save: data (list [eigenvalues, E_distr]), None otherwise
+    """
+    total_spins = central_spin + chain_length
+    dim = np.array(2**total_spins, dtype=np.int)
+    idx_psi_0 = sf.calc_idx_psi_0(initial_state, total_spins)
+    n_up = sf.unpackbits(idx_psi_0, total_spins).sum()
+    psi_0 = np.zeros(dim)
+    psi_0[idx_psi_0] = 1
+    subspace_mask = sf.calc_subspace(total_spins, n_up)
+    psi_0 = psi_0[subspace_mask]
+    width_means = np.empty(len(B0))
+    width_stds = np.empty(len(B0))
+    for j, B in enumerate(B0):
+        eigenvalues = np.empty((samples, subspace_mask.size))
+        eigenvectors = np.empty((samples, subspace_mask.size, subspace_mask.size))
+        for i in range(samples):
+            eigenvalues[i], eigenvectors[i] = diag.eig_values_vectors_spin_const(
+                chain_length, J, J_xy, B, A, periodic_boundaries, central_spin, n_up)
+        E_distr = np.abs(eigenvectors.transpose(0, 2, 1) @ psi_0)**2
+        # w_avg = np.average(eigenvalues, weights=E_distr, axis=1)
+        # w_std = np.sqrt(np.average((eigenvalues - w_avg[:, None])**2, weights=E_distr, axis=1))
+        w_std2 = np.sqrt((np.average(eigenvalues, weights=E_distr, axis=1))**2 -
+                         np.average(eigenvalues, weights=E_distr**2, axis=1))
+        # print(-np.sqrt(w_var) / (np.sort(eigenvalues.ravel())
+        #                          [0] - np.sort(eigenvalues.ravel())[-1]))
+        # plt.errorbar(w_std.mean() , B, xerr=np.sqrt(w_std.std()), capsize=2)
+        width_means[j] = w_std2.mean()
+        width_stds[j] = w_std2.std()
+    plt.plot(B0, width_means)
+    if save:
+        return [width_means, width_stds]
+
+
+def plot_ds_deff(times, chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin, samples,
+                 seed, scaling, save, initial_state):
+    """
+    Plots the value of 1/2 sqrt{ds^2/d^eff} of a given inital state (see
+    10.1103/PhysRevE.79.061103)
+
+    Returns:
+        If save: data (list [B0, ds_deff_means, ds_deff_stds]), None otherwise
+    """
+    total_spins = central_spin + chain_length
+    dim = np.array(2**total_spins, dtype=np.int)
+    idx_psi_0 = sf.calc_idx_psi_0(initial_state, total_spins)
+    n_up = sf.unpackbits(idx_psi_0, total_spins).sum()
+    psi_0 = np.zeros(dim)
+    psi_0[idx_psi_0] = 1
+    subspace_mask = sf.calc_subspace(total_spins, n_up)
+    psi_0 = psi_0[subspace_mask]
+    ds_deff_means = np.empty(len(B0))
+    ds_deff_stds = np.empty(len(B0))
+    distances_means = np.empty(len(B0))
+    distances_stds = np.empty(len(B0))
+    for j, B in enumerate(B0):
+        eigenvalues = np.empty((samples, subspace_mask.size))
+        eigenvectors = np.empty((samples, subspace_mask.size, subspace_mask.size))
+        distances = np.empty(samples)
+        for i in range(samples):
+            eigenvalues[i], eigenvectors[i] = diag.eig_values_vectors_spin_const(
+                chain_length, J, J_xy, B, A, periodic_boundaries, central_spin, n_up)
+            psi_t = time_evo(times, chain_length, J, J_xy, B, A, periodic_boundaries,
+                             central_spin, seed, scaling, initial_state)
+            rho_t = psi_t[:, :, np.newaxis] * psi_t[:, np.newaxis, :]  # density matrix in subspace
+            rho_a_t = sf.partial_trace_subspace(rho_t, subspace_mask, 1)  # density matrix of a
+            omega_a = np.mean(rho_a_t, axis=0)                         # time average
+            # distances[i] = np.mean(1/2 *
+            #     np.diagonal(np.sqrt((rho_a - omega_a) @ (rho_a - omega_a)), axis1=1, axis2=2))
+            distances[i] = np.mean(np.linalg.norm((rho_a_t - omega_a), ord="nuc", axis=(1, 2)))
+        E_distr = np.abs(eigenvectors.transpose(0, 2, 1) @ psi_0)**2
+        deff = 1 / np.sum(E_distr**4, axis=1)
+        ds_deff_means[j] = np.mean(1/2 * np.sqrt(4 / deff))
+        ds_deff_stds[j] = np.mean(1/4 * np.sqrt(4 / deff**3)) * deff.std()
+        distances_means[j] = distances.mean()
+        distances_stds[j] = distances.std()
+    plt.errorbar(B0, ds_deff_means, ds_deff_stds, capsize=2, label="ds/deff")
+    plt.errorbar(B0, distances_means, distances_stds, capsize=2, label=r"<D>_t")
+    plt.legend()
+    plt.ylim(bottom=0)
+    plt.xlabel("Disorder W")
+    if save:
+        return [B0, ds_deff_means, ds_deff_stds, distances_means, distances_stds]
