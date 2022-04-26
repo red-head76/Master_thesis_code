@@ -95,8 +95,8 @@ def eig_values_vectors(chain_length, J, J_xy, B0, A, periodic_boundaries, centra
     return np.linalg.eigh(H)
 
 
-def eig_values_vectors_spin_const(chain_length, J, J_xy, B0, A, periodic_boundaries,
-                                  central_spin, n_up, seed=False, scaling="inverse"):
+def Hamiltonian_spin_const(chain_length, J, J_xy, B0, A, periodic_boundaries,
+                           central_spin, n_up, seed=False, scaling="inverse"):
     """
     Computes the the Heisenberg Hamiltonian with coupling to a central spin:
     H = Sum_i (J * S_i * S_i+1 + B_i S_i^z + I^z S_i^z)
@@ -118,10 +118,9 @@ def eig_values_vectors_spin_const(chain_length, J, J_xy, B0, A, periodic_boundar
         scaling (string, default=inverse): if "inverse", the coupling A is scaled by 1/N,
                                           if "sqrt", the coupling A is scaled by 1/sqrt(N)
 
-
     Returns:
-        eigenvalues (float [dim_sub]): the eigenvalues of the Hamiltonian
-        eigenvectors (float [dim_sub, dim_sub]): the eigenvectors
+        H (array[dim_sub, dim_sub]) : The Hamiltonian of the subspace
+
     """
     total_spins = chain_length + central_spin
     dim = int(2**total_spins)
@@ -175,7 +174,32 @@ def eig_values_vectors_spin_const(chain_length, J, J_xy, B0, A, periodic_boundar
         H[map_states_to_subspace(states_to_flip_central),
           map_states_to_subspace(flipped_states_central)] = A/2
 
-    return np.linalg.eigh(H)
+    return H
+
+
+def eig_values_vectors_spin_const(chain_length, J, J_xy, B0, A, periodic_boundaries,
+                                  central_spin, n_up, seed=False, scaling="inverse"):
+    """
+    Calculates the eigenvalues AND vectors of the given system.
+    Returns:
+        eigenvalues (float [dim_sub]): the eigenvalues of the Hamiltonian
+        eigenvectors (float [dim_sub, dim_sub]): the eigenvectors
+    """
+    return np.linalg.eigh(Hamiltonian_spin_const(chain_length, J, J_xy, B0, A, periodic_boundaries,
+                                                 central_spin, n_up, seed=False,
+                                                 scaling="inverse"))
+
+
+def eig_values_spin_const(chain_length, J, J_xy, B0, A, periodic_boundaries,
+                          central_spin, n_up, seed=False, scaling="inverse"):
+    """
+    Calculates only the eigenvalues of the given system.
+    Returns:
+        eigenvalues (float [dim_sub]): the eigenvalues of the Hamiltonian
+    """
+    return np.linalg.eigvalsh(Hamiltonian_spin_const(chain_length, J, J_xy, B0, A,
+                                                     periodic_boundaries, central_spin, n_up,
+                                                     seed=False, scaling="inverse"))
 
 
 def eig_values_vectors_old_way(chain_length, J, J_xy, B0, A, periodic_boundaries, central_spin,
