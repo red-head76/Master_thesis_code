@@ -76,8 +76,7 @@ initial_state = Other["initial_state"]
 # Set to true in the following, if an animation is called
 anim = False
 
-if outputtype in ["plot_time_evo", "animate_time_evo", "animate_barplot", "plot_light_cone",
-                  "plot_deff"]:
+if outputtype in ["plot_time_evo", "animate_time_evo", "animate_barplot", "plot_light_cone"]:
     # Time array
     t = np.linspace(timestart, timeend, timesteps)
 
@@ -212,7 +211,7 @@ elif outputtype == "plot_2_spin_up":
 
 elif outputtype == "plot_deff":
     data = output.plot_deff(chain_length[0], J, J_xy, B0, A[0], periodic_boundaries,
-                            central_spin, samples[0], scaling, save_path, initial_state)
+                            central_spin, samples[0], seed, scaling, save_path, initial_state)
 
 elif outputtype == "plot_eigenstates":
     data = output.plot_eigenstates(chain_length[0], J, J_xy, B0[0], A[0], periodic_boundaries,

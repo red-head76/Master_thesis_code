@@ -6,6 +6,9 @@ from configparser import ConfigParser
 import fileinput
 from re import search
 
+# has to start with './' and end with '/'
+path_to_send = "./config_files/"
+
 
 def convert_list(string):
     # Converts a string to a list of floats
@@ -105,7 +108,7 @@ def send_single_config(config_name):
 
 if len(sys.argv) == 1:
     print("Submitting all files...")
-    entries = os.scandir("./config_files")
+    entries = os.scandir(path_to_send)
     # Get all the main config files
     config_files = []
     for entry in entries:
@@ -114,7 +117,7 @@ if len(sys.argv) == 1:
     for config_name in config_files:
         # For each main config, there might be several sub_configs depending on if there are
         # multiple parameters set, e.g. L = [10, 12, 14]
-        path = create_subconfigs("./config_files/" + config_name)
+        path = create_subconfigs(path_to_send + config_name)
         for sub_entry in os.scandir(path):
             # Check 1. If it is a .ini, 2. if it is a sub_config (not a subsub_config with _digit)
             # 3. if its one of the subconfigs corresponding to config_name
