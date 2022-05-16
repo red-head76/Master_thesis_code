@@ -186,8 +186,7 @@ def eig_values_vectors_spin_const(chain_length, J, J_xy, B0, A, periodic_boundar
         eigenvectors (float [dim_sub, dim_sub]): the eigenvectors
     """
     return np.linalg.eigh(Hamiltonian_spin_const(chain_length, J, J_xy, B0, A, periodic_boundaries,
-                                                 central_spin, n_up, seed=False,
-                                                 scaling="inverse"))
+                                                 central_spin, n_up, seed=seed, scaling=scaling))
 
 
 def eig_values_spin_const(chain_length, J, J_xy, B0, A, periodic_boundaries,
